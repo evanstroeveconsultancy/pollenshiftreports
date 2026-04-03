@@ -1,8 +1,9 @@
+// AUTO-GENERATED from shared/SlackBlockKit.template.gs — do not edit directly
 /****************************************************
- * SLACK BLOCK KIT BUILDER UTILITIES — WARATAH SHIFT REPORTS
+ * SLACK BLOCK KIT BUILDER UTILITIES — WARATAH
  *
  * Inline implementation (no library dependency).
- * Identical to SlackBlockKitWaratah.gs used in Task Management.
+ * Generated from shared/SlackBlockKit.template.gs
  *
  * Usage:
  *   const blocks = [
@@ -14,7 +15,7 @@
  *   ];
  *   bk_post(webhookUrl, blocks, "Fallback text");
  *
- * @version 1.0.0
+ * @version 1.1.0
  ****************************************************/
 
 
@@ -154,9 +155,9 @@ function notifyError_(functionName, error) {
  * Appends a learning entry to the LEARNINGS tab in the data warehouse.
  * Non-blocking — failures are logged only.
  *
- * @param {string} context  - Function or module name where the learning occurred
- * @param {string} issue    - Description of the issue or behaviour observed
- * @param {string} [fix]    - Fix applied or next action taken (optional)
+ * @param {string} context - Function or pipeline stage where the issue occurred
+ * @param {string} issue   - Description of what went wrong
+ * @param {string} fix     - What was done (or should be done) to resolve it
  */
 function logPipelineLearning_(context, issue, fix) {
   try {
@@ -167,6 +168,7 @@ function logPipelineLearning_(context, issue, fix) {
     if (!sheet) {
       sheet = wss.insertSheet('LEARNINGS');
       sheet.getRange(1, 1, 1, 5).setValues([['Timestamp', 'Venue', 'Context', 'Issue', 'Fix Applied']]);
+      sheet.getRange(1, 1, 1, 5).setFontWeight('bold').setBackground('#f3f3f3');
       sheet.setFrozenRows(1);
     }
     sheet.appendRow([new Date(), 'WARATAH', context, issue, fix || '']);

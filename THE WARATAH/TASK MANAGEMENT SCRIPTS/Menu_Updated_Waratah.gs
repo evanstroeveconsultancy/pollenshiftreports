@@ -14,7 +14,8 @@
  */
 function requirePassword_(actionName) {
   const stored = PropertiesService.getScriptProperties().getProperty('MENU_PASSWORD');
-  const password = stored || 'chocolateteapot'; // fallback during migration
+  if (!stored) throw new Error('MENU_PASSWORD not configured in Script Properties. Run setupScriptProperties() first.');
+  const password = stored;
   try {
     const ui = SpreadsheetApp.getUi();
     const response = ui.prompt(

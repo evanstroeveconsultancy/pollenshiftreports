@@ -184,8 +184,7 @@ function continueExport(sheetName, isTest) {
       }
 
       // Skip task push in TEST mode to avoid writing test data to production Actionables
-      // TEST emails always go to evan@pollenhospitality.com regardless of who triggers the run
-      const testRecipient = 'evan@pollenhospitality.com';
+      const testRecipient = PropertiesService.getScriptProperties().getProperty('AI_INSIGHTS_EVAN_EMAIL') || Session.getActiveUser().getEmail();
       const filename = `TEST – The Waratah Nightly Shift Report - ${sheetName}.pdf`;
       const pdfBlob = generatePdfForSheet_NoUI_(spreadsheet, sheet, filename);
       if (!pdfBlob) return { success: false, message: 'PDF generation failed. See logs for details.' };
@@ -404,7 +403,7 @@ function exportAndEmailPDF_TestToSelf() {
   const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = spreadsheet.getActiveSheet();
   const sheetName = sheet.getName();
-  const testRecipient = 'evan@pollenhospitality.com';
+  const testRecipient = PropertiesService.getScriptProperties().getProperty('AI_INSIGHTS_EVAN_EMAIL') || Session.getActiveUser().getEmail();
 
   ui.alert(
     "TEST MODE: This will email ONLY " + testRecipient +

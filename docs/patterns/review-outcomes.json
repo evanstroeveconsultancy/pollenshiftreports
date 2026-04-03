@@ -1,0 +1,104 @@
+{
+  "_schema": "review-outcomes-v2",
+  "_description": "Structured log of pipeline outcomes. Written by gas-code-review-agent (reviews), deployment-agent (deploys), and other agents. Read by ALL agents during exploration phase and by /learnings command for trends.",
+  "_updated": "2026-04-02",
+  "_agents_that_read": ["gas-code-review-agent", "deployment-agent", "documentation-agent", "rollover-trigger-agent", "slack-block-kit-agent", "task-management-agent", "claude-api-agent", "data-warehouse-agent", "external-integrations-agent", "sakura-gas-agent", "waratah-gas-agent", "shift-report-orchestrator"],
+  "_agents_that_write": ["gas-code-review-agent", "deployment-agent", "shift-report-orchestrator"],
+  "_categories": ["schema-drift", "formula-protection", "api-misuse", "config-misuse", "credential-leak", "cell-reference", "trigger-safety", "caller-breakage", "warehouse-schema", "date-handling", "query-formula", "rollover-safety", "slack-webhook", "doc-staleness", "deploy-failure", "other"],
+  "outcomes": [
+    {
+      "id": "seed-001",
+      "date": "2026-03-18",
+      "venue": "waratah",
+      "task": "Named range migration",
+      "files": ["WeeklyRolloverInPlaceWaratah.js"],
+      "findings": {
+        "p0": [{"description": "CLEARABLE_FIELDS used different key names than FIELD_CONFIG (cashDiscount vs cdDiscount, vips vs guestsOfNote) — silent mismatch meant some fields were not cleared", "file": "WeeklyRolloverInPlaceWaratah.js", "category": "schema-drift"}],
+        "p1": [],
+        "p2": [],
+        "p3": []
+      },
+      "deploy_decision": "BLOCKED",
+      "fix_cycles": 1,
+      "fix_succeeded": true,
+      "rule_added": "waratah-gas-agent P0: use getClearableFieldKeys_(), never maintain a parallel clearable list",
+      "gotcha_promoted": false,
+      "learnings": ["CLEARABLE_FIELDS keys must match FIELD_CONFIG keys exactly — any parallel list will drift"]
+    },
+    {
+      "id": "seed-002",
+      "date": "2026-03-06",
+      "venue": "waratah",
+      "task": "Formula cell B34 cleared during rollover",
+      "files": ["WeeklyRolloverInPlaceWaratah.js"],
+      "findings": {
+        "p0": [{"description": "CLEARABLE_FIELDS included netRevenue (formula cell) — rollover destroyed the formula", "file": "WeeklyRolloverInPlaceWaratah.js", "category": "formula-protection"}],
+        "p1": [],
+        "p2": [],
+        "p3": []
+      },
+      "deploy_decision": "BLOCKED",
+      "fix_cycles": 1,
+      "fix_succeeded": true,
+      "rule_added": "waratah-gas-agent + gas-code-review-agent: formula cells flagged isFormula:true in FIELD_CONFIG must never appear in clearable lists",
+      "gotcha_promoted": true,
+      "learnings": ["Formula cells must have isFormula:true in FIELD_CONFIG and be excluded from all clearing operations"]
+    },
+    {
+      "id": "seed-003",
+      "date": "2026-02-23",
+      "venue": "both",
+      "task": "TASK_CONFIG Slack config TypeError",
+      "files": ["EnhancedTaskManagement_Sakura.gs", "EnhancedTaskManagement.gs"],
+      "findings": {
+        "p0": [{"description": "TASK_CONFIG was extended with slack:{} keys — caused Cannot read properties of undefined (reading dmWebhooks)", "file": "EnhancedTaskManagement.gs", "category": "config-misuse"}],
+        "p1": [],
+        "p2": [],
+        "p3": []
+      },
+      "deploy_decision": "BLOCKED",
+      "fix_cycles": 1,
+      "fix_succeeded": true,
+      "rule_added": "task-management-agent P0: TASK_CONFIG must NOT contain Slack/email config",
+      "gotcha_promoted": false,
+      "learnings": ["TASK_CONFIG is for task workflow only — Slack/email config lives in Script Properties, read at runtime"]
+    },
+    {
+      "id": "seed-004",
+      "date": "2026-03-03",
+      "venue": "both",
+      "task": "sheet.clearContent() TypeError",
+      "files": ["TaskDashboard_Sakura.gs", "TaskDashboard.gs"],
+      "findings": {
+        "p0": [{"description": "Called clearContent() on a Sheet object — Sheet has clearContents() (plural), not clearContent()", "file": "TaskDashboard.gs", "category": "api-misuse"}],
+        "p1": [],
+        "p2": [],
+        "p3": []
+      },
+      "deploy_decision": "BLOCKED",
+      "fix_cycles": 1,
+      "fix_succeeded": true,
+      "rule_added": "Both venue agents + review agent: clearContent() only on Range; clearContents() only on Sheet",
+      "gotcha_promoted": true,
+      "learnings": ["Range.clearContent() is singular; Sheet.clearContents() is plural; sheet.clearContent() does NOT exist"]
+    }
+  ],
+  "stats": {
+    "total_reviews": 4,
+    "total_blocked": 4,
+    "total_clear": 0,
+    "common_categories": {
+      "schema-drift": 1,
+      "formula-protection": 1,
+      "config-misuse": 1,
+      "api-misuse": 1
+    },
+    "venue_breakdown": {
+      "sakura": 0,
+      "waratah": 2,
+      "both": 2
+    },
+    "fix_success_rate": 1.0,
+    "gotchas_promoted": 2
+  }
+}

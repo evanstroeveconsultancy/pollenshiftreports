@@ -101,6 +101,12 @@ function getRolloverConfig_() {
  * Called by time-based trigger or manually from menu.
  */
 function performInPlaceRollover() {
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(30000)) {
+    Logger.log('Could not acquire lock — another rollover may be running.');
+    return;
+  }
+
   const startTime = new Date();
   Logger.log('========== IN-PLACE ROLLOVER STARTED ==========');
 
@@ -195,6 +201,8 @@ function performInPlaceRollover() {
     }
 
     throw error;
+  } finally {
+    lock.releaseLock();
   }
 }
 

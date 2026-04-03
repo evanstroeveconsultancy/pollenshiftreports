@@ -99,46 +99,8 @@ function getVenueConfig_() {
       },
     },
 
-    'SAKURA': {
-      name: 'SAKURA HOUSE',
-      displayName: 'Sakura House',
-
-      // Operating schedule
-      days: ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'],
-      dayCount: 6,
-
-      // Sheet names
-      sheetNames: {
-        master: 'SAKURA ACTIONABLES SHEET',
-        audit: 'AUDIT LOG',
-        archive: 'ARCHIVE',
-      },
-
-      // Cell ranges (uses named ranges for Sakura)
-      ranges: {
-        // Sakura uses named ranges abstraction (via Run.gs helpers)
-        usesNamedRanges: true,
-
-        // Named range keys (actual ranges defined in spreadsheet)
-        todoTask: 'TODO_TASK_RANGE',
-        todoAssignee: 'TODO_ASSIGNEE_RANGE',
-        date: 'DATE_RANGE',
-        mod: 'MOD_RANGE',
-        netRevenue: 'NET_REVENUE',
-        shiftSummary: 'SHIFT_SUMMARY_RANGE',
-      },
-
-      // Timezone
-      timezone: 'Australia/Sydney',
-
-      // Feature flags
-      features: {
-        taskManagement: true,
-        nightlyExport: true,
-        analytics: true,
-        dataWarehouse: true,
-      },
-    },
+    // SAKURA config removed — this GAS project only serves WARATAH.
+    // See SAKURA HOUSE/SHIFT REPORT SCRIPTS/VenueConfigSakura.gs for Sakura config.
   };
 
   const config = configs[venueName];
