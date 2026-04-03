@@ -1,6 +1,6 @@
 // AUTO-GENERATED from shared/SlackBlockKit.template.gs — do not edit directly
 /****************************************************
- * SLACK BLOCK KIT BUILDER UTILITIES — SAKURA
+ * SLACK BLOCK KIT BUILDER UTILITIES — __VENUE_NAME__
  *
  * Inline implementation (no library dependency).
  * Generated from shared/SlackBlockKit.template.gs
@@ -134,7 +134,7 @@ function notifyError_(functionName, error) {
   Logger.log('❌ ' + functionName + ' failed: ' + error.message);
   try {
     var webhook = PropertiesService.getScriptProperties()
-      .getProperty('SAKURA_SLACK_WEBHOOK_TEST');
+      .getProperty('__ERROR_WEBHOOK_KEY__');
     if (webhook) {
       UrlFetchApp.fetch(webhook, {
         method: 'post',
@@ -161,7 +161,7 @@ function notifyError_(functionName, error) {
  */
 function logPipelineLearning_(context, issue, fix) {
   try {
-    var warehouseId = PropertiesService.getScriptProperties().getProperty('SAKURA_DATA_WAREHOUSE_ID');
+    var warehouseId = PropertiesService.getScriptProperties().getProperty('__WAREHOUSE_ID_KEY__');
     if (!warehouseId) return;
     var wss = SpreadsheetApp.openById(warehouseId);
     var sheet = wss.getSheetByName('LEARNINGS');
@@ -171,7 +171,7 @@ function logPipelineLearning_(context, issue, fix) {
       sheet.getRange(1, 1, 1, 5).setFontWeight('bold').setBackground('#f3f3f3');
       sheet.setFrozenRows(1);
     }
-    sheet.appendRow([new Date(), 'SAKURA', context, issue, fix || '']);
+    sheet.appendRow([new Date(), '__VENUE_NAME__', context, issue, fix || '']);
   } catch (e) {
     Logger.log('logPipelineLearning_ error: ' + e.message);
   }

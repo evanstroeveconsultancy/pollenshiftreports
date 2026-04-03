@@ -95,8 +95,8 @@ function testVenueSpecificConfig() {
       return false;
     }
 
-    if (config.ranges.usesNamedRanges !== false) {
-      Logger.log(`❌ FAILED: Waratah should use hardcoded cells`);
+    if (config.ranges.usesNamedRanges !== true) {
+      Logger.log(`❌ FAILED: Waratah should use named ranges (usesNamedRanges: true)`);
       return false;
     }
 

@@ -14,9 +14,35 @@
  * Credential: ANTHROPIC_API_KEY in Script Properties only.
  * Never hardcoded.
  *
- * @version 1.2.0
- * @updated 2026-03-18
+ * @version 1.3.0
+ * @updated 2026-04-03
  ****************************************************/
+
+
+// ============================================================================
+// MODULE-LEVEL STATISTICAL HELPERS
+// Private to this file. Used by M2 and M4.
+// ============================================================================
+
+/**
+ * Arithmetic mean of a numeric array.
+ * @param {number[]} arr
+ * @returns {number}
+ */
+function mean_(arr) {
+  return arr.reduce(function(s, v) { return s + v; }, 0) / arr.length;
+}
+
+/**
+ * Population standard deviation of a numeric array, given the mean.
+ * @param {number[]} arr
+ * @param {number}   m    - Pre-computed mean (avoids redundant pass)
+ * @returns {number}
+ */
+function stddev_(arr, m) {
+  var variance = arr.reduce(function(s, v) { return s + Math.pow(v - m, 2); }, 0) / arr.length;
+  return Math.sqrt(variance);
+}
 
 
 /**
@@ -212,15 +238,6 @@ function detectRevenueAnomalies_Waratah(shiftData, warehouseId) {
         ' historical rows for ' + todayDay + ' — need ≥4. Skipping.'
       );
       return { anomalyDetected: false, details: [] };
-    }
-
-    // --- Statistical helpers ---
-    function mean_(arr) {
-      return arr.reduce(function(s, v) { return s + v; }, 0) / arr.length;
-    }
-    function stddev_(arr, m) {
-      var variance = arr.reduce(function(s, v) { return s + Math.pow(v - m, 2); }, 0) / arr.length;
-      return Math.sqrt(variance);
     }
 
     // --- NetRevenue stats (col F = index 5) ---
@@ -504,18 +521,6 @@ function computeShiftAnalytics_Waratah(shiftData, warehouseId) {
         ' historical rows for ' + todayDay + ' — need ≥4. Skipping.'
       );
       return { hasSufficientData: false };
-    }
-
-    // -------------------------------------------------------------------------
-    // Statistical helper inner functions
-    // -------------------------------------------------------------------------
-    function mean_(arr) {
-      return arr.reduce(function(s, v) { return s + v; }, 0) / arr.length;
-    }
-
-    function stddev_(arr, m) {
-      var variance = arr.reduce(function(s, v) { return s + Math.pow(v - m, 2); }, 0) / arr.length;
-      return Math.sqrt(variance);
     }
 
     // Least-squares slope over ordered values (i is 0-indexed position)

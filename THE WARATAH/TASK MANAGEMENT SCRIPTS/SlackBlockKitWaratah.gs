@@ -1,10 +1,9 @@
+// AUTO-GENERATED from shared/SlackBlockKit.template.gs — do not edit directly
 /****************************************************
- * SLACK BLOCK KIT BUILDER UTILITIES
+ * SLACK BLOCK KIT BUILDER UTILITIES — WARATAH
  *
- * Provides helper functions for building Slack Block Kit
- * messages instead of plain text. Block Kit enables
- * rich formatting: headers, field grids, dividers,
- * buttons, and contextual metadata.
+ * Inline implementation (no library dependency).
+ * Generated from shared/SlackBlockKit.template.gs
  *
  * Usage:
  *   const blocks = [
@@ -16,7 +15,7 @@
  *   ];
  *   bk_post(webhookUrl, blocks, "Fallback text");
  *
- * @version 1.0.0
+ * @version 1.1.0
  ****************************************************/
 
 
@@ -120,6 +119,62 @@ function bk_list(items, style) {
       })
     }]
   };
+}
+
+
+/**
+ * Send an error notification to Evan via Slack (TEST webhook).
+ * Safe to call from any context (trigger, menu, editor).
+ * Use in catch blocks of trigger-eligible functions.
+ *
+ * @param {string} functionName — name of the function that failed
+ * @param {Error} error — the caught error object
+ */
+function notifyError_(functionName, error) {
+  Logger.log('❌ ' + functionName + ' failed: ' + error.message);
+  try {
+    var webhook = PropertiesService.getScriptProperties()
+      .getProperty('WARATAH_SLACK_WEBHOOK_TEST');
+    if (webhook) {
+      UrlFetchApp.fetch(webhook, {
+        method: 'post',
+        contentType: 'application/json',
+        payload: JSON.stringify({
+          text: '❌ ' + functionName + ' FAILED: ' + error.message
+        }),
+        muteHttpExceptions: true
+      });
+    }
+  } catch (e) {
+    Logger.log('Error notification also failed: ' + e.message);
+  }
+}
+
+
+/**
+ * Appends a learning entry to the LEARNINGS tab in the data warehouse.
+ * Non-blocking — failures are logged only.
+ *
+ * @param {string} context - Function or pipeline stage where the issue occurred
+ * @param {string} issue   - Description of what went wrong
+ * @param {string} fix     - What was done (or should be done) to resolve it
+ */
+function logPipelineLearning_(context, issue, fix) {
+  try {
+    var warehouseId = PropertiesService.getScriptProperties().getProperty('WARATAH_DATA_WAREHOUSE_ID');
+    if (!warehouseId) return;
+    var wss = SpreadsheetApp.openById(warehouseId);
+    var sheet = wss.getSheetByName('LEARNINGS');
+    if (!sheet) {
+      sheet = wss.insertSheet('LEARNINGS');
+      sheet.getRange(1, 1, 1, 5).setValues([['Timestamp', 'Venue', 'Context', 'Issue', 'Fix Applied']]);
+      sheet.getRange(1, 1, 1, 5).setFontWeight('bold').setBackground('#f3f3f3');
+      sheet.setFrozenRows(1);
+    }
+    sheet.appendRow([new Date(), 'WARATAH', context, issue, fix || '']);
+  } catch (e) {
+    Logger.log('logPipelineLearning_ error: ' + e.message);
+  }
 }
 
 
