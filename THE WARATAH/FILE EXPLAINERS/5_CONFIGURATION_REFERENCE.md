@@ -127,7 +127,7 @@
 The `WARATAH_EMAIL_RECIPIENTS` property currently contains:
 
 ```
-{"evan@pollenhospitality.com":"Evan","cynthia@pollenhospitality.com":"Cynthia","dipti@pollenhospitality.com":"Dipti","chef@pollenhospitality.com":"Chef","howie@pollenhospitality.com":"Howie","adam@pollenhospitality.com":"Adam","lily@pollenhospitality.com":"Lily"}
+{"evan@pollenhospitality.com":"Evan","cynthia@pollenhospitality.com":"Cynthia","nick@pollenhospitality.com":"Nick","chef@pollenhospitality.com":"Chef","howie@pollenhospitality.com":"Howie","adam@pollenhospitality.com":"Adam"}
 ```
 
 ### How to Read the Format
@@ -147,7 +147,7 @@ Breaking down the structure:
 
 **Example — adding a new staff member:**
 ```
-{"evan@pollenhospitality.com":"Evan","cynthia@pollenhospitality.com":"Cynthia","dipti@pollenhospitality.com":"Dipti","chef@pollenhospitality.com":"Chef","howie@pollenhospitality.com":"Howie","adam@pollenhospitality.com":"Adam","lily@pollenhospitality.com":"Lily","newperson@pollenhospitality.com":"New Person"}
+{"evan@pollenhospitality.com":"Evan","cynthia@pollenhospitality.com":"Cynthia","nick@pollenhospitality.com":"Nick","chef@pollenhospitality.com":"Chef","howie@pollenhospitality.com":"Howie","adam@pollenhospitality.com":"Adam","newperson@pollenhospitality.com":"New Person"}
 ```
 
 ### To Remove Someone
@@ -158,7 +158,7 @@ Breaking down the structure:
 
 **Example — removing Howie from the list:**
 ```
-{"evan@pollenhospitality.com":"Evan","cynthia@pollenhospitality.com":"Cynthia","dipti@pollenhospitality.com":"Dipti","chef@pollenhospitality.com":"Chef","adam@pollenhospitality.com":"Adam","lily@pollenhospitality.com":"Lily"}
+{"evan@pollenhospitality.com":"Evan","cynthia@pollenhospitality.com":"Cynthia","nick@pollenhospitality.com":"Nick","chef@pollenhospitality.com":"Chef","adam@pollenhospitality.com":"Adam"}
 ```
 
 ### Common Mistakes to Avoid
@@ -224,7 +224,7 @@ This is in the **Master Actionables Sheet** Script Properties.
 
 **Current format:**
 ```
-{"Evan":"https://hooks.slack.com/services/...","Cynthia":"...","Adam":"...","Lily":"...","Dipti":"..."}
+{"Evan":"https://hooks.slack.com/services/...","Cynthia":"...","Adam":"...","Jaiden":"...","Nick":"..."}
 ```
 
 Note: Howie is configured with an empty webhook (no DM notifications).
