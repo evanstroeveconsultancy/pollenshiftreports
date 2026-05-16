@@ -368,6 +368,15 @@ function postToSlackFromSheet_(spreadsheet, sheet, sheetName, webhookUrl) {
     return "$" + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
+  // --- Helper: truncate to Slack Block Kit section limit (3000 hard cap, 2900 with headroom) ---
+  const truncateForSlack_ = (text) => {
+    const limit = 2900;
+    const suffix = "\n…(truncated)";
+    const s = String(text == null ? "" : text);
+    if (s.length <= limit) return s;
+    return s.substring(0, limit - suffix.length) + suffix;
+  };
+
   // --- Date & Day ---
   const dateValue = getFieldValue(sheet, "date");
   let dateStr, dayStr;
@@ -499,32 +508,32 @@ function postToSlackFromSheet_(spreadsheet, sheet, sheetName, webhookUrl) {
 
   // --- Shift Summary (always shown) ---
   blocks.push(bk_divider());
-  blocks.push(bk_section("*Shift Summary*\n" + (shiftSummary || "_No summary recorded._")));
+  blocks.push(bk_section(truncateForSlack_("*Shift Summary*\n" + (shiftSummary || "_No summary recorded._"))));
 
   // --- Guests of Note (conditional) ---
   if (guestsOfNote) {
-    blocks.push(bk_section("*Guests of Note*\n" + guestsOfNote));
+    blocks.push(bk_section(truncateForSlack_("*Guests of Note*\n" + guestsOfNote)));
   }
 
   // --- The Good (conditional) ---
   if (goodNotes) {
-    blocks.push(bk_section("*The Good*\n" + goodNotes));
+    blocks.push(bk_section(truncateForSlack_("*The Good*\n" + goodNotes)));
   }
 
   // --- Issues (conditional) ---
   if (issues) {
-    blocks.push(bk_section("*Issues*\n" + issues));
+    blocks.push(bk_section(truncateForSlack_("*Issues*\n" + issues)));
   }
 
   // --- Kitchen Notes (conditional) ---
   if (kitchenNotes) {
-    blocks.push(bk_section("*Kitchen Notes*\n" + kitchenNotes));
+    blocks.push(bk_section(truncateForSlack_("*Kitchen Notes*\n" + kitchenNotes)));
   }
 
   // --- To-Do's ---
   blocks.push(bk_divider());
   if (todoLines.length > 0) {
-    blocks.push(bk_section("*To-Do's* (" + todoLines.length + ")\n" + todoLines.join("\n")));
+    blocks.push(bk_section(truncateForSlack_("*To-Do's* (" + todoLines.length + ")\n" + todoLines.join("\n"))));
   } else {
     blocks.push(bk_section("*To-Do's*\n_No tasks recorded._"));
   }
@@ -543,7 +552,7 @@ function postToSlackFromSheet_(spreadsheet, sheet, sheetName, webhookUrl) {
   if (aiSummary) {
     blocks.push(bk_divider());
     var aiLabel_ = aiIsUpgraded_ ? '*Sakura House Analytics Insights*' : '*AI Summary*';
-    blocks.push(bk_section(aiLabel_ + "\n" + aiSummary));
+    blocks.push(bk_section(truncateForSlack_(aiLabel_ + "\n" + aiSummary)));
   }
 
   // --- Action buttons ---
