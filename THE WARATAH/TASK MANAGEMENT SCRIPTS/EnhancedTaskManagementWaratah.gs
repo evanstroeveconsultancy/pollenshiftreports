@@ -275,6 +275,7 @@ const STAFF_LIST = [
   "Cynthia",
   "Adam",
   "Jaiden",
+  "Joffy",
   "Bar Team",
   "Nick",
   "Howie",

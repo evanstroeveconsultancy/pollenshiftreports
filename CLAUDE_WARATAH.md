@@ -656,7 +656,7 @@ NEW → TO DO → IN PROGRESS → DONE
 **Note:** Daily maintenance was decomposed into individual triggers (Mar 6, 2026). `runDailyTaskMaintenance()` no longer exists as a bundled function.
 
 **Staff with Slack DM:**
-- Evan, Cynthia, Adam, Jaiden, Nick
+- Evan, Cynthia, Adam, Jaiden, Joffy, Nick
 
 See [DEEP_DIVE_ARCHITECTURE.md](docs/waratah/DEEP_DIVE_ARCHITECTURE.md#enhanced-task-management-system) for full details.
 

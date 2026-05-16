@@ -206,6 +206,7 @@ NEW → TO DO → IN PROGRESS → DONE
 - Cynthia
 - Adam
 - Jaiden
+- Joffy
 - Nick
 
 (Howie does not have a Slack DM webhook configured — messages won't reach him via DM)
