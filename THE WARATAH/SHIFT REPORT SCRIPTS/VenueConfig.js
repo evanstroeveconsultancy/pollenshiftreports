@@ -42,48 +42,47 @@ function getVenueConfig_() {
         archive: 'ARCHIVE',
       },
 
-      // Cell ranges (hardcoded for Waratah)
+      // Cell ranges (hardcoded for Waratah — new sheet layout, cutover May 2026)
       ranges: {
         // Header fields
         date: 'B3:F3',
         mod: 'B4:F4',
-        staff: 'B5:F5',
+        fohStaff: 'B6',           // FOH staff list (split from old single 'staff' B5)
+        bohStaff: 'B7',           // BOH staff list
 
         // Financial metrics
-        netRevenue: 'B34',
-        cardTips: 'B32',
-        cashTips: 'B33',
-        totalTips: 'B36',
-        productionAmount: 'B8',
-        cashTakings: 'C19',       // New sheet: C19 = cash take formula (old sheet was B15)
-        cashCounted: 'C18',       // C18 = cash physically counted (formula — do not clear)
-        expectedCash: 'C24',      // C24 = POS-expected cash (manager input — clearable)
-        cashVariance: 'C26',      // C26 = variance = counted minus expected (formula — do not clear)
-        grossSalesIncCash: 'B16',
-        cashReturns: 'B17',
-        cdDiscount: 'B19',
-        refunds: 'B21',
-        cdRedeem: 'B23',
-        totalDiscount: 'B25',
-        discountsCompsExcCD: 'B26',
-        grossTaxableSales: 'B27',
-        taxes: 'B28',
-        netSalesWTips: 'B29',
+        netRevenue: 'B54',        // was B34
+        cardTips: 'C30',          // was B32
+        cashTips: 'C29',          // was B33
+        surchargeTips: 'C31',     // new field
+        totalTips: 'C32',         // was B36
+        productionAmount: 'B37',  // was B8
+        deposit: 'B38',           // was B9:B10
+        cashTake: 'C19',          // was cashTakings (formula — do not clear)
+        cashCounted: 'C18',       // cash physically counted (manager input)
+        totalCashRecorded: 'C24', // was expectedCash (formula — do not clear)
+        cashVariance: 'C26',      // variance = counted minus expected (formula — do not clear)
+        grossSales: 'B48',        // was grossSalesIncCash B16
+        cashReturns: 'C22',       // was B17 — now in POS cash recorded section
+        cdDiscount: 'C23',        // was B19 — now in POS cash recorded section
+        totalAdjustmentsDiscounts: 'B50',  // was totalDiscount B25
+        discountsExcCashDiscount: 'B51',   // was discountsCompsExcCD B26
+        grossSalesLessDiscounts: 'B52',    // was grossTaxableSales B27
+        taxes: 'B53',             // was B28
 
-        // Narrative fields (odd rows = data, even rows = labels)
-        shiftSummary: 'A43:F43',
-        guestsOfNote: 'A45:F45',
-        theGood: 'A47:F47',
-        theBad: 'A49:F49',
-        kitchenNotes: 'A51:F51',
+        // Narrative fields
+        generalShiftComments: 'A59',  // was shiftSummary A43:F43
+        guestsOfNote: 'A61',          // was A45:F45
+        theGood: 'A63',               // was A47:F47
+        theBad: 'A65',                // was A49:F49
+        kitchenNotes: 'A67',          // was A51:F51
+        maintenanceIssues: 'A88',     // new field
+        wastageComps: 'A86',          // was A63:F63
+        rsaIncidents: 'A90',          // was A65:F65
 
-        // Task management
-        todoTask: 'A53:E61',
-        todoAssignee: 'F53:F61',
-
-        // Incidents and wastage
-        wastageComps: 'A63:F63',
-        rsaIncidents: 'A65:F65',
+        // Task management (16 rows, assignee in col D)
+        todoTask: 'A69:A84',      // was A53:E61 (9 rows)
+        todoAssignee: 'D69:D84',  // was F53:F61 (col F → col D)
 
         // Uses named ranges (WEDNESDAY_SR_NetRevenue etc.) via RunWaratah.js
         // Fallback to hardcoded cells when named ranges don't exist in spreadsheet

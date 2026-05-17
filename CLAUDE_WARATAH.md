@@ -4,7 +4,7 @@
 **Status:** 🟢 PRODUCTION READY (manual operations until triggers created)
 **Operating Days:** 5 days (Wed-Sun)
 **Fields:** 36 total (27 clearable, 9 formula-only)
-**Cell References:** Named range system (`WEDNESDAY_SR_NetRevenue`) via `RunWaratah.js`. All 180 ranges active on new sheet. See [CELL_REFERENCE_MAP.md](docs/waratah/CELL_REFERENCE_MAP.md)
+**Cell References:** Named range system (`WEDNESDAY_SR_NetRevenue`) via `RunWaratah.js`. All 197 named ranges active on new sheet. See [CELL_REFERENCE_MAP.md](docs/waratah/CELL_REFERENCE_MAP.md)
 **Rollover:** In-place system ✅ Code ready; automated trigger pending May 18 setup
 
 ---
@@ -14,7 +14,7 @@
 > Cutover happened today: new Sakura-aligned sheet (`1rcfHTtey_HXC291FAmjpquYkRjWNGbFtClz2szKXfkA`) is now **LIVE** with all shift reporting code active. OLD sheet is dormant (triggers deleted). Triggers must be manually created on the new project before Mon May 18 operations.
 
 **Design doc:** `docs/plans/2026-05-17-waratah-shift-report-sakura-alignment-design.md`
-**Status:** ✅ Code deployed. ✅ Named ranges created (180 total for 36 fields). ✅ New sheet live. ⏳ Triggers pending manual creation.
+**Status:** ✅ Code deployed. ✅ Named ranges created (197 total for 36 fields, including multi-row ranges). ✅ New sheet live. ⏳ Triggers pending manual creation.
 
 ### What Changed
 
@@ -34,11 +34,11 @@
 - `VenueConfig.js` — `cashTakings: 'B15'` → `'C19'`; added `cashCounted`, `expectedCash`, `cashVariance`
 
 ### Phase 2 Manual Steps (COMPLETED May 17, 2026)
-✅ 1. Ran `setupWaratahNamedRanges_()` — created 180 named ranges on new sheet (36 fields × 5 days)
+✅ 1. Ran `setupWaratahNamedRanges_()` — created 197 named ranges on new sheet (36 fields × 5 days, including multi-row ranges for till entries, card expenses, and TODO tasks)
 ✅ 2. Flipped `WARATAH_SHEET_ID` Script Property to `1rcfHTtey_HXC291FAmjpquYkRjWNGbFtClz2szKXfkA`
 ✅ 3. Extended NIGHTLY_FINANCIAL header row from 22 → 22 columns (22 warehoused fields per Phase 1.2 update)
 ✅ 4. Deployed all Phase 1 code via `clasp push` to NEW project
-✅ 5. Verified with `verifyWaratahNamedRanges_()` — OK=180, MISSING=0, WRONG=0
+✅ 5. Verified with `verifyWaratahNamedRanges_()` — OK=197, MISSING=0, WRONG=0
 
 ### Phase 3 — Trigger Setup (PENDING Mon May 18)
 ⏳ Create time-based triggers on the NEW project:
@@ -59,7 +59,7 @@
 - **Script ID:** `1YATiIFCp6zOM4xGscZOodacGhfxyPr3nvepnJ0SrJ7e5P73HrBFbqnqH`
 - **URL:** https://script.google.com/u/0/home/projects/1YATiIFCp6zOM4xGscZOodacGhfxyPr3nvepnJ0SrJ7e5P73HrBFbqnqH
 - **Bound Sheet:** `1rcfHTtey_HXC291FAmjpquYkRjWNGbFtClz2szKXfkA` (NEW Sakura-aligned Waratah sheet)
-- **Status:** ✅ All code deployed, all named ranges created (180 for 36 fields), warehouse live
+- **Status:** ✅ All code deployed, all named ranges created (197 for 36 fields), warehouse live
 - **Triggers:** ⏳ Pending creation (see Phase 3 above)
 - **`.clasp.json`:** Points to NEW project; local backup of old config saved as `.clasp.json.bak-old-project`
 

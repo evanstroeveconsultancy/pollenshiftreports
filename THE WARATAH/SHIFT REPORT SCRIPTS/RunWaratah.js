@@ -34,6 +34,10 @@ const VALID_DAY_PREFIXES = ["WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUND
  * isFormula: false → input cell; safe to clearContent() during rollover
  *
  * Only fields the SCRIPT needs to READ or CLEAR are defined here.
+ *
+ * Layout version: new sheet (live May 2026) — 36 fields.
+ * Named range convention: {DAY}_SR_{PascalCaseSuffix}
+ *   e.g. WEDNESDAY_SR_FohStaff, WEDNESDAY_SR_CashCounted
  */
 const FIELD_CONFIG = {
 
@@ -50,58 +54,75 @@ const FIELD_CONFIG = {
     isFormula: false,
     description: "Manager on Duty (merged B4:F4)"
   },
-  staff: {
-    suffix: "SR_Staff",
-    fallback: "B5:F5",
+  fohStaff: {
+    suffix: "SR_FohStaff",
+    fallback: "B6",
     isFormula: false,
-    description: "Staff on shift (merged B5:F5)"
+    description: "FOH staff on shift (B6)"
+  },
+  bohStaff: {
+    suffix: "SR_BohStaff",
+    fallback: "B7",
+    isFormula: false,
+    description: "BOH staff on shift (B7)"
   },
 
-  // --- REVENUE & PRODUCTION ---
-  productionAmount: {
-    suffix: "SR_ProductionAmount",
-    fallback: "B8",
+  // --- TILL COUNTS (new 2-till system) ---
+  publicTillCount: {
+    suffix: "SR_PublicTillCount",
+    fallback: "C10:C17",
     isFormula: false,
-    description: "Production amount from Lightspeed (input)"
+    description: "Public till count entries (C10:C17)"
   },
-  deposit: {
-    suffix: "SR_Deposit",
-    fallback: "B9:B10",
+  publicTillRefloat: {
+    suffix: "SR_PublicTillRefloat",
+    fallback: "D10:D17",
     isFormula: false,
-    description: "Deposit"
+    description: "Public till refloat entries (D10:D17)"
   },
-  airbnbCovers: {
-    suffix: "SR_AirbnbCovers",
-    fallback: "B11",
+  terraceTillCount: {
+    suffix: "SR_TerraceTillCount",
+    fallback: "E10:E17",
     isFormula: false,
-    description: "Airbnb covers"
+    description: "Terrace till count entries (E10:E17)"
   },
-  cancellations: {
-    suffix: "SR_Cancellations",
-    fallback: "B13:B14",
+  terraceTillRefloat: {
+    suffix: "SR_TerraceTillRefloat",
+    fallback: "F10:F17",
     isFormula: false,
-    description: "Cancellations"
+    description: "Terrace till refloat entries (F10:F17)"
   },
 
-  // --- CASH FLOW (formula cells — read only, do NOT clear) ---
-  cashTakings: {
-    suffix: "SR_CashTakings",
-    fallback: "C19",  // New sheet: C19 = cash take (counted minus refloats). Old sheet was B15.
-    isFormula: true,
-    description: "Cash take = counted minus refloats (formula C19 — do not clear)"
-  },
-  // --- CASH RECONCILIATION (new 2-till system — new sheet only) ---
+  // --- CASH RECONCILIATION (formula cells — do NOT clear) ---
   cashCounted: {
     suffix: "SR_CashCounted",
     fallback: "C18",
     isFormula: true,
     description: "Cash counted — sum of public + terrace tills (formula C18 — do not clear)"
   },
-  expectedCash: {
-    suffix: "SR_ExpectedCash",
-    fallback: "C24",
+  cashTake: {
+    suffix: "SR_CashTake",
+    fallback: "C19",
+    isFormula: true,
+    description: "Cash take = counted minus refloats (formula C19 — do not clear)"
+  },
+  cashReturns: {
+    suffix: "SR_CashReturns",
+    fallback: "C22",
     isFormula: false,
-    description: "Expected cash from POS system (manager input — safe to clear)"
+    description: "Cash returns (C22)"
+  },
+  cdDiscount: {
+    suffix: "SR_CDDiscount",
+    fallback: "C23",
+    isFormula: false,
+    description: "CD discount (C23)"
+  },
+  totalCashRecorded: {
+    suffix: "SR_TotalCashRecorded",
+    fallback: "C24",
+    isFormula: true,
+    description: "Total cash recorded — formula C24 (do not clear)"
   },
   cashVariance: {
     suffix: "SR_CashVariance",
@@ -109,165 +130,167 @@ const FIELD_CONFIG = {
     isFormula: true,
     description: "Cash variance = counted minus expected (formula C26 — do not clear)"
   },
-  grossSalesIncCash: {
-    suffix: "SR_GrossSalesIncCash",
-    fallback: "B16",
-    isFormula: true,
-    description: "Gross sales inc cash (formula — do not clear)"
-  },
 
-  // --- DEDUCTIONS (merged pairs — value lives in first cell) ---
-  cashReturns: {
-    suffix: "SR_CashReturns",
-    fallback: "B17:B18",
+  // --- TIPS ---
+  cashTips: {
+    suffix: "SR_CashTips",
+    fallback: "C29",
     isFormula: false,
-    description: "Cash returns (merged B17:B18 — value in B17)"
-  },
-  cdDiscount: {
-    suffix: "SR_CDDiscount",
-    fallback: "B19:B20",
-    isFormula: false,
-    description: "CD discount (merged B19:B20 — value in B19)"
-  },
-  refunds: {
-    suffix: "SR_Refunds",
-    fallback: "B21:B22",
-    isFormula: false,
-    description: "Refunds (merged B21:B22 — value in B21)"
-  },
-  cdRedeem: {
-    suffix: "SR_CDRedeem",
-    fallback: "B23:B24",
-    isFormula: false,
-    description: "CD redeem (merged B23:B24 — value in B23)"
-  },
-  totalDiscount: {
-    suffix: "SR_TotalDiscount",
-    fallback: "B25",
-    isFormula: false,
-    description: "Total discount (input)"
-  },
-
-  // --- CALCULATED DEDUCTIONS (formula cells — read only, do NOT clear) ---
-  discountsCompsExcCD: {
-    suffix: "SR_DiscountsCompsExcCD",
-    fallback: "B26",
-    isFormula: true,
-    description: "Discounts comps exc CD (formula — do not clear)"
-  },
-  grossTaxableSales: {
-    suffix: "SR_GrossTaxableSales",
-    fallback: "B27",
-    isFormula: true,
-    description: "Gross taxable sales (formula — do not clear)"
-  },
-  taxes: {
-    suffix: "SR_Taxes",
-    fallback: "B28",
-    isFormula: true,
-    description: "Taxes (formula — do not clear)"
-  },
-  netSalesWTips: {
-    suffix: "SR_NetSalesWTips",
-    fallback: "B29",
-    isFormula: true,
-    description: "Net sales with tips (formula — do not clear)"
-  },
-
-  // --- TIPS & CASH ---
-  pettyCash: {
-    suffix: "SR_PettyCash",
-    fallback: "B30",
-    isFormula: false,
-    description: "Petty cash (input)"
+    description: "Cash tips (C29)"
   },
   cardTips: {
     suffix: "SR_CardTips",
-    fallback: "B32",
+    fallback: "C30",
     isFormula: false,
-    description: "Card tips (input)"
+    description: "Card tips (C30)"
   },
-  cashTips: {
-    suffix: "SR_CashTips",
-    fallback: "B33",
+  surchargeTips: {
+    suffix: "SR_SurchargeTips",
+    fallback: "C31",
     isFormula: false,
-    description: "Cash tips (input)"
+    description: "Surcharge tips (C31)"
   },
-
-  // --- NET REVENUE (formula — do NOT clear) ---
-  netRevenue: {
-    suffix: "SR_NetRevenue",
-    fallback: "B34",
-    isFormula: true,
-    description: "Net revenue (formula — do not clear)"
-  },
-
-  // --- TOTAL TIPS (formula — do NOT clear) ---
   totalTips: {
     suffix: "SR_TotalTips",
-    fallback: "B36",
+    fallback: "C32",
     isFormula: true,
-    description: "Total tips (formula — do not clear)"
+    description: "Total tips (formula C32 — do not clear)"
   },
 
-  // --- NARRATIVE (merged A:F — value lives in col A) ---
-  shiftSummary: {
-    suffix: "SR_ShiftSummary",
-    fallback: "A43:F43",
+  // --- REVENUE & PRODUCTION ---
+  productionAmount: {
+    suffix: "SR_ProductionAmount",
+    fallback: "B37",
     isFormula: false,
-    description: "Shift summary (merged A43:F43 — value lives in column A)"
+    description: "Production amount from Lightspeed (B37)"
+  },
+  deposit: {
+    suffix: "SR_Deposit",
+    fallback: "B38",
+    isFormula: false,
+    description: "Function/Event Deposit (B38)"
+  },
+  cardExpenses: {
+    suffix: "SR_CardExpenses",
+    fallback: "B40:B45",
+    isFormula: false,
+    description: "Card expenses (B40:B45)"
+  },
+
+  // --- FINANCIAL CALCULATIONS (formula cells — do NOT clear) ---
+  cashTakeDisplay: {
+    suffix: "SR_CashTakeDisplay",
+    fallback: "B47",
+    isFormula: true,
+    description: "Cash take display — mirror of C19 (formula B47 — do not clear)"
+  },
+  grossSales: {
+    suffix: "SR_GrossSales",
+    fallback: "B48",
+    isFormula: true,
+    description: "Gross sales (formula B48 — do not clear)"
+  },
+  totalAdjustmentsDiscounts: {
+    suffix: "SR_TotalAdjustmentsDiscounts",
+    fallback: "B50",
+    isFormula: false,
+    description: "Total adjustments / discounts (B50)"
+  },
+  discountsExcCashDiscount: {
+    suffix: "SR_DiscountsExcCashDiscount",
+    fallback: "B51",
+    isFormula: true,
+    description: "Discounts exc cash discount (formula B51 — do not clear)"
+  },
+  grossSalesLessDiscounts: {
+    suffix: "SR_GrossSalesLessDiscounts",
+    fallback: "B52",
+    isFormula: true,
+    description: "Gross sales less discounts (formula B52 — do not clear)"
+  },
+  taxes: {
+    suffix: "SR_Taxes",
+    fallback: "B53",
+    isFormula: true,
+    description: "Taxes (formula B53 — do not clear)"
+  },
+  netRevenue: {
+    suffix: "SR_NetRevenue",
+    fallback: "B54",
+    isFormula: true,
+    description: "Net revenue (formula B54 — do not clear)"
+  },
+  runningTotals: {
+    suffix: "SR_RunningTotals",
+    fallback: "D37:D54",
+    isFormula: true,
+    description: "Running totals column (formula D37:D54 — do not clear)"
+  },
+
+  // --- NARRATIVE (value lives in col A of each merged row) ---
+  generalShiftComments: {
+    suffix: "SR_GeneralShiftComments",
+    fallback: "A59",
+    isFormula: false,
+    description: "General shift comments (A59)"
   },
   guestsOfNote: {
     suffix: "SR_GuestsOfNote",
-    fallback: "A45:F45",
+    fallback: "A61",
     isFormula: false,
-    description: "Guests of note / VIPs (merged A45:F45)"
+    description: "Guests of note / VIPs (A61)"
   },
   theGood: {
     suffix: "SR_TheGood",
-    fallback: "A47:F47",
+    fallback: "A63",
     isFormula: false,
-    description: "The good (merged A47:F47)"
+    description: "The good (A63)"
   },
   theBad: {
     suffix: "SR_TheBad",
-    fallback: "A49:F49",
+    fallback: "A65",
     isFormula: false,
-    description: "The bad (merged A49:F49)"
+    description: "The bad (A65)"
   },
   kitchenNotes: {
     suffix: "SR_KitchenNotes",
-    fallback: "A51:F51",
+    fallback: "A67",
     isFormula: false,
-    description: "Kitchen notes (merged A51:F51)"
+    description: "Kitchen notes (A67)"
   },
 
-  // --- TASKS (9 rows: 53-61) ---
+  // --- TASKS (16 rows: 69-84) ---
   todoTasks: {
     suffix: "SR_TodoTasks",
-    fallback: "A53:E61",
+    fallback: "A69:A84",
     isFormula: false,
-    description: "To-do task descriptions (merged A:E per row — value in col A)"
+    description: "To-do task descriptions (A69:A84 — 16 rows)"
   },
   todoAssignees: {
     suffix: "SR_TodoAssignees",
-    fallback: "F53:F61",
+    fallback: "D69:D84",
     isFormula: false,
-    description: "To-do assignees (col F)"
+    description: "To-do assignees (D69:D84 — 16 rows, col D)"
   },
 
   // --- INCIDENTS & WASTAGE ---
   wastageComps: {
     suffix: "SR_WastageComps",
-    fallback: "A63:F63",
+    fallback: "A86",
     isFormula: false,
-    description: "Wastage / comps (merged A63:F63)"
+    description: "Wastage / comps (A86)"
+  },
+  maintenanceIssues: {
+    suffix: "SR_MaintenanceIssues",
+    fallback: "A88",
+    isFormula: false,
+    description: "Maintenance issues (A88)"
   },
   rsaIncidents: {
     suffix: "SR_RSAIncidents",
-    fallback: "A65:F65",
+    fallback: "A90",
     isFormula: false,
-    description: "RSA incidents (merged A65:F65)"
+    description: "RSA incidents (A90)"
   }
 };
 

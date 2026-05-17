@@ -71,7 +71,9 @@ function getEmailRecipients_() {
    ========================================================================== */
 
 // Safe module-level constant — hardcoded string, no Script Properties dependency
-const TODO_SLACK_RANGE = 'A53:F61';  // Hardcoded — covers A53:E61 task cols + F61 assignee col
+// New sheet layout: task descriptions in col A, assignees in col D, 16 rows (rows 69-84).
+// Read A69:D84 (cols A–D, 16 rows); description=col A (index 0), assignee=col D (index 3).
+const TODO_SLACK_RANGE = 'A69:D84';
 
 /**
  * Lazy-load getter for all venue configuration values that depend on Script Properties.
@@ -116,7 +118,7 @@ function _getExportConfig_() {
   const DATE_RANGE          = VENUE_CONFIG.ranges.date;
   const MOD_RANGE           = VENUE_CONFIG.ranges.mod;
   const NET_REVENUE_CELL    = VENUE_CONFIG.ranges.netRevenue;
-  const SHIFT_SUMMARY_RANGE = VENUE_CONFIG.ranges.shiftSummary;
+  const SHIFT_SUMMARY_RANGE = VENUE_CONFIG.ranges.generalShiftComments;  // was .shiftSummary (renamed in new sheet layout)
 
   return {
     VENUE_CONFIG,
@@ -239,21 +241,25 @@ function continueExport(sheetName, isTest) {
         const readCell_ = (range) => { try { return sheet.getRange(range).getDisplayValue().trim(); } catch (e_) { return ''; } };
         const cfg_ = getVenueConfig_();
         const dateVal_ = sheet.getRange(cfg_.ranges.date).getValue();
+        const fohStaff_ = readCell_(cfg_.ranges.fohStaff || 'B6');
+        const bohStaff_ = readCell_(cfg_.ranges.bohStaff || 'B7');
         const aiShiftData_ = {
           date: dateVal_ instanceof Date ? Utilities.formatDate(dateVal_, tz_, 'dd/MM/yyyy') : readCell_(cfg_.ranges.date),
           day:  dateVal_ instanceof Date ? Utilities.formatDate(dateVal_, tz_, 'EEEE') : '',
-          mod:          readCell_(cfg_.ranges.mod),
-          netRevenue:   readCell_(cfg_.ranges.netRevenue),
-          cardTips:     readCell_(cfg_.ranges.cardTips),
-          cashTips:     readCell_(cfg_.ranges.cashTips),
-          totalTips:    readCell_(cfg_.ranges.totalTips),
-          staff:        readCell_(cfg_.ranges.staff),
-          shiftSummary: readCell_('A43'),
-          guestsOfNote: readCell_('A45'),
-          theGood:      readCell_('A47'),
-          theBad:       readCell_('A49'),
-          kitchenNotes: readCell_('A51'),
-          todoCount:    0
+          mod:              readCell_(cfg_.ranges.mod),
+          netRevenue:       readCell_(cfg_.ranges.netRevenue),
+          cardTips:         readCell_(cfg_.ranges.cardTips),
+          cashTips:         readCell_(cfg_.ranges.cashTips),
+          totalTips:        readCell_(cfg_.ranges.totalTips),
+          // Combined staff string for AI prompt (M1/M5)
+          staff:            (fohStaff_ || bohStaff_) ? ('FOH: ' + (fohStaff_ || '') + ' | BOH: ' + (bohStaff_ || '')) : '',
+          // Narrative fields — new sheet cell addresses
+          shiftSummary:     readCell_('A59'),   // generalShiftComments (was A43)
+          guestsOfNote:     readCell_('A61'),   // (was A45)
+          theGood:          readCell_('A63'),   // (was A47)
+          theBad:           readCell_('A65'),   // (was A49)
+          kitchenNotes:     readCell_('A67'),   // (was A51)
+          todoCount:        0
         };
 
         // Phase 1: Pre-calculate analytics from warehouse
@@ -442,8 +448,8 @@ function exportAndEmailPDF_TestToSelf() {
 function pushTodosToMasterActionables(sheet, sheetName, preloadedConfig) {
   const { TODO_TASK_RANGE, TODO_ASSIGNEE_RANGE } = preloadedConfig || _getExportConfig_();
   // Read TO-DOs from the shift report
-  const todoValues   = sheet.getRange(TODO_TASK_RANGE).getValues();     // 9 x 5 (A53:E61)
-  const assignValues = sheet.getRange(TODO_ASSIGNEE_RANGE).getValues(); // 9 x 1 (F53:F61)
+  const todoValues   = sheet.getRange(TODO_TASK_RANGE).getValues();     // 16 x 1 (A69:A84)
+  const assignValues = sheet.getRange(TODO_ASSIGNEE_RANGE).getValues(); // 16 x 1 (D69:D84)
 
   const todos = [];
 
@@ -632,8 +638,8 @@ function _notifyExportWarnings_(sheetName, warnings) {
  *
  * @param {Spreadsheet} ss - The active spreadsheet
  * @param {string[]} days - Ordered day prefixes, e.g. ['WEDNESDAY', ...]
- * @param {string} todoTaskRange - A1 range for task text column (e.g. 'A53:E61')
- * @param {string} todoAssigneeRange - A1 range for assignee column (e.g. 'F53:F61')
+ * @param {string} todoTaskRange - A1 range for task text column (e.g. 'A69:A84')
+ * @param {string} todoAssigneeRange - A1 range for assignee column (e.g. 'D69:D84')
  */
 function buildTodoAggregationSheet_(ss, days, todoTaskRange, todoAssigneeRange) {
   const todoSheetName = "TO-DOs";
@@ -652,8 +658,8 @@ function buildTodoAggregationSheet_(ss, days, todoTaskRange, todoAssigneeRange) 
     const matchedDay = days.find(day => sName.startsWith(day));
     if (!matchedDay) return;
 
-    const todoValues   = s.getRange(todoTaskRange).getValues();    // e.g. A53:E61 — value in col A (merged)
-    const assignValues = s.getRange(todoAssigneeRange).getValues(); // e.g. F53:F61
+    const todoValues   = s.getRange(todoTaskRange).getValues();     // e.g. A69:A84 — value in col A
+    const assignValues = s.getRange(todoAssigneeRange).getValues(); // e.g. D69:D84
 
     for (let i = 0; i < todoValues.length; i++) {
       const todo    = todoValues[i][0];  // col A of the merged task range
@@ -683,9 +689,9 @@ function buildTodoAggregationSheet_(ss, days, todoTaskRange, todoAssigneeRange) 
  * Password-gated via pw_backfillAllDaysTodos() in Menu.js.
  * Menu: Admin Tools → Setup & Utilities → Backfill TO-DOs (All Days)
  *
- * TO-DO ranges used (from VenueConfig.js, row 53 authoritative):
- *   Tasks:    A53:E61  (9 rows; merged A-E, value read from col A)
- *   Assignee: F53:F61  (9 rows)
+ * TO-DO ranges used (from VenueConfig.js — new sheet layout):
+ *   Tasks:    A69:A84  (16 rows; value in col A)
+ *   Assignee: D69:D84  (16 rows; col D)
  */
 function backfillAllDaysTodos() {
   const ui = SpreadsheetApp.getUi();
@@ -794,28 +800,33 @@ function postToSlackFromSheet(spreadsheet, sheet, sheetName, webhookUrl) {
 
   // --- Core fields ---
   const modText    = readCell(ranges.mod) || "N/A";
-  const staffText  = readCell(ranges.staff);
+  // Staff — split into FOH/BOH on new sheet layout
+  const fohStaffText = readCell(ranges.fohStaff || 'B6');
+  const bohStaffText = readCell(ranges.bohStaff || 'B7');
+  const staffText = (fohStaffText || bohStaffText)
+    ? ('FOH: ' + (fohStaffText || '') + ' | BOH: ' + (bohStaffText || ''))
+    : '';
   const netRevenue = readCell(ranges.netRevenue);
   const cardTips   = readCell(ranges.cardTips);
   const cashTips   = readCell(ranges.cashTips);
   const totalTips  = readCell(ranges.totalTips);
 
-  // --- Narrative fields (only include sections with content) ---
-  const shiftSummary = readCell("A43") || "";
-  const guestsOfNote = readCell("A45") || "";
-  const theGood      = readCell("A47") || "";
-  const theBad       = readCell("A49") || "";
-  const kitchenNotes = readCell("A51") || "";
-  const wastageComps = readCell("A63") || "";
-  const rsaIncidents = readCell("A65") || "";
+  // --- Narrative fields (new sheet cell addresses) ---
+  const shiftSummary = readCell("A59") || "";   // generalShiftComments (was A43)
+  const guestsOfNote = readCell("A61") || "";   // (was A45)
+  const theGood      = readCell("A63") || "";   // (was A47)
+  const theBad       = readCell("A65") || "";   // (was A49)
+  const kitchenNotes = readCell("A67") || "";   // (was A51)
+  const wastageComps = readCell("A86") || "";   // (was A63)
+  const rsaIncidents = readCell("A90") || "";   // (was A65)
 
-  // --- To-Do's: A53:F61 (task text in A, assignee in F) ---
+  // --- To-Do's: A69:D84 (task text in col A index 0, assignee in col D index 3) ---
   const todoRange = sheet.getRange(TODO_SLACK_RANGE).getValues();
   const todoLines = [];
 
   todoRange.forEach(row => {
     const taskText = (row[0] || "").toString().trim();
-    const assignee = (row[5] || "").toString().trim();
+    const assignee = (row[3] || "").toString().trim(); // col D (index 3) \u2014 was col F (index 5)
     if (taskText) {
       todoLines.push(assignee ? `\u2022 *${assignee}:* ${taskText}` : `\u2022 _Unassigned:_ ${taskText}`);
     }
@@ -833,8 +844,8 @@ function postToSlackFromSheet(spreadsheet, sheet, sheetName, webhookUrl) {
       cardTips: cardTips,
       cashTips: cashTips,
       totalTips: totalTips,
-      staff: staffText,
-      shiftSummary: shiftSummary,
+      staff: staffText,           // combined "FOH: … | BOH: …" string — M1/M5 prompt uses 'staff'
+      shiftSummary: shiftSummary, // generalShiftComments at A59 — M1 prompt key stays 'shiftSummary'
       guestsOfNote: guestsOfNote,
       theGood: theGood,
       theBad: theBad,

@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<title>Markdown → PDF Viewer</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.10.0/dist/mermaid.min.js" integrity="sha384-PY+AFiXLIHkR5jE4nk0JwPQQmmQlT4mJXFlgeT4jJeuARaBQBK+nSwwxzrPRAtUM" crossorigin="anonymous"></script>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  html, body { background: #ffffff; margin: 0; padding: 0; }
+  body {
+    font-family: "Avenir Next", "Avenir", "Helvetica Neue", Arial, sans-serif;
+    color: #1f2421;
+    line-height: 1.55;
+    font-size: 15px;
+  }
+  .toolbar {
+    position: sticky; top: 0; z-index: 50;
+    background: #0f2e23; color: #f2f7f3;
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 18px;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.08);
+  }
+  .toolbar .brand {
+    font-weight: 600; letter-spacing: 0.04em;
+    font-size: 13px; text-transform: uppercase; color: #cfe1d5;
+  }
+  .toolbar .doc-title {
+    font-size: 14px; opacity: 0.85;
+  }
+  .toolbar .spacer { flex: 1; }
+  .toolbar button {
+    background: #3f6b4a; color: #fff; border: 0;
+    padding: 8px 14px; border-radius: 4px;
+    font-family: inherit; font-size: 13px; cursor: pointer;
+    transition: background 120ms ease;
+  }
+  .toolbar button:hover { background: #538360; }
+  .toolbar button.secondary {
+    background: transparent; border: 1px solid #6b8773; color: #cfe1d5;
+  }
+  .toolbar button.secondary:hover { background: rgba(255,255,255,0.06); }
+  main {
+    max-width: 940px;
+    margin: 0 auto;
+    padding: 28px 32px 80px;
+  }
+  .cover {
+    border-bottom: 2px solid #3f6b4a;
+    padding-bottom: 18px;
+    margin-bottom: 26px;
+  }
+  .cover .eyebrow {
+    text-transform: uppercase; letter-spacing: 0.18em;
+    font-size: 11px; color: #6b8773; margin-bottom: 6px;
+  }
+  .cover .title {
+    font-size: 32px; font-weight: 600; color: #0f2e23;
+    line-height: 1.1; margin: 0;
+  }
+  .cover .meta {
+    font-size: 13px; color: #4a5d4f; margin-top: 8px;
+  }
+  h1, h2, h3, h4 {
+    color: #0f2e23; line-height: 1.25;
+    page-break-after: avoid;
+  }
+  h1 { font-size: 28px; border-bottom: 2px solid #3f6b4a; padding-bottom: 6px; margin: 28px 0 14px; }
+  h2 { font-size: 21px; border-bottom: 1px solid #cfd9d2; padding-bottom: 4px; margin: 24px 0 10px; }
+  h3 { font-size: 16px; color: #2a4d3a; margin: 18px 0 6px; }
+  h4 { font-size: 14px; color: #2a4d3a; margin: 14px 0 4px; }
+  p { margin: 6px 0 10px; }
+  ul, ol { margin: 6px 0 12px 24px; padding: 0; }
+  li { margin: 3px 0; }
+  code {
+    font-family: "SF Mono", "Menlo", "Consolas", monospace;
+    font-size: 12.5px; background: #f1f4f1; padding: 1px 4px;
+    border-radius: 3px; color: #2a4d3a;
+  }
+  pre {
+    font-family: "SF Mono", "Menlo", "Consolas", monospace;
+    background: #f6f8f6; border: 1px solid #cfd9d2;
+    border-radius: 4px; padding: 10px;
+    font-size: 12.5px; line-height: 1.45;
+    overflow: auto; white-space: pre-wrap; word-wrap: break-word;
+    page-break-inside: avoid;
+  }
+  pre code { background: none; padding: 0; color: inherit; }
+  blockquote {
+    border-left: 3px solid #3f6b4a; background: #f2f7f3;
+    margin: 10px 0; padding: 8px 14px; color: #2a4d3a;
+  }
+  table {
+    border-collapse: collapse; width: 100%;
+    margin: 10px 0 16px; font-size: 13px;
+    page-break-inside: avoid;
+  }
+  th, td {
+    border: 1px solid #cfd9d2; padding: 6px 8px;
+    text-align: left; vertical-align: top;
+  }
+  th { background: #e7eee9; color: #0f2e23; font-weight: 600; }
+  tr:nth-child(even) td { background: #fafcfa; }
+  hr { border: 0; border-top: 1px solid #cfd9d2; margin: 18px 0; }
+  strong { color: #0f2e23; }
+  .mermaid-wrap {
+    background: #fafcfa; border: 1px solid #cfd9d2; border-radius: 6px;
+    padding: 14px; margin: 14px 0 20px;
+    overflow: auto;
+    page-break-inside: avoid;
+  }
+  pre.mermaid {
+    background: transparent; border: 0; padding: 0; margin: 0;
+    text-align: center;
+    overflow: visible; white-space: normal;
+  }
+  pre.mermaid svg { max-width: 100%; height: auto; }
+  .upload-zone {
+    display: none;
+    border: 2px dashed #3f6b4a; padding: 18px;
+    border-radius: 6px; background: #f2f7f3; margin: 10px 0 16px;
+    text-align: center; font-size: 13px; color: #2a4d3a;
+  }
+  .upload-zone.visible { display: block; }
+  .upload-zone label {
+    background: #3f6b4a; color: #fff; padding: 6px 12px;
+    border-radius: 4px; cursor: pointer; font-weight: 600;
+  }
+  .upload-zone input { display: none; }
+  @media print {
+    .toolbar, .upload-zone { display: none !important; }
+    main { padding: 0; max-width: none; }
+    .mermaid-wrap { border: 0; background: transparent; padding: 0; }
+    @page { size: A4; margin: 16mm; }
+    .mermaid-wrap.wide-diagram { page: landscape; page-break-before: always; page-break-after: always; }
+    @page landscape { size: A4 landscape; margin: 12mm; }
+  }
+
+  .empty-hint {
+    border: 1px dashed #cfd9d2;
+    border-radius: 6px;
+    padding: 28px;
+    text-align: center;
+    color: #4a5d4f;
+    background: #fafcfa;
+    margin: 24px 0;
+  }
+  .empty-hint h2 { color: #2a4d3a; border: 0; margin: 0 0 8px; }
+
+</style>
+</head>
+<body>
+  <div class="toolbar">
+    <span class="brand">Pollen · Waratah</span>
+    <span class="doc-title" id="docTitle">Untitled</span>
+    <span class="spacer"></span>
+    <button class="secondary" id="loadBtn" type="button">Load another .md…</button>
+    <button id="printBtn" type="button">Save as PDF…</button>
+  </div>
+  <main id="docroot">
+    <div class="cover">
+      <div class="eyebrow">Markdown → PDF Viewer</div>
+      <p class="title">Drop a .md file</p>
+      <div class="meta">Renders Mermaid diagrams · prints to PDF · works offline (except for the Mermaid CDN load on first open)</div>
+    </div>
+    <div class="upload-zone visible" id="dropZone">
+      <p>Drop a <code>.md</code> file here, or
+        <label for="mdInput">choose a file</label>
+        <input type="file" id="mdInput" accept=".md,.markdown,text/markdown,text/plain">
+      </p>
+      <p style="margin-top:8px; opacity:0.7;">Diagrams in <code>```mermaid</code> code blocks will render automatically. Tables, headings and code blocks are styled to match this view.</p>
+    </div>
+    <div id="bodyContainer"><div class="empty-hint"><h2>Drop a markdown file to get started</h2><p>Any <code>.md</code> file works. <code>```mermaid</code> code blocks render as live diagrams. Tables, headings, lists and code blocks are all styled for both screen and print.</p></div></div>
+  </main>
+
+<script>
+  // Mark wide diagrams so the print stylesheet sends them to a landscape page
+  function tagWideDiagrams() {
+    document.querySelectorAll('pre.mermaid svg').forEach(function(svg) {
+      try {
+        var vb = svg.viewBox && svg.viewBox.baseVal;
+        if (vb && vb.height && (vb.width / vb.height) > 2.2) {
+          svg.closest('.mermaid-wrap').classList.add('wide-diagram');
+        }
+      } catch (e) {}
+    });
+  }
+
+  mermaid.initialize({
+    startOnLoad: true,
+    securityLevel: "strict",
+    theme: "neutral",
+    flowchart: { useMaxWidth: true, htmlLabels: true }
+  });
+
+  // After mermaid renders, tag wide diagrams for landscape printing
+  window.addEventListener('load', function() {
+    setTimeout(tagWideDiagrams, 600);
+  });
+
+  document.getElementById('printBtn').addEventListener('click', function() {
+    window.print();
+  });
+
+  // Optional: load another .md file at runtime — minimal converter
+  var loadBtn  = document.getElementById('loadBtn');
+  var dropZone = document.getElementById('dropZone');
+  var mdInput  = document.getElementById('mdInput');
+
+  loadBtn.addEventListener('click', function() {
+    dropZone.classList.toggle('visible');
+  });
+
+  // Very small markdown-to-HTML converter — handles headings, tables, code fences,
+  // lists, paragraphs, bold/italic/inline code. Good enough for technical docs.
+  function md2html(src) {
+    src = src.replace(/\r\n/g, '\n');
+    var out = [];
+    var lines = src.split('\n');
+    var i = 0;
+    function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function inline(s) {
+      s = esc(s);
+      s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+      s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      s = s.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+      s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+      return s;
+    }
+    while (i < lines.length) {
+      var line = lines[i];
+      // Fenced code
+      var m = line.match(/^```(\w*)\s*$/);
+      if (m) {
+        var lang = m[1] || '';
+        i++;
+        var buf = [];
+        while (i < lines.length && !/^```\s*$/.test(lines[i])) { buf.push(lines[i]); i++; }
+        i++;
+        if (lang.toLowerCase() === 'mermaid') {
+          out.push('<div class="mermaid-wrap"><pre class="mermaid">' + esc(buf.join('\n')) + '</pre></div>');
+        } else {
+          out.push('<pre><code>' + esc(buf.join('\n')) + '</code></pre>');
+        }
+        continue;
+      }
+      // Headings
+      var h = line.match(/^(#{1,6})\s+(.*)$/);
+      if (h) {
+        out.push('<h' + h[1].length + '>' + inline(h[2]) + '</h' + h[1].length + '>');
+        i++; continue;
+      }
+      // Horizontal rule
+      if (/^---+\s*$/.test(line)) { out.push('<hr>'); i++; continue; }
+      // Blockquote
+      if (/^>\s?/.test(line)) {
+        var qbuf = [];
+        while (i < lines.length && /^>\s?/.test(lines[i])) { qbuf.push(lines[i].replace(/^>\s?/,'')); i++; }
+        out.push('<blockquote>' + qbuf.map(inline).join(' ') + '</blockquote>');
+        continue;
+      }
+      // Tables (GitHub-flavoured)
+      if (i+1 < lines.length && /\|/.test(line) && /^\s*\|?\s*:?-{2,}/.test(lines[i+1])) {
+        var head = line.split('|').map(function(c){ return c.trim(); }).filter(function(c,idx,a){ return !(idx===0&&c==='') && !(idx===a.length-1&&c===''); });
+        i += 2;
+        var rows = [];
+        while (i < lines.length && /\|/.test(lines[i]) && lines[i].trim() !== '') {
+          var row = lines[i].split('|').map(function(c){ return c.trim(); }).filter(function(c,idx,a){ return !(idx===0&&c==='') && !(idx===a.length-1&&c===''); });
+          rows.push(row);
+          i++;
+        }
+        var th = head.map(function(c){ return '<th>' + inline(c) + '</th>'; }).join('');
+        var trs = rows.map(function(r){ return '<tr>' + r.map(function(c){ return '<td>' + inline(c) + '</td>'; }).join('') + '</tr>'; }).join('');
+        out.push('<table><thead><tr>' + th + '</tr></thead><tbody>' + trs + '</tbody></table>');
+        continue;
+      }
+      // Lists
+      if (/^[-*+]\s+/.test(line)) {
+        var lbuf = [];
+        while (i < lines.length && /^[-*+]\s+/.test(lines[i])) {
+          lbuf.push('<li>' + inline(lines[i].replace(/^[-*+]\s+/, '')) + '</li>');
+          i++;
+        }
+        out.push('<ul>' + lbuf.join('') + '</ul>');
+        continue;
+      }
+      if (/^\d+\.\s+/.test(line)) {
+        var nbuf = [];
+        while (i < lines.length && /^\d+\.\s+/.test(lines[i])) {
+          nbuf.push('<li>' + inline(lines[i].replace(/^\d+\.\s+/, '')) + '</li>');
+          i++;
+        }
+        out.push('<ol>' + nbuf.join('') + '</ol>');
+        continue;
+      }
+      // Paragraph (collect until blank line)
+      if (line.trim() === '') { i++; continue; }
+      var pbuf = [line];
+      i++;
+      while (i < lines.length && lines[i].trim() !== '' && !/^[#>\-*+`|]/.test(lines[i]) && !/^\d+\.\s+/.test(lines[i])) {
+        pbuf.push(lines[i]); i++;
+      }
+      out.push('<p>' + pbuf.map(inline).join(' ') + '</p>');
+    }
+    return out.join('\n');
+  }
+
+  function loadMd(text, name) {
+    var html = md2html(text);
+    document.getElementById('bodyContainer').innerHTML = html;
+    document.querySelector('.cover .title').textContent = name.replace(/\.md$/i, '');
+    document.querySelector('.cover .meta').textContent = 'Loaded from ' + name;
+    // Re-run mermaid on the new content
+    try {
+      mermaid.run({ querySelector: 'pre.mermaid' }).then(function(){ setTimeout(tagWideDiagrams, 300); });
+    } catch (e) { console.error(e); }
+  }
+
+  mdInput.addEventListener('change', function(e) {
+    var f = e.target.files[0];
+    if (!f) return;
+    var r = new FileReader();
+    r.onload = function(ev) { loadMd(ev.target.result, f.name); dropZone.classList.remove('visible'); };
+    r.readAsText(f);
+  });
+
+  // Drag & drop
+  ['dragover','dragenter'].forEach(function(evt){
+    document.addEventListener(evt, function(e){ e.preventDefault(); dropZone.classList.add('visible'); });
+  });
+  document.addEventListener('drop', function(e){
+    e.preventDefault();
+    var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) {
+      var r = new FileReader();
+      r.onload = function(ev) { loadMd(ev.target.result, f.name); dropZone.classList.remove('visible'); };
+      r.readAsText(f);
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-**Last updated:** May 17, 2026 (Phase 1.1 refinements)
+**Last updated:** May 17, 2026 (Phase 1.3 — 197 named ranges, no triggers yet)
 **Audience:** Managers who want to understand what happens behind the scenes
 **Prerequisite:** Read 01-BASIC first — this guide builds on it
 
@@ -15,8 +15,8 @@ You know how to fill in the shift report and send it. This guide explains what h
 **LIVE Project (Active):**
 - Apps Script ID: `1YATiIFCp6zOM4xGscZOodacGhfxyPr3nvepnJ0SrJ7e5P73HrBFbqnqH`
 - Bound Sheet: `1rcfHTtey_HXC291FAmjpquYkRjWNGbFtClz2szKXfkA` (new Sakura-aligned Waratah sheet)
-- All code deployed and active; 177 named ranges created
-- Triggers: pending manual creation on May 18
+- All code deployed and active; 197 named ranges created (36 fields × 5 days + multi-row ranges)
+- Triggers: NOT YET CREATED — manual operation required until setup completes
 
 **OLD Project (Dormant):**
 - Apps Script ID: `1hVHqRKw772uODidsOVxl9S1h6oqOWvxqevFFVFv6p6HNGl_-CO7PrVjz`
@@ -131,11 +131,14 @@ If any of the previous steps had errors (but didn't stop the pipeline), a notifi
 
 ---
 
-## The Weekly Rollover: What Happens Monday Morning
+## The Weekly Rollover: What Happens Monday Evening
 
-**Triggered by:** An automatic timer — no one presses anything
-**When:** Monday at 9:00pm Sydney time
+<!-- Added 2026-05-17 (Phase 1.3): Noted that rollover trigger is not yet created; manual operations required until setup is complete -->
+
+**Triggered by:** An automatic timer — no one presses anything (PENDING: trigger not yet created as of May 17, 2026)
+**Scheduled for:** Monday at 9:00pm Sydney time
 **What you'll notice:** When you open the spreadsheet on Wednesday, it will be clean with new dates
+**Until trigger setup:** Rollover must be run manually via `Waratah Tools → Admin → Weekly Rollover → Run Rollover Now` (password required)
 
 Here's what the rollover does, step by step:
 
@@ -182,9 +185,10 @@ A Slack message with the same information is posted to the Waratah channel.
 
 ## The Weekly Digest: Revenue at a Glance
 
-**Triggered by:** Automatic timer
-**When:** Monday at 4:00pm Sydney time
+**Triggered by:** Automatic timer (PENDING: trigger not yet created as of May 17, 2026)
+**Scheduled for:** Monday at 4:00pm Sydney time
 **What it does:** Posts a revenue comparison to Slack
+**Until trigger setup:** Manually post via `Waratah Tools → Admin → Weekly Digest → Send Revenue Digest (LIVE)` (password required)
 
 The digest reads from the data warehouse and compares:
 - This week's total revenue vs last week's
@@ -197,9 +201,10 @@ It's designed to give the management team a quick pulse check on how the venue i
 
 ## The Weekly Backfill: Catching Missed Data
 
-**Triggered by:** Automatic timer
-**When:** Monday at 8:00am Sydney time
+**Triggered by:** Automatic timer (PENDING: trigger not yet created as of May 17, 2026)
+**Scheduled for:** Monday at 8:00am Sydney time
 **What it does:** Scans all 5 day sheets and logs any that weren't captured by the nightly export
+**Until trigger setup:** Manually backfill via `Waratah Tools → Admin → Data Warehouse → Backfill Entire Week to Warehouse` (password required)
 
 This is a safety net. If the nightly export failed for a particular day (network error, script timeout, etc.), the backfill catches it and logs the data to the warehouse. It uses the same duplicate prevention — days that were already logged are skipped.
 
@@ -209,31 +214,36 @@ This is a safety net. If the nightly export failed for a particular day (network
 
 The data warehouse is a separate Google Spreadsheet that stores historical data from every shift report. It has four main sheets:
 
-### NIGHTLY_FINANCIAL (25 columns — expanded May 17, 2026)
+### NIGHTLY_FINANCIAL (22 columns A–V — Phase 1.3 schema)
 
-> The warehouse now tracks cash reconciliation data alongside financial figures. This gives management visibility into till accuracy and cash flow without needing a separate system.
+> The warehouse tracks cash reconciliation alongside financial figures. Two shifts can have the same MOD name; duplicates are prevented by matching on (date + MOD). The schema evolved from 25 columns to 22 columns as formulas and intermediates were separated out (see CELL_REFERENCE_MAP.md for the full schema).
 
 Every night's financial figures are logged as a single row:
 
 | Column | Data |
 |--------|------|
-| Date | Tonight's date |
-| Day | Day of the week |
-| Week Ending | The Sunday of this week |
-| MOD | Manager on Duty |
-| Staff | Staff on shift |
-| Net Revenue | From the financial section |
-| Production Amount | From the financial section |
-| Cash Takings | Calculated from till counts |
-| Gross Sales | From POS end-of-day |
-| Cash Returns, CD Discount, Refunds, CD Redeem | From POS breakdown |
-| Total Discount | From POS breakdown |
-| Discounts/Comps exc CD, Gross Taxable, Taxes, Net Sales w/ Tips | From POS breakdown |
-| Card Tips, Cash Tips, Total Tips | From the financial section |
-| **Cash Counted** | Sum of both till counts (NEW) |
-| **Expected Cash** | What the POS said should be there (NEW) |
-| **Cash Variance** | Did the tills balance? (NEW) |
-| Logged At | Timestamp when this row was written |
+| A | Date | Tonight's date |
+| B | Day | Day of the week |
+| C | Week Ending | The Sunday of this week |
+| D | MOD | Manager on Duty |
+| E | FOH Staff | Front-of-house staff names |
+| F | BOH Staff | Back-of-house staff names |
+| G | Cash Counted | Sum of both till counts |
+| H | Cash Takings | Net cash after refloats |
+| I | Cash Variance | Counted − Expected (till balance check) |
+| J | Cash Tips | From financial section |
+| K | Card Tips | From financial section |
+| L | Surcharge Tips | From financial section |
+| M | Total Tips | Sum of all tips |
+| N | Production Amount | From financial section |
+| O | Function Deposit | Event deposits |
+| P | Total Adjustments | Manual adjustments/discounts |
+| Q | Net Revenue | Final result after all adjustments |
+| R | Taxes | Calculated taxes |
+| S | Cash Returns | Customer refunds (cash) |
+| T | CD Discount | Card discount amount |
+| U | Wastage Notes | From incident section |
+| V | Logged At | Timestamp when this row was written |
 
 ### OPERATIONAL_EVENTS (8 columns)
 

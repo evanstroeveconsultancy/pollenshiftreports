@@ -41,13 +41,19 @@ const ACTIVE_DAY_PREFIXES_SETUP = ['WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'
 const ALL_DAY_PREFIXES_SETUP = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
 
 /**
- * Field definitions for the new Sakura-aligned sheet layout.
+ * Field definitions for the new sheet layout (live May 2026, 36 fields).
  *
  * suffix:      Named range suffix (full name = {DAY}_SR_{suffix})
  * cell:        A1 notation on each day sheet
  * isFormula:   true = formula cell — never clear during rollover
  * activeOnly:  true = only created on WEDNESDAY–SUNDAY (not Mon/Tue)
  * description: Human-readable description
+ *
+ * IMPORTANT: Keep in sync with FIELD_CONFIG in RunWaratah.js.
+ * The two configs serve different purposes:
+ *   RunWaratah.js FIELD_CONFIG  — runtime read/clear helpers (uses 'fallback' key)
+ *   SetupWaratah.js SETUP_FIELD_CONFIG — named range creation (uses 'cell' key)
+ * Both must reflect the same authoritative cell addresses.
  */
 const SETUP_FIELD_CONFIG = {
 
@@ -68,45 +74,52 @@ const SETUP_FIELD_CONFIG = {
     activeOnly: true,
     description: 'Manager on Duty (merged B4:F4)'
   },
-  staff: {
-    suffix: 'SR_Staff',
-    cell: 'B5:F5',
+  fohStaff: {
+    suffix: 'SR_FohStaff',
+    cell: 'B6',
     isFormula: false,
     activeOnly: true,
-    description: 'Staff on shift (merged B5:F5)'
+    description: 'FOH staff on shift (B6)'
+  },
+  bohStaff: {
+    suffix: 'SR_BohStaff',
+    cell: 'B7',
+    isFormula: false,
+    activeOnly: true,
+    description: 'BOH staff on shift (B7)'
   },
 
-  // --- REVENUE & PRODUCTION ---
-  productionAmount: {
-    suffix: 'SR_ProductionAmount',
-    cell: 'B8',
+  // --- TILL COUNTS (new 2-till system) ---
+  publicTillCount: {
+    suffix: 'SR_PublicTillCount',
+    cell: 'C10:C17',
     isFormula: false,
     activeOnly: true,
-    description: 'Production amount from Lightspeed (input)'
+    description: 'Public till count entries (C10:C17)'
   },
-  deposit: {
-    suffix: 'SR_Deposit',
-    cell: 'B9:B10',
+  publicTillRefloat: {
+    suffix: 'SR_PublicTillRefloat',
+    cell: 'D10:D17',
     isFormula: false,
     activeOnly: true,
-    description: 'Deposit'
+    description: 'Public till refloat entries (D10:D17)'
   },
-  airbnbCovers: {
-    suffix: 'SR_AirbnbCovers',
-    cell: 'B11',
+  terraceTillCount: {
+    suffix: 'SR_TerraceTillCount',
+    cell: 'E10:E17',
     isFormula: false,
     activeOnly: true,
-    description: 'Airbnb covers'
+    description: 'Terrace till count entries (E10:E17)'
   },
-  cancellations: {
-    suffix: 'SR_Cancellations',
-    cell: 'B13:B14',
+  terraceTillRefloat: {
+    suffix: 'SR_TerraceTillRefloat',
+    cell: 'F10:F17',
     isFormula: false,
     activeOnly: true,
-    description: 'Cancellations'
+    description: 'Terrace till refloat entries (F10:F17)'
   },
 
-  // --- CASH RECONCILIATION (new 2-till system) ---
+  // --- CASH RECONCILIATION (formula cells — do NOT clear) ---
   cashCounted: {
     suffix: 'SR_CashCounted',
     cell: 'C18',
@@ -114,19 +127,33 @@ const SETUP_FIELD_CONFIG = {
     activeOnly: true,
     description: 'Cash counted — sum of public + terrace tills (formula C18 — do not clear)'
   },
-  cashTakings: {
-    suffix: 'SR_CashTakings',
+  cashTake: {
+    suffix: 'SR_CashTake',
     cell: 'C19',
     isFormula: true,
     activeOnly: true,
     description: 'Cash take = counted minus refloats (formula C19 — do not clear)'
   },
-  expectedCash: {
-    suffix: 'SR_ExpectedCash',
-    cell: 'C24',
+  cashReturns: {
+    suffix: 'SR_CashReturns',
+    cell: 'C22',
     isFormula: false,
     activeOnly: true,
-    description: 'Expected cash from POS system (manager input)'
+    description: 'Cash returns (C22)'
+  },
+  cdDiscount: {
+    suffix: 'SR_CDDiscount',
+    cell: 'C23',
+    isFormula: false,
+    activeOnly: true,
+    description: 'CD discount (C23)'
+  },
+  totalCashRecorded: {
+    suffix: 'SR_TotalCashRecorded',
+    cell: 'C24',
+    isFormula: true,
+    activeOnly: true,
+    description: 'Total cash recorded (formula C24 — do not clear)'
   },
   cashVariance: {
     suffix: 'SR_CashVariance',
@@ -136,186 +163,191 @@ const SETUP_FIELD_CONFIG = {
     description: 'Cash variance = counted minus expected (formula C26 — do not clear)'
   },
 
-  // --- FINANCIAL BREAKDOWN ---
-  grossSalesIncCash: {
-    suffix: 'SR_GrossSalesIncCash',
-    cell: 'B16',
-    isFormula: true,
-    activeOnly: true,
-    description: 'Gross sales inc cash (formula — do not clear)'
-  },
-  cashReturns: {
-    suffix: 'SR_CashReturns',
-    cell: 'B17:B18',
+  // --- TIPS ---
+  cashTips: {
+    suffix: 'SR_CashTips',
+    cell: 'C29',
     isFormula: false,
     activeOnly: true,
-    description: 'Cash returns (merged B17:B18 — value in B17)'
-  },
-  cdDiscount: {
-    suffix: 'SR_CDDiscount',
-    cell: 'B19:B20',
-    isFormula: false,
-    activeOnly: true,
-    description: 'CD discount (merged B19:B20 — value in B19)'
-  },
-  refunds: {
-    suffix: 'SR_Refunds',
-    cell: 'B21:B22',
-    isFormula: false,
-    activeOnly: true,
-    description: 'Refunds (merged B21:B22 — value in B21)'
-  },
-  cdRedeem: {
-    suffix: 'SR_CDRedeem',
-    cell: 'B23:B24',
-    isFormula: false,
-    activeOnly: true,
-    description: 'CD redeem (merged B23:B24 — value in B23)'
-  },
-  totalDiscount: {
-    suffix: 'SR_TotalDiscount',
-    cell: 'B25',
-    isFormula: false,
-    activeOnly: true,
-    description: 'Total discount (input)'
-  },
-  discountsCompsExcCD: {
-    suffix: 'SR_DiscountsCompsExcCD',
-    cell: 'B26',
-    isFormula: true,
-    activeOnly: true,
-    description: 'Discounts comps exc CD (formula — do not clear)'
-  },
-  grossTaxableSales: {
-    suffix: 'SR_GrossTaxableSales',
-    cell: 'B27',
-    isFormula: true,
-    activeOnly: true,
-    description: 'Gross taxable sales (formula — do not clear)'
-  },
-  taxes: {
-    suffix: 'SR_Taxes',
-    cell: 'B28',
-    isFormula: true,
-    activeOnly: true,
-    description: 'Taxes (formula — do not clear)'
-  },
-  netSalesWTips: {
-    suffix: 'SR_NetSalesWTips',
-    cell: 'B29',
-    isFormula: true,
-    activeOnly: true,
-    description: 'Net sales with tips (formula — do not clear)'
-  },
-
-  // --- TIPS & CASH ---
-  pettyCash: {
-    suffix: 'SR_PettyCash',
-    cell: 'B30',
-    isFormula: false,
-    activeOnly: true,
-    description: 'Petty cash (input)'
+    description: 'Cash tips (C29)'
   },
   cardTips: {
     suffix: 'SR_CardTips',
-    cell: 'B32',
+    cell: 'C30',
     isFormula: false,
     activeOnly: true,
-    description: 'Card tips (input)'
+    description: 'Card tips (C30)'
   },
-  cashTips: {
-    suffix: 'SR_CashTips',
-    cell: 'B33',
+  surchargeTips: {
+    suffix: 'SR_SurchargeTips',
+    cell: 'C31',
     isFormula: false,
     activeOnly: true,
-    description: 'Cash tips (input)'
+    description: 'Surcharge tips (C31)'
   },
-
-  // --- NET REVENUE ---
-  netRevenue: {
-    suffix: 'SR_NetRevenue',
-    cell: 'B34',
-    isFormula: true,
-    activeOnly: true,
-    description: 'Net revenue (formula — do not clear)'
-  },
-
-  // --- TOTAL TIPS ---
   totalTips: {
     suffix: 'SR_TotalTips',
-    cell: 'B36',
+    cell: 'C32',
     isFormula: true,
     activeOnly: true,
-    description: 'Total tips (formula — do not clear)'
+    description: 'Total tips (formula C32 — do not clear)'
+  },
+
+  // --- REVENUE & PRODUCTION ---
+  productionAmount: {
+    suffix: 'SR_ProductionAmount',
+    cell: 'B37',
+    isFormula: false,
+    activeOnly: true,
+    description: 'Production amount from Lightspeed (B37)'
+  },
+  deposit: {
+    suffix: 'SR_Deposit',
+    cell: 'B38',
+    isFormula: false,
+    activeOnly: true,
+    description: 'Function/Event Deposit (B38)'
+  },
+  cardExpenses: {
+    suffix: 'SR_CardExpenses',
+    cell: 'B40:B45',
+    isFormula: false,
+    activeOnly: true,
+    description: 'Card expenses (B40:B45)'
+  },
+
+  // --- FINANCIAL CALCULATIONS (formula cells — do NOT clear) ---
+  cashTakeDisplay: {
+    suffix: 'SR_CashTakeDisplay',
+    cell: 'B47',
+    isFormula: true,
+    activeOnly: true,
+    description: 'Cash take display — mirror of C19 (formula B47 — do not clear)'
+  },
+  grossSales: {
+    suffix: 'SR_GrossSales',
+    cell: 'B48',
+    isFormula: true,
+    activeOnly: true,
+    description: 'Gross sales (formula B48 — do not clear)'
+  },
+  totalAdjustmentsDiscounts: {
+    suffix: 'SR_TotalAdjustmentsDiscounts',
+    cell: 'B50',
+    isFormula: false,
+    activeOnly: true,
+    description: 'Total adjustments / discounts (B50)'
+  },
+  discountsExcCashDiscount: {
+    suffix: 'SR_DiscountsExcCashDiscount',
+    cell: 'B51',
+    isFormula: true,
+    activeOnly: true,
+    description: 'Discounts exc cash discount (formula B51 — do not clear)'
+  },
+  grossSalesLessDiscounts: {
+    suffix: 'SR_GrossSalesLessDiscounts',
+    cell: 'B52',
+    isFormula: true,
+    activeOnly: true,
+    description: 'Gross sales less discounts (formula B52 — do not clear)'
+  },
+  taxes: {
+    suffix: 'SR_Taxes',
+    cell: 'B53',
+    isFormula: true,
+    activeOnly: true,
+    description: 'Taxes (formula B53 — do not clear)'
+  },
+  netRevenue: {
+    suffix: 'SR_NetRevenue',
+    cell: 'B54',
+    isFormula: true,
+    activeOnly: true,
+    description: 'Net revenue (formula B54 — do not clear)'
+  },
+  runningTotals: {
+    suffix: 'SR_RunningTotals',
+    cell: 'D37:D54',
+    isFormula: true,
+    activeOnly: true,
+    description: 'Running totals column (formula D37:D54 — do not clear)'
   },
 
   // --- NARRATIVE ---
-  shiftSummary: {
-    suffix: 'SR_ShiftSummary',
-    cell: 'A43:F43',
+  generalShiftComments: {
+    suffix: 'SR_GeneralShiftComments',
+    cell: 'A59',
     isFormula: false,
     activeOnly: true,
-    description: 'Shift summary (merged A43:F43)'
+    description: 'General shift comments (A59)'
   },
   guestsOfNote: {
     suffix: 'SR_GuestsOfNote',
-    cell: 'A45:F45',
+    cell: 'A61',
     isFormula: false,
     activeOnly: true,
-    description: 'Guests of note / VIPs (merged A45:F45)'
+    description: 'Guests of note / VIPs (A61)'
   },
   theGood: {
     suffix: 'SR_TheGood',
-    cell: 'A47:F47',
+    cell: 'A63',
     isFormula: false,
     activeOnly: true,
-    description: 'The good (merged A47:F47)'
+    description: 'The good (A63)'
   },
   theBad: {
     suffix: 'SR_TheBad',
-    cell: 'A49:F49',
+    cell: 'A65',
     isFormula: false,
     activeOnly: true,
-    description: 'The bad (merged A49:F49)'
+    description: 'The bad (A65)'
   },
   kitchenNotes: {
     suffix: 'SR_KitchenNotes',
-    cell: 'A51:F51',
+    cell: 'A67',
     isFormula: false,
     activeOnly: true,
-    description: 'Kitchen notes (merged A51:F51)'
+    description: 'Kitchen notes (A67)'
   },
 
-  // --- TASKS ---
+  // --- TASKS (16 rows: 69-84) ---
   todoTasks: {
     suffix: 'SR_TodoTasks',
-    cell: 'A53:E61',
+    cell: 'A69:A84',
     isFormula: false,
     activeOnly: true,
-    description: 'To-do task descriptions (merged A:E per row — value in col A)'
+    description: 'To-do task descriptions (A69:A84 — 16 rows)'
   },
   todoAssignees: {
     suffix: 'SR_TodoAssignees',
-    cell: 'F53:F61',
+    cell: 'D69:D84',
     isFormula: false,
     activeOnly: true,
-    description: 'To-do assignees (col F)'
+    description: 'To-do assignees (D69:D84 — 16 rows, col D)'
   },
 
   // --- INCIDENTS & WASTAGE ---
   wastageComps: {
     suffix: 'SR_WastageComps',
-    cell: 'A63:F63',
+    cell: 'A86',
     isFormula: false,
     activeOnly: true,
-    description: 'Wastage / comps (merged A63:F63)'
+    description: 'Wastage / comps (A86)'
+  },
+  maintenanceIssues: {
+    suffix: 'SR_MaintenanceIssues',
+    cell: 'A88',
+    isFormula: false,
+    activeOnly: true,
+    description: 'Maintenance issues (A88)'
   },
   rsaIncidents: {
     suffix: 'SR_RSAIncidents',
-    cell: 'A65:F65',
+    cell: 'A90',
     isFormula: false,
     activeOnly: true,
-    description: 'RSA incidents (merged A65:F65)'
+    description: 'RSA incidents (A90)'
   }
 };
 
