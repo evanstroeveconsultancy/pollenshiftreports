@@ -2,7 +2,7 @@
 
 **Audience:** Floor staff and MODs (Managers on Duty) who fill in the shift report at the end of service.
 
-**Time required:** About ten minutes once you know the system; fifteen on your first few attempts.
+**Time required:** About 20 minutes once you know the system
 
 This guide walks you through every step of completing and sending the shift report at The Waratah, from the cash count to clicking Send. You do not need to know how the system works underneath. You just need to know what to type where, and when to click which button.
 
@@ -31,14 +31,14 @@ You must have filled in:
 
 1. The date and your name
 2. Cash till counts and refloats (both tills)
-3. Card expense breakdown (each line from the POS)
+3. Card expense breakdown (each line from receipts)
 4. Production amount and function deposits
 5. Card tips and cash tips
 6. The five narrative fields (Shift Report, VIPs, Good, Bad, Kitchen)
 
 You should have filled in (where applicable):
 
-7. Any tasks (TO-DOs) for tomorrow's shift
+7. Any tasks (TO-DOs)
 8. Any wastage, maintenance, or RSA incidents from tonight
 
 If the cash variance shown by the sheet is more than fifty dollars in either direction, **stop and recount before sending**. A variance of plus or minus fifty triggers a system warning and almost always means a count mistake, not a real shortfall.
@@ -62,7 +62,7 @@ The Waratah operates two tills, Public and Terrace. Both need a full count at th
 For each till, you enter:
 
 - **Closing count**: every denomination and the total
-- **Refloat**: the cash you left in the till to start tomorrow's service
+- **Refloat**: the cash you left in the till to start tomorrow's service. Always $350.
 - **Cash variance**: this is auto-calculated, you do not type it
 
 The system computes:
@@ -81,11 +81,11 @@ Below the cash section, there is a financial summary. You enter values in the wh
 
 You will need to enter:
 
-- **Card Expenses**: six separate line items from your POS (Eftpos, AMEX, etc.)
-- **Production Amount**: from the POS Production figure
-- **Function Deposit**: any deposits paid by function clients tonight
-- **Cash Returns and CD (Credit Discount)**: rare, leave blank if zero
-- **Total Tips Card**: the card tips total from your POS
+- **Card Expenses**: six separate line items
+- **Production Amount**: from the POS Takings
+- **Function Deposit**: any deposits paid by function clients in advance, see Cynthia
+- **Cash Returns and CD (Credit Discount)**: our recorded cash takings, leave blank if zero
+- **Total Tips Card**: the card tips total from  POS
 - **Total Tips Cash**: the cash tips total
 
 Cells that calculate automatically (do not touch):
@@ -103,25 +103,24 @@ Below the financial section are five large narrative fields. Each is one paragra
 
 | Field | What goes here |
 |---|---|
-| Shift Report | A general summary of the shift: covers, atmosphere, anything notable |
-| VIPs | Any high-profile guests, returning regulars, or special bookings |
-| Good | What went well tonight (mention staff who performed) |
+| Shift Report | A general summary of the shift: vibe, atmosphere, anything notable |
+| VIPs | Any high profile guests, returning regulars, or special bookings |
+| Good | What went well tonight (mention staff who performed well) |
 | Bad | What went wrong, even small things (problems, complaints, slow tickets) |
-| Kitchen | Notes from or about the kitchen: stock issues, comps, special requests |
+| Kitchen | Notes from or about the kitchen: issues, comps, special requests |
 
 These narratives are read by the management team the next morning. Be specific. "Table 7 complained about steak temperature, remade and comped" is useful. "Some complaints" is not.
 
-If a field genuinely has nothing to report, write "Nothing notable" rather than leaving it blank. Blank fields trigger a system warning in some checks.
+If a field genuinely has nothing to report, write "Nothing notable" or "NTR" rather than leaving it blank. Blank fields trigger a system warning in some checks.
 
-### 2.5 Add tasks (TO-DOs) for tomorrow
+### 2.5 Add tasks (TO-DOs)
 
 There is a tasks section with sixteen rows. Each row has a task description column and an assignee column.
 
 | Task description | Assignee |
 |---|---|
-| Replace coffee grinder burr | Howie |
-| Top up wine cellar stock | Cynthia |
-| Fix dripping tap in Public bar | Nick |
+| Top up wine cellar stock | Adam |
+| Fix dripping tap in Public bar | Evan |
 
 Rules for tasks:
 
@@ -153,11 +152,9 @@ What happens:
 
 1. A confirmation dialog asks: "Send shift report for [today's date]?" Click **Yes**.
 2. A second checklist dialog appears asking you to tick that you have:
-   - Counted the till
    - Approved Deputy timesheets
    - Done the fruit order
-   - Completed the report fully
-3. Tick all four boxes and click **Send**.
+3. Tick the boxes and click **Send**.
 4. A green confirmation message appears for about ten to fifteen seconds while the system processes.
 5. The dialog auto-closes when complete.
 

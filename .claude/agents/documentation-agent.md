@@ -16,11 +16,11 @@ You are the institutional memory keeper for Shift Reports 3.0. **You run before 
 - `docs/sakura/CELL_REFERENCE_MAP_SAKURA.md`, `docs/sakura/DEEP_DIVE_ARCHITECTURE_SAKURA.md`, `docs/sakura/INTEGRATION_FLOWS_SAKURA.md`, `docs/sakura/WORKFLOW_WEEKLY_SAKURA.md`
 - `docs/waratah/CELL_REFERENCE_MAP.md`, `docs/waratah/DEEP_DIVE_ARCHITECTURE.md`, `docs/waratah/INTEGRATION_FLOWS.md`, `docs/waratah/WORKFLOW_WEEKLY.md`
 - `SAKURA HOUSE/FILE EXPLAINERS/1_DAILY_SHIFT_REPORT.md`, `SAKURA HOUSE/FILE EXPLAINERS/2_TASK_MANAGEMENT.md`, `SAKURA HOUSE/FILE EXPLAINERS/3_WEEKLY_AUTOMATED_EVENTS.md`, `SAKURA HOUSE/FILE EXPLAINERS/4_TROUBLESHOOTING.md`, `SAKURA HOUSE/FILE EXPLAINERS/5_CONFIGURATION_REFERENCE.md`
-- `THE WARATAH/FILE EXPLAINERS/2_TASK_MANAGEMENT.md`, `THE WARATAH/FILE EXPLAINERS/3_WEEKLY_AUTOMATED_EVENTS.md`, `THE WARATAH/FILE EXPLAINERS/4_TROUBLESHOOTING.md` <!-- 2026-05-17 Phase 2: PARTIALLY SUPERSEDED — manager-tier content canonicalised to docs/waratah/for-managers/. Admin and developer content remains here for Phase 3 and Phase 4. -->
-- `THE WARATAH/FILE EXPLAINERS/5_CONFIGURATION_REFERENCE.md` <!-- Phase 3 target; still authoritative -->
-- `docs/waratah/README.md`, `docs/waratah/for-daily-users/shift-report-walkthrough.md` <!-- Added 2026-05-17 Phase 1: canonical Daily User home -->
-- `docs/waratah/for-managers/README.md`, `docs/waratah/for-managers/01-shift-reports.md`, `docs/waratah/for-managers/02-task-management.md`, `docs/waratah/for-managers/03-weekly-automation.md`, `docs/waratah/for-managers/04-staff-and-recipients.md`, `docs/waratah/for-managers/05-troubleshooting.md` <!-- Added 2026-05-17 Phase 2: canonical Manager tier home (6 files) -->
-- `THE WARATAH/FILE EXPLAINERS/README.md` <!-- Added 2026-05-17 Phase 1, updated Phase 2: transitional README documenting consolidation status -->
+- `THE WARATAH/FILE EXPLAINERS/2_TASK_MANAGEMENT.md`, `THE WARATAH/FILE EXPLAINERS/3_WEEKLY_AUTOMATED_EVENTS.md`, `THE WARATAH/FILE EXPLAINERS/4_TROUBLESHOOTING.md` <!-- 2026-05-17 Phases 2 and 3: PARTIALLY SUPERSEDED. Manager content in docs/waratah/for-managers/, admin content in docs/waratah/for-admins/. Only developer overflow remains here for Phase 4. -->
+- `docs/waratah/README.md`, `docs/waratah/for-daily-users/shift-report-walkthrough.md` <!-- 2026-05-17 Phase 1: canonical Daily User home -->
+- `docs/waratah/for-managers/README.md`, `docs/waratah/for-managers/01-shift-reports.md`, `docs/waratah/for-managers/02-task-management.md`, `docs/waratah/for-managers/03-weekly-automation.md`, `docs/waratah/for-managers/04-staff-and-recipients.md`, `docs/waratah/for-managers/05-troubleshooting.md` <!-- 2026-05-17 Phase 2: canonical Manager tier home (6 files) -->
+- `docs/waratah/for-admins/README.md`, `docs/waratah/for-admins/01-configuration-reference.md`, `docs/waratah/for-admins/02-staff-and-access-management.md`, `docs/waratah/for-admins/03-advanced-troubleshooting.md`, `docs/waratah/for-admins/04-deployment-and-clasp.md` <!-- 2026-05-17 Phase 3: canonical Admin tier home (5 files) -->
+- `THE WARATAH/FILE EXPLAINERS/README.md` <!-- 2026-05-17 Phase 1, updated Phases 2 and 3: transitional README documenting consolidation status -->
 - `docs/waratah/explainers/02-INTERMEDIATE-How-The-System-Works.md` <!-- 2026-05-17 Phase 2: PARTIALLY SUPERSEDED — manager-tier content canonicalised to docs/waratah/for-managers/. Admin and developer overflow remains here pending Phases 3 and 4. -->
 - `docs/waratah/explainers/03-ADVANCED-Complete-Backend-Reference.md` <!-- 2026-05-17 Phase 1: still authoritative; Phase 4 target. Treat as required-check files for any sheet structure, named range, cell layout, warehouse schema, or trigger schedule changes -->
 - `docs/sakura/explainers/` (if it exists) — parallel manager-facing explainers for Sakura <!-- Added 2026-05-17: If Sakura equivalent explainers exist, they are also in scope -->
@@ -128,8 +128,8 @@ git checkout waratah/develop
 - `docs/waratah/WORKFLOW_WEEKLY.md` — weekly workflow documentation
 - `docs/_archive/plans/` — archived implementation plans
 - `WORKFLOW_SHIFT_REPORTS.md` — shift report workflow documentation
-- `THE WARATAH/FILE EXPLAINERS/` — 4 legacy files (2_TASK_MANAGEMENT, 3_WEEKLY_AUTOMATED_EVENTS, 4_TROUBLESHOOTING are PARTIALLY SUPERSEDED as of Phase 2; 5_CONFIGURATION_REFERENCE remains authoritative pending Phase 3) + transitional README.md. Files 2, 3, 4 carry "Partially Superseded" banners pointing to canonical manager-tier content in docs/waratah/for-managers/.
-- `docs/waratah/` (audience-tiered hierarchy, in progress since 2026-05-17) — `README.md` (root router), `for-daily-users/` (Phase 1 complete), `for-managers/` (Phase 2 complete: 6 files), `for-admins/` (Phase 3 pending), `for-developers/` (Phase 4 pending), `_archive/` (preserved legacy files). Full plan: `/docs/plans/2026-05-17-waratah-docs-consolidation-design.md`.
+- `THE WARATAH/FILE EXPLAINERS/` — 3 legacy files (2_TASK_MANAGEMENT, 3_WEEKLY_AUTOMATED_EVENTS, 4_TROUBLESHOOTING are PARTIALLY SUPERSEDED through Phases 2 and 3; only developer content remains pending Phase 4) + transitional README.md. 1_DAILY archived in Phase 1, 5_CONFIGURATION_REFERENCE archived in Phase 3.
+- `docs/waratah/` (audience-tiered hierarchy) — `README.md` (root router), `for-daily-users/` (Phase 1 complete), `for-managers/` (Phase 2 complete: 6 files), `for-admins/` (Phase 3 complete: 5 files), `for-developers/` (Phase 4 pending), `_archive/` (preserved legacy files). Full plan: `/docs/plans/2026-05-17-waratah-docs-consolidation-design.md`.
 - `docs/waratah/explainers/` — 2 remaining tiers. 01-BASIC archived 2026-05-17 (Phase 1). 02-INTERMEDIATE partially superseded 2026-05-17 (Phase 2, manager content moved; admin/dev overflow remains). 03-ADVANCED still authoritative (Phase 4 target). UPDATE WHEN: sheet structure, named ranges, cell layouts, cash recon, warehouse schema, trigger schedule, or system cutover occurs. 03-ADVANCED is a required-check file until Phase 4 completes.
 
 **`.claude/commands/` (slash command definitions — update when agent routing, pipeline phases, or command behavior changes):**
@@ -185,7 +185,11 @@ These are **manager-facing handover docs**. Keep tone non-technical: no function
 | `2_TASK_MANAGEMENT.md` | EnhancedTaskManagement, TaskDashboard, SlackActionablesPoster/SlackBlockKit, Menu_Updated |
 | `3_WEEKLY_AUTOMATED_EVENTS.md` | WeeklyRolloverInPlace, WeeklyDigest, AnalyticsDashboard |
 | `4_TROUBLESHOOTING.md` | DiagnoseSlack, any error handling or diagnostic changes |
-| `5_CONFIGURATION_REFERENCE.md` | _SETUP_ScriptProperties, VenueConfig, Menu, Run (Sakura only) |
+| `5_CONFIGURATION_REFERENCE.md` | _SETUP_ScriptProperties, VenueConfig, Menu, Run (Sakura only). Waratah equivalent archived 2026-05-17; canonical is for-admins/01-configuration-reference.md |
+| `for-admins/01-configuration-reference.md` (Waratah, Phase 3) | _SETUP_ScriptProperties.js, RunWaratah.js (SHEET_PROTECTION_OWNER_EMAIL usage) |
+| `for-admins/02-staff-and-access-management.md` (Waratah, Phase 3) | EnhancedTaskManagementWaratah.gs (STAFF_LIST), _SETUP_ScriptProperties (both projects) |
+| `for-admins/03-advanced-troubleshooting.md` (Waratah, Phase 3) | DiagnoseSlack.js, WeeklyRolloverInPlace, any error handler |
+| `for-admins/04-deployment-and-clasp.md` (Waratah, Phase 3) | trigger setup functions, MenuWaratah.js admin items |
 
 ## "Recent Updates" Section Convention
 
