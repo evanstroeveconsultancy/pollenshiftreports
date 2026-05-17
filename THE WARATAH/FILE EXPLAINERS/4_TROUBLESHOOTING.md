@@ -1,6 +1,6 @@
 # Troubleshooting — The Waratah
 
-**Last Updated:** March 18, 2026
+**Last Updated:** May 17, 2026 (Phase 1.3: rollover Mon 9pm, digest Mon 4pm, named-range system replaces hardcoded cells)
 **Type:** Handover guide for managers
 **Audience:** Tech-savvy restaurant manager without coding knowledge
 
@@ -36,7 +36,7 @@ Ask yourself these questions:
 
 ### What Just Happened
 
-All the scheduled jobs that run on their own (Monday rollover at 10am, revenue digest at 8am, daily task cleanup at 6am, etc.) were deleted when the code was updated. The spreadsheets are fine, but nothing automatic will happen until you recreate the triggers.
+All the scheduled jobs that run on their own (Monday rollover at 9pm, Monday revenue digest at 4pm, daily task cleanup at 6am, etc.) were deleted when the code was updated. The spreadsheets are fine, but nothing automatic will happen until you recreate the triggers.
 
 ### How to Fix It — Shift Report Spreadsheet
 
@@ -44,8 +44,8 @@ Open the **"Waratah Shift Report - Current Week"** spreadsheet and recreate thes
 
 | Trigger | What It Does | Menu Path |
 |---------|-------------|-----------|
-| **Rollover (Monday 10am)** | Clears all day sheets for a new week, archives last week's data | Waratah Tools > Admin Tools > Weekly Reports > Weekly Rollover (In-Place) > **Create Rollover Trigger** |
-| **Revenue Digest (Wednesday 8am)** | Posts a summary to Slack comparing this week to last week | Waratah Tools > Admin Tools > Weekly Digest > **Setup Wednesday Digest Trigger** |
+| **Rollover (Monday 9pm)** | Clears all day sheets for a new week, archives last week's data | Waratah Tools > Admin Tools > Weekly Reports > Weekly Rollover (In-Place) > **Create Rollover Trigger** |
+| **Revenue Digest (Monday 4pm)** | Posts a summary to Slack comparing this week to last week — runs BEFORE the 9pm rollover so it reads pre-rollover data | Waratah Tools > Admin Tools > Weekly Digest > **Setup Monday Digest Trigger** |
 | **Weekly Backfill (Monday 2am)** | Backs up financial data to the warehouse for analytics | Waratah Tools > Admin Tools > Data Warehouse > **Setup Weekly Backfill Trigger** |
 
 **Steps to recreate each trigger:**
@@ -142,7 +142,7 @@ If the test message appears in Slack, you're fixed.
 
 ## Rollover Didn't Work
 
-> The rollover is the automated job that runs every Monday at 10am. It clears the data from the previous week, archives it, and gets the sheets ready for the new week.
+> The rollover is the automated job that runs every Monday at 9pm. It clears the data from the previous week, archives it, and gets the sheets ready for the new week. The 9pm timing runs AFTER the Monday 4pm Weekly Revenue Digest so the digest reads pre-rollover data.
 
 ### How to Check If Rollover Actually Ran
 
@@ -183,11 +183,20 @@ Some cells contain formulas (like the Net Revenue cell) and are intentionally no
 
 ## Hardcoded Cell Reference Issues
 
-> The Waratah system uses fixed cell addresses (like "B34" for Net Revenue) rather than labeled references. These work perfectly fine, but if someone inserts or deletes rows or columns on the day sheets, the system may start reading from the wrong cells.
+> As of May 17, 2026 (Phase 1.2), The Waratah system uses **named ranges** (like `WEDNESDAY_SR_NetRevenue`) rather than hardcoded cell addresses. Named ranges follow the cell when rows or columns are inserted — they're far more robust. This section explains what to do if a named range is accidentally deleted or mistargeted.
 
 ### What Causes This Problem
 
-The system is programmed to look at specific cells: B34 for Net Revenue, B32 for Card Tips, B33 for Cash Tips, and about 20 others. If someone inserts a new row in the middle of the sheet, all those cell references shift — the system keeps looking at B34, but now it points to different data.
+If a manager accidentally deletes a named range from `Data → Named ranges`, or if a tab is duplicated/renamed in a way that creates a binding conflict (see the "setup script wrong-sheet binding" known issue in `CELL_REFERENCE_MAP.md`), the system can throw "named range not found" errors on the next export.
+
+**Current cell layout (for reference — read from named ranges, not directly):**
+- B54: Net Revenue (formula)
+- C30: Card Tips
+- C29: Cash Tips
+- C32: Total Tips (formula)
+- B37: Production Amount
+- C18/C19/C24/C26: Cash recon (formulas)
+- See `CELL_REFERENCE_MAP.md` for the full 36-field map.
 
 ### Signs Something Is Wrong
 
@@ -200,7 +209,7 @@ The system is programmed to look at specific cells: B34 for Net Revenue, B32 for
 
 **The golden rule: Never insert or delete rows or columns on any of the day sheets (MONDAY through SUNDAY tabs).**
 
-If you need to add information, use the empty rows provided (like rows 53-61 for tasks, rows 63-65 for notes). Do not insert new rows in the middle of the financial data section.
+If you need to add information, use the empty rows provided (like rows 69-84 for tasks, rows 59-67 for narrative notes, rows 86-90 for incidents). Do not insert new rows in the middle of the financial data section. If a named range gets deleted, run **Waratah Tools → Admin → Named Ranges → Setup All Named Ranges (New Sheet)** to recreate it.
 
 ### If This Already Happened
 
@@ -341,7 +350,7 @@ The more details you provide, the faster the fix.
 
 | Problem | Solution |
 |---------|----------|
-| Rollover didn't happen Monday morning | Recreate the Monday 10am trigger (see "Nothing Is Running Automatically") |
+| Rollover didn't happen Monday night | Recreate the Monday 9pm trigger (see "Nothing Is Running Automatically") |
 | No Slack messages but emails arrived | Update the webhook URL in Script Properties (see "Slack Messages Aren't Posting") |
 | Emails not arriving | Check spam, verify recipient list, send test report (see "Email Reports Aren't Arriving") |
 | Wrong numbers in reports or blank fields | Check for inserted/deleted rows or columns (see "Hardcoded Cell Reference Issues") |

@@ -265,24 +265,33 @@ Applies to: A59:F59 (generalShiftComments), A61:F61 (guestsOfNote), A63:F63 (the
 
 > The warehouse stores all shift data for analytics. Each row is one shift. Columns map directly to FIELD_CONFIG, excluding formula intermediates and 6-row card expense range.
 
-<!-- Added 2026-05-17 (FIELD_CONFIG rewrite): Updated schema column count. L/M/R now NULL per user spec; new fields added (F/B staff separate, cash recon, maintenance). Total 22 columns A-V after Phase 1.2. -->
+<!-- Added 2026-05-17 (Phase 1.3 — correction): The Phase 1.2 doc pass invented a 22-col schema. Reality: schema was extended from 22 to 25 cols when cash recon W/X/Y were added on May 17. Code assertion in IntegrationHubWaratah.js line 492 expects exactly 25 cols. -->
 
 ```
-A=Date, B=Day, C=WeekEnding, D=MOD, E=FohStaff, F=BohStaff,
-G=CashCounted, H=CashTakings, I=CashVariance,
-J=CashTips, K=CardTips, L=SurchargeTips, M=TotalTips,
-N=ProductionAmount, O=FunctionDeposit, P=TotalAdjustments,
-Q=NetRevenue, R=Taxes, S=CashReturns, T=CDDiscount,
-U=WastageComps, V=LoggedAt
+A=Date, B=Day, C=WeekEnding, D=MOD,
+E=Staff (combined: "FOH: <names> | BOH: <names>"),
+F=NetRevenue (from B54), G=ProductionAmount (from B37),
+H=CashTakings (from C19), I=GrossSalesIncCash (from B48),
+J=CashReturns (from C22), K=CDDiscount (from C23),
+L=Refunds (NULL — source removed), M=CDRedeem (NULL — source removed),
+N=TotalDiscount (from B50), O=DiscountsCompsExcCD (from B51),
+P=GrossTaxableSales (from B52), Q=Taxes (from B53),
+R=NetSalesWTips (NULL — no direct equivalent on new sheet),
+S=CardTips (from C30), T=CashTips (from C29), U=TotalTips (from C32),
+V=LoggedAt,
+W=CashCounted (from C18, NEW May 17),
+X=ExpectedCash (from C24, NEW May 17),
+Y=CashVariance (from C26, NEW May 17)
 ```
 
-**Schema changes (Phase 1.2):**
-- Added: E=FohStaff, F=BohStaff (split from single Staff), G=CashCounted, I=CashVariance, L=SurchargeTips
-- Removed: CashRecorded (formula, not warehoused), MaintenanceIssues (qualitative, stored in QUALITATIVE_NOTES only)
-- NULL going forward: L(old Refunds), M(old CDRedeem), R(old NetSalesWTips) — these are formula intermediates
-- Total: 22 columns (A-V)
+**Schema changes (Phase 1.2 cutover):**
+- Header row extended from 22 → 25 columns (W/X/Y added for cash recon)
+- E=Staff repurposed to a combined string: `"FOH: " + fohStaff + " | BOH: " + bohStaff` (no schema position change; just the source changed)
+- Source-cell remapping for almost every column (cutover moved most fields; same warehouse column header preserved for analytics compatibility)
+- NULL going forward: L (Refunds), M (CDRedeem), R (NetSalesWTips) — source cells removed from new sheet layout; historical rows preserve their values
+- Total: 25 columns (A–Y)
 
-**Header assertion:** `logToDataWarehouse_()` expects exactly 22 columns after the header row. No manual migration needed — the header is auto-created if missing.
+**Header assertion:** `logToDataWarehouse_()` expects exactly 25 columns after the header row (asserted at line 492). The user manually added W/X/Y to the warehouse sheet during the May 17 cutover.
 
 ---
 
