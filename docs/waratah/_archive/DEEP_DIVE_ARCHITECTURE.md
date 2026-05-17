@@ -1,6 +1,8 @@
-# THE WARATAH - Deep Dive Architecture
+<!-- ARCHIVED 2026-05-17 (Phase 4 of Waratah docs consolidation). Script Properties section superseded by /docs/waratah/for-admins/01-configuration-reference.md (Phase 3). Architecture content superseded by /docs/waratah/for-developers/01-architecture-and-data-flow.md (Phase 4). This file is preserved for historical reference. Do not edit. -->
 
-**Last Updated:** March 6, 2026 (NOTE: Architecture now uses NEW Sakura-aligned sheet as of May 17, 2026 — see CLAUDE_WARATAH.md for current sheet IDs and configuration)
+# THE WARATAH, Deep Dive Architecture
+
+**Last Updated:** March 6, 2026 (NOTE: Architecture now uses NEW Sakura-aligned sheet as of May 17, 2026. See CLAUDE_WARATAH.md for current sheet IDs and configuration)
 **Type:** Detailed Technical Documentation (partially stale — use CLAUDE_WARATAH.md for script ID, sheet ID, and trigger status)
 **Load:** On-demand only (reference material)
 

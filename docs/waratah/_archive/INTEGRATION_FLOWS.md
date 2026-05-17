@@ -1,4 +1,6 @@
-# THE WARATAH - Integration Flows
+<!-- ARCHIVED 2026-05-17 (Phase 4 of Waratah docs consolidation). Superseded by /docs/waratah/for-developers/03-integration-pipeline.md and /04-warehouse-schemas.md. This file is preserved for historical reference. Do not edit. -->
+
+# THE WARATAH, Integration Flows
 
 **Last Updated:** April 2, 2026 (Date parsing hardening: `parseCellDate_()`, `toDateOnly_()`)
 **Type:** Detailed Integration Documentation

@@ -2,25 +2,30 @@
 
 This directory historically contained five manager-facing handover documents. They are being consolidated into a single audience-tiered structure under [`/docs/waratah/`](../../docs/waratah/) as part of a documentation consolidation effort that began on 2026-05-17.
 
-## Status as of 2026-05-17, Phase 3 complete
+## Status as of 2026-05-17, all phases complete
 
-| Old file | New canonical location | Status |
-|---|---|---|
-| `1_DAILY_SHIFT_REPORT.md` | [`/docs/waratah/for-daily-users/shift-report-walkthrough.md`](../../docs/waratah/for-daily-users/shift-report-walkthrough.md) | **Archived** in `/docs/waratah/_archive/` |
-| `2_TASK_MANAGEMENT.md` | Manager: [`02-task-management.md`](../../docs/waratah/for-managers/02-task-management.md), [`04-staff-and-recipients.md`](../../docs/waratah/for-managers/04-staff-and-recipients.md). Admin: [`01-configuration-reference.md`](../../docs/waratah/for-admins/01-configuration-reference.md), [`02-staff-and-access-management.md`](../../docs/waratah/for-admins/02-staff-and-access-management.md) | **Partially superseded (Phases 2 and 3)** (only developer audit trail internals remain here) |
-| `3_WEEKLY_AUTOMATED_EVENTS.md` | Manager: [`03-weekly-automation.md`](../../docs/waratah/for-managers/03-weekly-automation.md). Admin: [`03-advanced-troubleshooting.md`](../../docs/waratah/for-admins/03-advanced-troubleshooting.md), [`04-deployment-and-clasp.md`](../../docs/waratah/for-admins/04-deployment-and-clasp.md) | **Partially superseded (Phases 2 and 3)** (only developer trigger internals remain here) |
-| `4_TROUBLESHOOTING.md` | Manager: [`05-troubleshooting.md`](../../docs/waratah/for-managers/05-troubleshooting.md). Admin: [`03-advanced-troubleshooting.md`](../../docs/waratah/for-admins/03-advanced-troubleshooting.md), [`02-staff-and-access-management.md`](../../docs/waratah/for-admins/02-staff-and-access-management.md) | **Partially superseded (Phases 2 and 3)** (only developer named-range debugging remains here) |
-| `5_CONFIGURATION_REFERENCE.md` | [`/docs/waratah/for-admins/01-configuration-reference.md`](../../docs/waratah/for-admins/01-configuration-reference.md) and [`02-staff-and-access-management.md`](../../docs/waratah/for-admins/02-staff-and-access-management.md) | **Archived** in `/docs/waratah/_archive/` |
+All five legacy files fully archived. Canonical destinations:
 
-Three files still in this directory hold only developer-tier content pending Phase 4. The "Partially superseded" banner at the top of each file lists the canonical destinations for everything that has moved.
+| Old file | Canonical destination(s) |
+|---|---|
+| `1_DAILY_SHIFT_REPORT.md` | [`for-daily-users/shift-report-walkthrough.md`](../../docs/waratah/for-daily-users/shift-report-walkthrough.md) |
+| `2_TASK_MANAGEMENT.md` | Manager: [`02-task-management.md`](../../docs/waratah/for-managers/02-task-management.md), [`04-staff-and-recipients.md`](../../docs/waratah/for-managers/04-staff-and-recipients.md). Admin: [`01-configuration-reference.md`](../../docs/waratah/for-admins/01-configuration-reference.md), [`02-staff-and-access-management.md`](../../docs/waratah/for-admins/02-staff-and-access-management.md). Developer: [`06-task-management-internals.md`](../../docs/waratah/for-developers/06-task-management-internals.md) |
+| `3_WEEKLY_AUTOMATED_EVENTS.md` | Manager: [`03-weekly-automation.md`](../../docs/waratah/for-managers/03-weekly-automation.md). Admin: [`03-advanced-troubleshooting.md`](../../docs/waratah/for-admins/03-advanced-troubleshooting.md), [`04-deployment-and-clasp.md`](../../docs/waratah/for-admins/04-deployment-and-clasp.md). Developer: [`05-rollover-and-triggers.md`](../../docs/waratah/for-developers/05-rollover-and-triggers.md) |
+| `4_TROUBLESHOOTING.md` | Manager: [`05-troubleshooting.md`](../../docs/waratah/for-managers/05-troubleshooting.md). Admin: [`03-advanced-troubleshooting.md`](../../docs/waratah/for-admins/03-advanced-troubleshooting.md), [`02-staff-and-access-management.md`](../../docs/waratah/for-admins/02-staff-and-access-management.md). Developer: [`02-cell-reference-and-field-config.md`](../../docs/waratah/for-developers/02-cell-reference-and-field-config.md) |
+| `5_CONFIGURATION_REFERENCE.md` | Admin: [`01-configuration-reference.md`](../../docs/waratah/for-admins/01-configuration-reference.md), [`02-staff-and-access-management.md`](../../docs/waratah/for-admins/02-staff-and-access-management.md) |
+
+All five archived files now live in [`/docs/waratah/_archive/`](../../docs/waratah/_archive/) for historical reference. Do not edit the archived files; canonical updates belong in the new locations above.
 
 ## Where to go now
 
-If you are looking for the daily shift report walkthrough, go to [`/docs/waratah/for-daily-users/shift-report-walkthrough.md`](../../docs/waratah/for-daily-users/shift-report-walkthrough.md).
+All documentation is now organised by audience under [`/docs/waratah/`](../../docs/waratah/):
 
-If you are a venue manager looking for any of: shift reports, task management, weekly automation, staff and recipients, troubleshooting, go to [`/docs/waratah/for-managers/`](../../docs/waratah/for-managers/). These manager-tier docs are canonical as of Phase 2 (2026-05-17).
+- Floor staff: [`for-daily-users/shift-report-walkthrough.md`](../../docs/waratah/for-daily-users/shift-report-walkthrough.md)
+- Venue managers: [`for-managers/`](../../docs/waratah/for-managers/) (6 files)
+- Admin operators: [`for-admins/`](../../docs/waratah/for-admins/) (5 files)
+- Developers and Claude AI agents: [`for-developers/`](../../docs/waratah/for-developers/) (7 files)
 
-If you are an admin operator looking for: Script Properties reference, staff and access management, advanced troubleshooting, deployment procedures, go to [`/docs/waratah/for-admins/`](../../docs/waratah/for-admins/). These admin-tier docs are canonical as of Phase 3 (2026-05-17).
+Start at the [root README](../../docs/waratah/README.md) for the four-route router.
 
 If you are an AI agent or developer, start at [`/CLAUDE_WARATAH.md`](../../CLAUDE_WARATAH.md) at the repository root.
 

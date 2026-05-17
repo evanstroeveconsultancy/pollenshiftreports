@@ -1,6 +1,6 @@
-<!-- PARTIALLY SUPERSEDED 2026-05-17 (Phase 2 of Waratah docs consolidation). Manager-tier content has been canonicalised to /docs/waratah/for-managers/ (01-shift-reports.md, 02-task-management.md, 03-weekly-automation.md, 05-troubleshooting.md, plus glossary in for-managers/README.md). Admin and developer content remains here pending Phases 3 and 4. See /docs/plans/2026-05-17-waratah-docs-consolidation-design.md. -->
+<!-- ARCHIVED 2026-05-17 (Phase 4 of Waratah docs consolidation). Content fully migrated: manager to /docs/waratah/for-managers/ (Phase 2); developer overflow to /docs/waratah/for-developers/01-architecture-and-data-flow.md (Phase 4). This file is preserved for historical reference. Do not edit. -->
 
-> ⚠️ **Partially Superseded (2026-05-17).** Manager-tier content has moved to [`/docs/waratah/for-managers/`](../for-managers/) (split across `01-shift-reports.md`, `02-task-management.md`, `03-weekly-automation.md`, `05-troubleshooting.md`, and the glossary in `README.md`). Admin and developer content remains here until Phases 3 and 4 of the [documentation consolidation](../../plans/2026-05-17-waratah-docs-consolidation-design.md) complete.
+> 🗄️ **Archived (2026-05-17).** Manager content moved to [`/docs/waratah/for-managers/`](../../docs/waratah/for-managers/); developer overflow to [`/docs/waratah/for-developers/01-architecture-and-data-flow.md`](../../docs/waratah/for-developers/01-architecture-and-data-flow.md). See [migration plan](../../docs/plans/2026-05-17-waratah-docs-consolidation-design.md).
 
 ---
 

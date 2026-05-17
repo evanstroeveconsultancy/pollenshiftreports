@@ -1,6 +1,8 @@
-# THE WARATAH - Cell Reference Map
+<!-- ARCHIVED 2026-05-17 (Phase 4 of Waratah docs consolidation). Superseded by /docs/waratah/for-developers/02-cell-reference-and-field-config.md. This file is preserved for historical reference. Do not edit. Updates belong in the canonical replacement. -->
 
-**Last Updated:** May 17, 2026 (Phase 1.2 — cell map correction)
+# THE WARATAH, Cell Reference Map
+
+**Last Updated:** May 17, 2026 (Phase 1.2, cell map correction)
 **Type:** Authoritative Reference — Cell Addresses & Named Ranges
 **Purpose:** Complete mapping of 36-field system (180 named ranges) for all Waratah day sheets
 **Sheet:** `1rcfHTtey_HXC291FAmjpquYkRjWNGbFtClz2szKXfkA`

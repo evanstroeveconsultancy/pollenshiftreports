@@ -71,9 +71,11 @@ Work through this in order. Stop at any failed step.
 | Sakura architecture/integration | `docs/sakura/DEEP_DIVE_ARCHITECTURE_SAKURA.md`, `docs/sakura/INTEGRATION_FLOWS_SAKURA.md` |
 | Sakura rollover/weekly | `docs/sakura/WORKFLOW_WEEKLY_SAKURA.md` |
 | Sakura cell references | `docs/sakura/CELL_REFERENCE_MAP_SAKURA.md` |
-| Waratah architecture/integration | `docs/waratah/DEEP_DIVE_ARCHITECTURE.md`, `docs/waratah/INTEGRATION_FLOWS.md` |
-| Waratah rollover/weekly | `docs/waratah/WORKFLOW_WEEKLY.md` |
-| Waratah cell references | `docs/waratah/CELL_REFERENCE_MAP.md` |
+| Waratah architecture/integration | `docs/waratah/for-developers/01-architecture-and-data-flow.md`, `docs/waratah/for-developers/03-integration-pipeline.md`, `docs/waratah/for-developers/04-warehouse-schemas.md` |
+| Waratah rollover/weekly | `docs/waratah/for-developers/05-rollover-and-triggers.md` (manager view: `for-managers/03-weekly-automation.md`) |
+| Waratah cell references | `docs/waratah/for-developers/02-cell-reference-and-field-config.md` |
+| Waratah admin configuration | `docs/waratah/for-admins/01-configuration-reference.md` and `04-deployment-and-clasp.md` |
+| Waratah task management internals | `docs/waratah/for-developers/06-task-management-internals.md` |
 | Sakura user-facing behavior | `SAKURA HOUSE/FILE EXPLAINERS/DAILY_SHIFT_REPORT.md` |
 | Sakura weekly automation | `SAKURA HOUSE/FILE EXPLAINERS/WEEKLY_AUTOMATED_EVENTS.md` |
 | Sakura task management | `SAKURA HOUSE/FILE EXPLAINERS/TASK_MANAGEMENT.md` |

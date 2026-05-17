@@ -23,7 +23,7 @@ The shift report system lives in one Google Sheet. The Task Management system li
 
 ## 2. What Happens After the MOD Clicks "Send"
 
-Once the MOD ticks the four-item checklist and clicks Send, the system runs an end-to-end pipeline in about ten seconds. As a manager, you do not need to do anything during this pipeline. You should know what to expect so you can spot a problem if one step fails.
+Once the MOD ticks the two-item checklist and clicks Send, the system runs an end-to-end pipeline in about 30 seconds. As a manager, you do not need to do anything during this pipeline. You should know what to expect so you can spot a problem if one step fails.
 
 The pipeline runs nine sequential steps:
 
@@ -32,8 +32,8 @@ The pipeline runs nine sequential steps:
 3. **Calculate derived figures.** Net revenue, total tips, total adjustments, cash variance all compute server-side from the inputs.
 4. **Generate a PDF.** A formatted PDF of the night's report is produced.
 5. **Build the Slack message.** A Block Kit message is assembled with the night's headline numbers, narrative notes, task summary, AI insights (when available), and action buttons (view PDF, email team).
-6. **Post to Slack.** The message goes to the manager channels and as direct messages to the six staff with personal DM webhooks (Evan, Cynthia, Adam, Jaiden, Joffy, Nick). Howie does not have a personal DM webhook by choice.
-7. **Email the PDF.** Sent to the six configured recipients (Evan, Cynthia, Nick, Chef, Howie, Adam).
+6. **Post to Slack.** The message goes to the manager channels and, optionally, as direct messages to the six staff with personal DM webhooks (Evan, Cynthia, Adam, Jaiden, Joffy, Nick).
+7. **Email the PDF.** Sent to the five configured recipients (Evan, Cynthia, Nick, Ian, Adam).
 8. **Write to the data warehouse.** Tonight's numbers append to the central warehouse spreadsheet for weekly analytics. Duplicate-prevention logic ensures the same night cannot be logged twice.
 9. **Sync tasks to Task Management.** Any TO-DOs the MOD typed flow into the Task Management spreadsheet as new tasks, with assignees pre-populated.
 
@@ -49,7 +49,7 @@ The system has two send modes. As a manager you should know which is which becau
 
 | Mode | Slack | Email | Warehouse | Tasks | When to use |
 |---|---|---|---|---|---|
-| **LIVE** (Send Shift Report) | Posts to manager channels and DMs | Sent to all six recipients | Written | Synced to Task Management | Every real shift |
+| **LIVE** (Send Shift Report) | Posts to manager channels and DMs | Sent to all recipients | Written | Synced to Task Management | Every real shift |
 | **TEST** (Send TEST Report) | Posts to test channel only | Not sent | Not written | Not synced | Training, dry runs, verifying changes |
 
 TEST mode is safe to run as many times as you like. It does not consume any quotas or write any permanent records. Use it when:
@@ -68,7 +68,7 @@ The next morning, confirm three things to know the previous night's report lande
 
 1. **Did the Slack message appear in the manager channels?** Check the channels you watch. If the message is missing, see [`05-troubleshooting.md`](05-troubleshooting.md) Section 4.
 2. **Did the email arrive?** Check your inbox or spam folder. If the email is missing, see [`05-troubleshooting.md`](05-troubleshooting.md) Section 5.
-3. **Did the tasks from last night's TO-DOs appear in the Task Management spreadsheet?** Open the Task Management spreadsheet, filter by Source = "Shift Report" and Date Created = today. You should see one row per task the MOD added. If tasks are missing, see [`02-task-management.md`](02-task-management.md) Section 14.
+3. **Did the tasks from last night's TO-DOs appear in the Task Management spreadsheet?** Open the Task Management spreadsheet. You should see one row per task the MOD added. If tasks are missing, see [`02-task-management.md`](02-task-management.md) Section 14.
 
 A weekly check is also worth doing: on Tuesday morning, confirm Monday's rollover ran. See [`03-weekly-automation.md`](03-weekly-automation.md) Section 2 for the verification routine.
 

@@ -1,4 +1,6 @@
-# THE WARATAH - Weekly Rollover Workflow
+<!-- ARCHIVED 2026-05-17 (Phase 4 of Waratah docs consolidation). Superseded by /docs/waratah/for-developers/05-rollover-and-triggers.md. This file is preserved for historical reference. Do not edit. -->
+
+# THE WARATAH, Weekly Rollover Workflow
 
 **Last Updated:** May 17, 2026 (Rollover code deployed; trigger pending creation)
 **Status:** ✅ Code deployed; ⏳ Trigger pending setup on NEW project

@@ -266,12 +266,11 @@ The shift report email goes to the management team. As of May 2026, that is six 
 
 | Recipient | Role |
 |---|---|
-| Evan | Owner |
-| Cynthia | Operations |
-| Nick | Floor Manager |
-| Chef | Head Chef |
-| Howie | Bar Manager |
-| Adam | Hospitality Manager |
+| Evan | Admin |
+| Cynthia | Owner |
+| Nick | Head Chef |
+| Ian | Shareholder |
+| Adam | Owner |
 
 The Slack message goes to the venue's manager channels (multiple channels for redundancy) and also as direct messages to a subset of the team who have opted in.
 

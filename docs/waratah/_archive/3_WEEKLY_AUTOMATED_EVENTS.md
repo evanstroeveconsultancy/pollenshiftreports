@@ -1,6 +1,6 @@
-<!-- PARTIALLY SUPERSEDED 2026-05-17 (Phases 2 and 3 of Waratah docs consolidation). Manager-tier content canonicalised to /docs/waratah/for-managers/03-weekly-automation.md (Phase 2). Admin-tier content (trigger recreation, rollover recovery) canonicalised to /docs/waratah/for-admins/03-advanced-troubleshooting.md and /04-deployment-and-clasp.md (Phase 3). Only developer content (trigger destruction internals) remains here pending Phase 4. See /docs/plans/2026-05-17-waratah-docs-consolidation-design.md. -->
+<!-- ARCHIVED 2026-05-17 (Phase 4 of Waratah docs consolidation). Content fully migrated: manager to /docs/waratah/for-managers/03-weekly-automation.md (Phase 2); admin to /docs/waratah/for-admins/03-advanced-troubleshooting.md and /04-deployment-and-clasp.md (Phase 3); developer trigger internals to /docs/waratah/for-developers/05-rollover-and-triggers.md (Phase 4). This file is preserved for historical reference. Do not edit. -->
 
-> ⚠️ **Partially Superseded (Phases 2 and 3 of 2026-05-17 consolidation).** Manager-tier content moved to [`/docs/waratah/for-managers/03-weekly-automation.md`](../../docs/waratah/for-managers/03-weekly-automation.md). Admin-tier content moved to [`/docs/waratah/for-admins/03-advanced-troubleshooting.md`](../../docs/waratah/for-admins/03-advanced-troubleshooting.md) and [`04-deployment-and-clasp.md`](../../docs/waratah/for-admins/04-deployment-and-clasp.md). Developer content (trigger internals) remains here pending Phase 4.
+> 🗄️ **Archived (2026-05-17).** Manager → `for-managers/03-weekly-automation.md`; admin → `for-admins/03-advanced-troubleshooting.md` + `/04-deployment-and-clasp.md`; developer → `for-developers/05-rollover-and-triggers.md`.
 
 ---
 

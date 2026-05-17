@@ -40,7 +40,7 @@ Before dispatching anything:
    - Data warehouse / analytics? → also dispatch `data-warehouse-agent` in parallel
 4. Check for named range implications:
    - New field added? → waratah-gas-agent must add it to FIELD_CONFIG in RunWaratah.js first
-   - Rollover changes? → load docs/waratah/WORKFLOW_WEEKLY.md for full rollover context
+   - Rollover changes? → load docs/waratah/for-developers/05-rollover-and-triggers.md for full rollover context (legacy `docs/waratah/WORKFLOW_WEEKLY.md` archived 2026-05-17 Phase 4)
 
 **Output this classification block before proceeding to Phase 1:**
 ```

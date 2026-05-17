@@ -53,7 +53,7 @@ The Waratah uses **named ranges** (`WEDNESDAY_SR_NetRevenue` etc.) defined in `F
 - `getFieldValues(sheet, 'todoTasks')` — returns 2D array
 - When adding new fields, add them to `FIELD_CONFIG` in `RunWaratah.js` first, then use the helpers
 - For performance-sensitive batch reads (e.g. IntegrationHubWaratah.js extractShiftData_), direct `getRange().getValues()` is acceptable — add a comment explaining why
-- Consult `docs/waratah/CELL_REFERENCE_MAP.md` for the full field map
+- Consult `docs/waratah/for-developers/02-cell-reference-and-field-config.md` for the full field map (canonical; the legacy `docs/waratah/CELL_REFERENCE_MAP.md` was archived 2026-05-17)
 
 ## Operating Parameters
 - **Days:** Wednesday–Sunday (5 days)
@@ -91,8 +91,8 @@ The rollover system is in-place with fresh-template handling (specific to Warata
 ## Detailed Documentation (Load On Demand)
 - `WORKFLOW_TASK_MANAGEMENT.md` — 866 lines of detailed task management backend flows
 - `WORKFLOW_SHIFT_REPORTS.md` — 509 lines of shift report implementation detail
-- `docs/waratah/DEEP_DIVE_ARCHITECTURE.md` — full architecture deep-dive
-- `docs/waratah/INTEGRATION_FLOWS.md` — integration flow details
+- `docs/waratah/for-developers/01-architecture-and-data-flow.md` — full architecture deep-dive (Phase 4 canonical; legacy `docs/waratah/DEEP_DIVE_ARCHITECTURE.md` archived 2026-05-17)
+- `docs/waratah/for-developers/03-integration-pipeline.md` and `04-warehouse-schemas.md` — integration flow details (Phase 4 canonical; legacy `docs/waratah/INTEGRATION_FLOWS.md` archived 2026-05-17)
 
 Only load these when you need implementation-level detail. Start with `CLAUDE_WARATAH.md`.
 
