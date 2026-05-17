@@ -1,10 +1,41 @@
 # THE WARATAH - Quick Reference
 
-**Last Updated:** May 17, 2026 (Joffy added to staff roster; Jaiden + Joffy personal Slack DM webhooks activated; departed-staff references purged from docs)
+**Last Updated:** May 17, 2026 (Phase 1: Sakura-alignment migration — named range hardening, 3-col cash recon schema extension, new rollover system, Mon/Tue guard)
 **Status:** 🟢 PRODUCTION READY
 **Operating Days:** 5 days (Wed-Sun)
 **Cell References:** Named range system (`WEDNESDAY_SR_NetRevenue`) via `RunWaratah.js` — falls back to hardcoded cells when ranges absent. See [CELL_REFERENCE_MAP.md](docs/waratah/CELL_REFERENCE_MAP.md)
 **Rollover:** In-place system ✅ Automated
+
+---
+
+## Phase 1 — Sakura Alignment Migration (May 17, 2026)
+
+**Design doc:** `docs/plans/2026-05-17-waratah-shift-report-sakura-alignment-design.md`
+**Status:** Code complete. Deploy Phase 2 (Wed May 20) — update `WARATAH_SHEET_ID` Script Property.
+
+### What Changed
+
+**New file:**
+- `SetupWaratah.js` — `setupWaratahNamedRanges_()` creates/updates all named ranges on the new sheet; `verifyWaratahNamedRanges_()` audits them
+
+**Rewritten file:**
+- `WeeklyRolloverInPlaceWaratah.js` — Sakura-pattern rollover with idempotency, dry-run mode, 7-tab date stamping, Monday 9pm trigger
+
+**Modified files:**
+- `RunWaratah.js` — `getFieldRange()` now THROWS on missing named range (no silent fallback); 3 new FIELD_CONFIG entries: `cashCounted` (C18, formula), `expectedCash` (C24, NOT formula), `cashVariance` (C26, formula); `cashTakings` updated from B15→C19
+- `IntegrationHubWaratah.js` — batch read widened to C column; 3 new warehouse cols (W/X/Y); header assertion (throws if NIGHTLY_FINANCIAL ≠ 25 cols); Script Property backward compat (`WARATAH_SHEET_ID` falls back to `WARATAH_SHIFT_REPORT_CURRENT_ID`)
+- `NightlyExportWaratah.js` — Mon/Tue guard (early return if sheet name starts with MONDAY/TUESDAY); cash variance Block Kit field
+- `MenuWaratah.js` — Named Ranges submenu; rollover menu updated to new functions; `setupAllTriggers_Waratah()` trigger name + timing updated
+- `AIInsightsWaratah.js` — `getRange(..., 22)` → `getRange(..., 25)` in both analytics functions; JSDoc updated to 25-col schema
+- `AnalyticsDashboardWaratah.js` — schema comment updated to 25 cols
+- `VenueConfig.js` — `cashTakings: 'B15'` → `'C19'`; added `cashCounted`, `expectedCash`, `cashVariance`
+
+### Phase 2 Manual Steps (Wed May 20)
+1. Run `setupWaratahNamedRanges_()` against the new sheet via Admin Tools
+2. Flip `WARATAH_SHEET_ID` Script Property to `1rcfHTtey_HXC291FAmjpquYkRjWNGbFtClz2szKXfkA`
+3. Add NIGHTLY_FINANCIAL header row: add columns W=CashCounted, X=ExpectedCash, Y=CashVariance
+4. Run `clasp push` to deploy all Phase 1 code
+5. Verify with `verifyWaratahNamedRanges_()` and a test export
 
 ---
 
@@ -75,7 +106,7 @@
 ## 🆕 Small Items S1-S9 (March 18, 2026)
 
 **S1 — Trigger Setup Menu:**
-- New function `setupAllTriggers_Waratah()` in `MenuWaratah.js` — installs all 3 SR triggers (rollover Mon 10am, backfill Mon 8am, digest Wed 8am) in one call; deduplicates before creating
+- New function `setupAllTriggers_Waratah()` in `MenuWaratah.js` — installs all 3 SR triggers (rollover Mon 9pm, backfill Mon 8am, digest Wed 8am) in one call; deduplicates before creating
 - New menu item: Admin Tools → Setup & Utilities → "Setup All SR Triggers"
 - `onOpen()` shows "⚠ Admin Tools" warning if triggers missing
 - `requirePassword_()` now reads from MENU_PASSWORD Script Property (fallback: 'chocolateteapot')
@@ -116,7 +147,7 @@
 **Function:** `computeShiftAnalytics_Waratah(shiftData, warehouseId)`
 
 - Pure GAS math engine — no AI calls
-- Reads NIGHTLY_FINANCIAL warehouse (22 cols A-V)
+- Reads NIGHTLY_FINANCIAL warehouse (25 cols A-Y as of Phase 1)
 - Computes metrics:
   - 4-week and 8-week trailing averages (net revenue, production amount, cash takings, total tips)
   - Week-over-week delta (pct change vs last week)
@@ -328,7 +359,7 @@ Workflow:
 5. PDF emailed + Slack posted + warehouse logged
 ```
 
-### Weekly: Rollover (Automated Monday 10:00am)
+### Weekly: Rollover (Automated Monday 9:00pm)
 ```
 Manual Run: Waratah Tools → Weekly Reports → Weekly Rollover (In-Place) → Run Rollover Now
 Preview: → Preview Rollover (Dry Run)
@@ -365,9 +396,9 @@ runValidationReport()    // Full system validation
 4. **Named Range System** (`RunWaratah.js`)
    - All field definitions live in `FIELD_CONFIG` — single source of truth
    - Helpers: `getFieldValue(sheet, 'netRevenue')`, `getFieldDisplayValue(sheet, 'mod')`, `getFieldValues(sheet, 'todoTasks')`
-   - Falls back to hardcoded cells automatically when named ranges don't exist in the spreadsheet
-   - Create ranges: `Admin Tools → Setup & Utilities → Named Ranges → Create on ALL Sheets`
-   - Diagnostics: `Named Ranges → Diagnose Active Sheet` (or All Sheets)
+   - **BREAKING (Phase 1):** `getFieldRange()` now THROWS if a named range is missing — no silent fallback. Run `setupWaratahNamedRanges_()` to create them before using the new sheet.
+   - Create ranges: `Admin Tools → Named Ranges → Setup All Named Ranges (New Sheet)` (via `SetupWaratah.js`)
+   - Diagnostics: `Named Ranges → Verify Named Ranges` (or `Diagnose Active Sheet` / `All Sheets`)
 
 5. **Merged Cell Clearing**
    - Narrative cells are merged A:F — value lives in column A
@@ -375,9 +406,10 @@ runValidationReport()    // Full system validation
    - Always use `A##:F##` (not `B##:F##`) when clearing merged narrative cells
 
 6. **Formula Cells — DO NOT CLEAR** (enforced automatically by `isFormula: true` in FIELD_CONFIG)
-   - B15 (cashTakings), B16 (grossSalesIncCash), B26-B29 (financial breakdown formulas)
-   - B34 (netRevenue), B36 (totalTips)
+   - **Old sheet:** B15 (cashTakings), B16 (grossSalesIncCash), B26-B29 (financial breakdown formulas), B34 (netRevenue), B36 (totalTips)
+   - **New sheet (Phase 1):** C18 (cashCounted), C19 (cashTakings/cashTake), C26 (cashVariance) — all formula cells
    - `getClearableFieldKeys_()` auto-excludes all formula cells — no manual list needed
+   - C24 (expectedCash) IS clearable — it is manager input, not a formula
    - B38/B39 (Labor Hours/Cost) are formulas — NOT warehoused (ignored entirely)
 
 ---
@@ -464,24 +496,23 @@ logToDataWarehouse_(shiftData, config, skipLock)  // Line 339 - Write to 4 wareh
 validateShiftData_(shiftData)    // Line 511 - Check revenue logic, required fields
 ```
 
-### WeeklyRolloverInPlaceWaratah.js
+### WeeklyRolloverInPlaceWaratah.js (rewritten Phase 1 — Sakura-pattern)
 ```javascript
-performWeeklyRollover()          // Main rollover function
-validatePreconditions_()         // Check file ID, venue, archive folder
-generateWeekSummary_()           // Calculate week stats (throws 'No valid dates found' on fresh template)
-exportPdfToArchive_(summary)     // Create PDF in Archive/YYYY/YYYY-MM/pdfs/
-createArchiveSnapshot_(summary)  // Copy spreadsheet to Archive/YYYY/YYYY-MM/sheets/
-clearAllSheetData_()             // Clear data via clearContent() (preserves structure)
-updateDatesToNextWeek_()         // Calculate & set Wed-Sun dates + rename tabs; returns nextWednesday Date
-sendRolloverNotifications_()     // Email + Slack to managers
-validateRolloverResult_()        // NEW (S2): Check rollover completion; posts Slack alert on failure (non-blocking)
-previewRollover()                // Dry run — shows what would happen, no changes made
-createWeeklyRolloverTrigger()    // Create Monday 10:00am trigger (S2: wraps getUi() in try/catch)
-removeWeeklyRolloverTrigger()    // Delete the rollover trigger (S2: wraps getUi() in try/catch)
-getSheetByDayPrefix_(ss, day)    // Find sheet by day prefix (handles renamed tabs like "WEDNESDAY 26/02")
+runWaratahWeeklyRollover(options)    // Main entry point; options: { dryRun: true }
+performWeeklyRollover()              // Backward-compat alias → calls runWaratahWeeklyRollover()
+createRolloverTrigger_Waratah()      // Create Monday 9:00pm trigger
+pw_removeRolloverTrigger_Waratah()   // Remove the rollover trigger
+// Internal helpers:
+_warAlreadyRolledOver_()             // Idempotency check — compares Wednesday B3 to expected next-Wed
+_warClearAllSheetData_()             // Clears via getClearableFieldKeys_() — auto-skips formula cells (C18/C19/C26)
+_warUpdateAllTabDates_()             // Stamps ALL 7 tabs (Mon-Sun) + renames all 7 tabs
+_warValidateRolloverResult_()        // Post-rollover validation; non-blocking
 ```
 
-**Fresh template handling:** If `generateWeekSummary_()` throws `'No valid dates found'`, rollover skips archiving (Steps 3-4) and continues with clearing + date update. First rollover after deploying to a new file is safe.
+**Idempotency:** `_warAlreadyRolledOver_()` checks Wednesday B3 against the next expected Wednesday date — safe to re-run.
+**Mon/Tue tabs:** All 7 tabs (Mon-Sun) are date-stamped and renamed during rollover. Only Wed-Sun are active for shift reports; Mon/Tue tabs are skipped by `continueExport()` (live path guard added Phase 1).
+**Fresh template:** On first rollover, archiving is skipped gracefully.
+**Dry run:** `runWaratahWeeklyRollover({ dryRun: true })` — logs all steps without making changes.
 
 ### EnhancedTaskManagementWaratah.gs
 ```javascript
@@ -508,7 +539,8 @@ resetScriptProperties()     // CAUTION: Deletes all properties
 VENUE_NAME: "WARATAH"
 MENU_PASSWORD: "chocolateteapot"                       // S1: Read by requirePassword_() in MenuWaratah.js
 SHEET_PROTECTION_OWNER_EMAIL: "evan@pollenhospitality.com"  // Only user allowed to edit protected sheet areas; falls back to script owner if not set
-WARATAH_WORKING_FILE_ID: "[current_week_spreadsheet_id]"
+WARATAH_SHEET_ID: "[new_sheet_id]"                            // Phase 1 (May 20): flip to 1rcfHTtey_... to activate new sheet
+WARATAH_WORKING_FILE_ID: "[current_week_spreadsheet_id]"    // Fallback if WARATAH_SHEET_ID not set
 WARATAH_DATA_WAREHOUSE_ID: "[warehouse_spreadsheet_id]"
 ARCHIVE_ROOT_FOLDER_ID: "[archive_folder_id]"
 WARATAH_SLACK_WEBHOOK_LIVE: "https://hooks.slack.com/..."
@@ -531,14 +563,15 @@ See [DEEP_DIVE_ARCHITECTURE.md](docs/waratah/DEEP_DIVE_ARCHITECTURE.md#script-pr
 **Auto-Build Behavior (S8, Mar 18, 2026):** The ANALYTICS tab is auto-created on first warehouse write if missing. LockService re-entrancy fixed via `skipLock` parameter — when backfill calls `logToDataWarehouse_()`, it passes `skipLock=true` to prevent deadlock.
 
 ```
-1. NIGHTLY_FINANCIAL      (22 cols A-V) - Full financial breakdown
+1. NIGHTLY_FINANCIAL      (25 cols A-Y as of Phase 1 May 2026) - Full financial breakdown
    A=Date, B=Day, C=WeekEnding, D=MOD, E=Staff,
    F=NetRevenue, G=ProductionAmount, H=CashTakings,
    I=GrossSalesIncCash, J=CashReturns, K=CDDiscount,
    L=Refunds, M=CDRedeem, N=TotalDiscount,
    O=DiscountsCompsExcCD, P=GrossTaxableSales,
    Q=Taxes, R=NetSalesWTips, S=CardTips, T=CashTips,
-   U=TotalTips, V=LoggedAt
+   U=TotalTips, V=LoggedAt,
+   W=CashCounted, X=ExpectedCash, Y=CashVariance
 
 2. OPERATIONAL_EVENTS     (8 cols A-H) - TO-DOs (one row per TODO)
    A=Date, B=Day, C=MOD, D=Description, E=Assignee,
@@ -601,7 +634,7 @@ setupWeeklyDigestTrigger_Waratah()       // Installs Monday 9am trigger (safe to
 
 ## 📅 Weekly Rollover Details
 
-**Automated:** Monday 10:00am (Australia/Sydney)
+**Automated:** Monday 9:00pm (Australia/Sydney)
 
 **What It Does:**
 1. Archives previous week (PDF + Sheets snapshot)
@@ -651,7 +684,7 @@ NEW → TO DO → IN PROGRESS → DONE
 | Archive Old Tasks | Monday 6am | `runScheduledArchive()` |
 | Weekly Summary (DMs) | Mon 10am | `sendWeeklyActiveTasksSummary()` — sends to individual staff only |
 | onEdit Auto-sort | Every edit | `onTaskSheetEditWithAutoSort()` |
-| Weekly Rollover | Monday 10am | `performWeeklyRollover()` |
+| Weekly Rollover | Monday 9pm | `runWaratahWeeklyRollover()` (alias: `performWeeklyRollover()`) |
 
 **Note:** Daily maintenance was decomposed into individual triggers (Mar 6, 2026). `runDailyTaskMaintenance()` no longer exists as a bundled function.
 
@@ -724,7 +757,7 @@ const webhook = PropertiesService.getScriptProperties()
 | **Sheet Names** | WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY | Exactly 5 sheets |
 | **Cell Strategy** | Named ranges | `WEDNESDAY_SR_NetRevenue` etc. (fallback: B34, A53) |
 | **Rollover Type** | In-place | Same file ID persists |
-| **Rollover Time** | Monday 10:00am | Australia/Sydney timezone |
+| **Rollover Time** | Monday 9:00pm | Australia/Sydney timezone |
 | **Admin Password** | chocolateteapot | TODO: Rotate |
 | **Timezone** | Australia/Sydney | Critical for triggers |
 
@@ -780,7 +813,7 @@ if (config.name === 'THE WARATAH') {
 
 ---
 
-**Last Updated:** March 18, 2026 (S1-S9 pass + M1-M7 AI Insights upgrade + P0 rollover fix)
+**Last Updated:** May 17, 2026 (Phase 1: Sakura-alignment migration — named range hardening, 3-col schema, rollover rewrite)
 **Version:** 3.4
 **Status:** ✅ Fully operational and production-ready
 **Total LOC:** ~9,371 lines across 22 code files + 5 HTML files (+ RunWaratah.js ~800 LOC)

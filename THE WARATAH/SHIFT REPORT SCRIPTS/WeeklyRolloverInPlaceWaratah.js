@@ -1,744 +1,764 @@
-/**
- * WeeklyRolloverInPlace.gs
+/****************************************************
+ * WEEKLY ROLLOVER — IN-PLACE IMPLEMENTATION
+ * THE WARATAH
  *
- * In-place weekly rollover system for The Waratah.
- * Eliminates duplication-based approach that breaks menus.
+ * Single working file approach: clears and resets
+ * weekly data instead of creating new files.
  *
- * Flow:
- * 1. Archive previous week (PDF + snapshot)
- * 2. Clear data (using clearContent() to preserve structure)
- * 3. Update dates to next week
- * 4. Send notifications
+ * KEY BENEFIT: Menus always work (same file = same
+ * container-bound script = menus never disappear).
  *
- * Created: 2026-02-15
- */
+ * PROCESS:
+ * 1. Validate preconditions
+ * 2. Generate week summary (Wed–Sun)
+ * 3. Export PDF to archive
+ * 4. Create Google Sheets snapshot
+ * 5. Clear data (Wed–Sun only — Mon/Tue rename only)
+ * 6. Update dates on ALL 7 tabs (Mon–Sun)
+ * 7. Verify named ranges (non-blocking)
+ * 8. Post-rollover validation (non-blocking)
+ * 9. Named range health check (non-blocking)
+ *
+ * TRIGGER: Monday 9:00 PM (Australia/Sydney)
+ *   Why Monday 9pm: Waratah operates Sunday — clearing
+ *   at Sun 9pm would wipe the active shift. Weekly Revenue
+ *   Digest runs Monday 4pm; rollover must run AFTER to
+ *   preserve that week's data for the digest.
+ *
+ * MANUAL: Admin Tools > Weekly Rollover > Run Rollover Now
+ *
+ * @version 2.0.0
+ * @date 2026-05-17
+ * @phase Phase 1 — Sakura Alignment Migration
+ ****************************************************/
+
 
 // ============================================================================
 // CONFIGURATION
 // ============================================================================
 
 /**
- * Day sheets in order (5 days - Waratah operates Wed-Sun)
+ * Active days — full pipeline: clear + date-stamp + warehouse.
+ * Waratah operates Wednesday through Sunday.
  */
-const DAY_SHEETS = [
-  'WEDNESDAY',
-  'THURSDAY',
-  'FRIDAY',
-  'SATURDAY',
-  'SUNDAY'
-];
+const WAR_ROLLOVER_ACTIVE_DAYS = ['WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
 
 /**
- * Field keys (from FIELD_CONFIG in RunWaratah.js) to clear during rollover.
- * Formula cells are excluded — they are protected by the isFormula flag in FIELD_CONFIG.
- *
- * Excluded formula cells: cashTakings (B15), grossSalesIncCash (B16),
- * discountsCompsExcCD (B26), grossTaxableSales (B27), taxes (B28),
- * netSalesWTips (B29), netRevenue (B34), totalTips (B36).
- *
- * During transition: if named ranges don't exist, getFieldRange() falls back
- * to the hardcoded cells in FIELD_CONFIG automatically.
+ * All 7 days — all tabs get renamed for visual consistency.
+ * Mon/Tue are rename-only; they are NOT cleared.
  */
-const CLEARABLE_FIELD_KEYS = [
-  'date', 'mod', 'staff',
-  'productionAmount', 'deposit', 'airbnbCovers', 'cancellations',
-  'cashReturns', 'cdDiscount', 'refunds', 'cdRedeem', 'totalDiscount',
-  'pettyCash', 'cardTips', 'cashTips',
-  'shiftSummary', 'guestsOfNote', 'theGood', 'theBad', 'kitchenNotes',
-  'todoTasks', 'todoAssignees',
-  'wastageComps', 'rsaIncidents'
-];
+const WAR_ROLLOVER_ALL_DAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
 
 /**
- * Date field to UPDATE (not clear)
+ * Day offsets from Sunday (week ending).
+ * Sunday = 0, Saturday = -1, ..., Monday = -6.
  */
-const DATE_FIELD = 'B3:F3';
+const WAR_ROLLOVER_OFFSETS = {
+  MONDAY:    -6,
+  TUESDAY:   -5,
+  WEDNESDAY: -4,
+  THURSDAY:  -3,
+  FRIDAY:    -2,
+  SATURDAY:  -1,
+  SUNDAY:     0
+};
+
+/**
+ * Timezone for all date operations.
+ */
+const WAR_ROLLOVER_TZ = 'Australia/Sydney';
+
 
 // ============================================================================
-// MAIN ROLLOVER FUNCTION
+// MAIN ENTRY POINTS
 // ============================================================================
 
 /**
- * Performs weekly in-place rollover
+ * Primary rollover entry point.
+ * Called by Monday 9pm time-based trigger or manually from menu.
  *
- * Password-protected function that:
- * 1. Validates preconditions
- * 2. Generates week summary
- * 3. Exports PDF to archive
- * 4. Creates Google Sheets snapshot to archive
- * 5. Clears all data fields
- * 6. Updates dates to next week
- * 7. Sends notifications
- *
- * Triggered automatically: Monday 10:00am
- * Can also be run manually via menu (with password)
+ * @param {Object} [options]           - Optional configuration
+ * @param {boolean} [options.dryRun]   - If true, log intent but make no changes
  */
-function performWeeklyRollover() {
-  const lock = LockService.getScriptLock();
-  if (!lock.tryLock(30000)) {
-    Logger.log('❌ Could not acquire lock — another rollover may be running.');
+function runWaratahWeeklyRollover(options) {
+  var opts = options || {};
+  var dryRun = opts.dryRun === true;
+
+  if (dryRun) {
+    _warDryRun_();
     return;
   }
 
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(30000)) {
+    Logger.log('runWaratahWeeklyRollover: Could not acquire lock — another rollover may be running.');
+    return;
+  }
+
+  var startTime = new Date();
+  Logger.log('========== WARATAH WEEKLY ROLLOVER STARTED ==========');
+
   try {
-    Logger.log('========================================');
-    Logger.log('WEEKLY ROLLOVER - Starting');
-    Logger.log('========================================');
+    var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
 
-    // 1. Validate preconditions
-    Logger.log('Step 1: Validating preconditions...');
-    validatePreconditions_();
-    Logger.log('✅ Preconditions valid');
+    // Step 1: Validate preconditions
+    _warValidatePreconditions_(spreadsheet);
+    Logger.log('Step 1: Preconditions valid');
 
-    // 2. Generate week summary (if previous week exists)
-    Logger.log('Step 2: Generating week summary...');
-    let summary;
-    let pdfFile;
-    let snapshotFile;
-
-    try {
-      summary = generateWeekSummary_();
-      Logger.log(`✅ Week summary: ${summary.weekEnding}`);
-
-      // 3. Export PDF to archive (only if previous week exists)
-      Logger.log('Step 3: Exporting PDF to archive...');
-      pdfFile = exportPdfToArchive_(summary);
-      Logger.log(`✅ PDF created: ${pdfFile.getName()}`);
-
-      // 4. Create archive snapshot (only if previous week exists)
-      Logger.log('Step 4: Creating Google Sheets snapshot...');
-      snapshotFile = createArchiveSnapshot_(summary);
-      Logger.log(`✅ Snapshot created: ${snapshotFile.getName()}`);
-
-    } catch (e) {
-      if (e.message.includes('No valid dates found')) {
-        // Fresh template - no previous data to archive
-        summary = null;
-        pdfFile = null;
-        snapshotFile = null;
-        Logger.log('⚠️ No previous week data found (fresh template)');
-        Logger.log('Skipping archiving steps (Steps 3-4)');
-      } else {
-        throw e; // Re-throw if it's a different error
-      }
-    }
-
-    // 5. Clear all sheet data
-    Logger.log('Step 5: Clearing all data fields...');
-    clearAllSheetData_();
-    Logger.log('✅ All data cleared');
-
-    // 6. Update dates to next week
-    Logger.log('Step 6: Updating dates to next week...');
-    const nextWeekStart = updateDatesToNextWeek_();
-    Logger.log(`✅ Dates updated to week starting: ${nextWeekStart}`);
-
-    // 6b. Verify/fix named ranges on all sheets (silent — logs only, non-blocking)
-    try {
-      const ss = SpreadsheetApp.getActiveSpreadsheet(); // ss is not in scope here — get it directly
-      verifyAndFixNamedRanges_(ss);
-    } catch (e) {
-      Logger.log(`Named range verify skipped (non-blocking): ${e.message}`);
-    }
-
-    // 7. Send notifications (only if previous week was archived)
-    if (summary && pdfFile && snapshotFile) {
-      Logger.log('Step 7: Sending rollover notifications...');
-      sendRolloverNotifications_(summary, nextWeekStart, pdfFile, snapshotFile);
-      Logger.log('✅ Notifications sent');
-    } else {
-      Logger.log('Step 7: Skipping notifications (fresh template - no archive)');
-    }
-
-    // 8. Post-rollover validation (non-blocking — rollover is already complete)
-    Logger.log('Step 8: Running post-rollover validation...');
-    validateRolloverResult_();
-
-    // 9. Named range health check (non-blocking)
-    Logger.log('Step 9: Running named range health check...');
-    try {
-      namedRangeHealthCheck_Waratah();
-    } catch (e) {
-      Logger.log('Step 9: Named range health check failed (non-blocking): ' + e.message);
-    }
-
-    Logger.log('========================================');
-    Logger.log('WEEKLY ROLLOVER - Completed Successfully');
-    Logger.log('========================================');
-
-    // Show appropriate completion message (safe for trigger context)
-    try {
-      if (summary && pdfFile && snapshotFile) {
+    // Step 2: Idempotency check — bail if already rolled over this week
+    if (_warAlreadyRolledOver_(spreadsheet)) {
+      Logger.log('runWaratahWeeklyRollover: Already rolled over this week — no-op.');
+      try {
         SpreadsheetApp.getUi().alert(
-          'Weekly Rollover Complete',
-          `Previous week archived successfully.\n\nPDF: ${pdfFile.getName()}\nSnapshot: ${snapshotFile.getName()}\n\nDates updated to week starting: ${Utilities.formatDate(nextWeekStart, 'Australia/Sydney', 'dd/MM/yyyy')}`,
+          'Rollover Skipped',
+          'The spreadsheet has already been rolled over this week.\n\n' +
+          'Wednesday date matches the expected next-week date. No changes made.',
           SpreadsheetApp.getUi().ButtonSet.OK
         );
-      } else {
-        SpreadsheetApp.getUi().alert(
-          'Weekly Rollover Complete (Fresh Template)',
-          `No previous week data found (fresh template).\n\nDates updated to week starting: ${Utilities.formatDate(nextWeekStart, 'Australia/Sydney', 'dd/MM/yyyy')}\n\nNext rollover will include archiving.`,
-          SpreadsheetApp.getUi().ButtonSet.OK
-        );
-      }
-    } catch (uiErr) {
-      Logger.log('(UI alert skipped — running from trigger context)');
+      } catch (uiErr) { /* trigger context */ }
+      return;
     }
+
+    // Step 3: Generate week summary
+    var summary = null;
+    var pdfResult = null;
+    var snapshotResult = null;
+
+    try {
+      summary = _warGenerateWeekSummary_(spreadsheet);
+      Logger.log('Step 2: Week ending ' + summary.weekEndDate + ' | Revenue $' + summary.totalRevenue);
+
+      // Step 3a: Export PDF
+      pdfResult = _warExportPdfToArchive_(spreadsheet, summary.weekEndDate);
+      Logger.log('Step 3: PDF archived: ' + pdfResult.archivePath);
+
+      // Step 3b: Sheets snapshot
+      snapshotResult = _warCreateArchiveSnapshot_(spreadsheet, summary.weekEndDate);
+      Logger.log('Step 4: Snapshot archived: ' + snapshotResult.archivePath);
+
+    } catch (archiveErr) {
+      // Fresh template or no data — skip archive
+      Logger.log('Steps 2-4: Skipped archive (no previous week data): ' + archiveErr.message);
+      summary = null;
+      pdfResult = null;
+      snapshotResult = null;
+    }
+
+    // Step 5: Clear data on active days only (Wed–Sun)
+    _warClearAllSheetData_(spreadsheet);
+    Logger.log('Step 5: Data cleared on active days (Wed–Sun)');
+
+    // Step 6: Update dates on ALL 7 tabs (Mon–Sun)
+    var nextSunday = _warUpdateAllTabDates_(spreadsheet);
+    Logger.log('Step 6: All 7 tabs date-stamped; week ending ' +
+      Utilities.formatDate(nextSunday, WAR_ROLLOVER_TZ, 'dd/MM/yyyy'));
+
+    // Step 7: Verify named ranges (non-blocking)
+    try {
+      if (typeof verifyWaratahNamedRanges_ === 'function') {
+        var verifyResult = verifyWaratahNamedRanges_();
+        if (verifyResult.missing > 0 || verifyResult.wrong > 0) {
+          Logger.log('Step 7: Named range issues detected — missing=' + verifyResult.missing +
+            ', wrong=' + verifyResult.wrong + '. Run setupWaratahNamedRanges_() to fix.');
+        } else {
+          Logger.log('Step 7: Named ranges OK');
+        }
+      } else {
+        Logger.log('Step 7: verifyWaratahNamedRanges_ not available (SetupWaratah.js not loaded?)');
+      }
+    } catch (verifyErr) {
+      Logger.log('Step 7: Named range verification failed (non-blocking): ' + verifyErr.message);
+    }
+
+    // Step 8: Post-rollover validation (non-blocking)
+    _warValidateRolloverResult_(spreadsheet);
+
+    // Step 9: Named range health check (non-blocking)
+    try {
+      if (typeof namedRangeHealthCheck_Waratah === 'function') {
+        namedRangeHealthCheck_Waratah();
+      }
+    } catch (healthErr) {
+      Logger.log('Step 9: Named range health check failed (non-blocking): ' + healthErr.message);
+    }
+
+    var duration = ((new Date()) - startTime) / 1000;
+    Logger.log('========== WARATAH ROLLOVER COMPLETE: ' + duration.toFixed(1) + 's ==========');
+
+    // UI success message
+    try {
+      var ui = SpreadsheetApp.getUi();
+      var msg = summary
+        ? 'Week ending ' + summary.weekEndDate + ' archived.\n\n' +
+          'Total revenue: $' + (summary.totalRevenue || 0).toLocaleString() + '\n' +
+          'All 7 tabs renamed. Wednesday–Sunday cleared.\n\n' +
+          'Duration: ' + duration.toFixed(1) + 's'
+        : 'No previous week data to archive (fresh template).\n\n' +
+          'All 7 tabs renamed with next week\'s dates.\n\n' +
+          'Duration: ' + duration.toFixed(1) + 's';
+      ui.alert('Rollover Complete', msg, ui.ButtonSet.OK);
+    } catch (uiErr) { /* trigger context */ }
+
+    return { success: true, weekEndDate: summary ? summary.weekEndDate : null, duration: duration };
 
   } catch (error) {
-    Logger.log(`❌ ERROR: ${error.message}`);
-    Logger.log(error.stack);
-
-    // Notify Evan via Slack (works in trigger context where UI alerts don't)
-    notifyError_('performWeeklyRollover', error);
+    Logger.log('runWaratahWeeklyRollover: FAILED — ' + error.message + '\n' + error.stack);
+    notifyError_('runWaratahWeeklyRollover', error);
 
     try {
       SpreadsheetApp.getUi().alert(
         'Rollover Failed',
-        `Error: ${error.message}\n\nCheck Apps Script logs for details.`,
+        'Error: ' + error.message + '\n\nCheck Apps Script logs for details.\nData has NOT been cleared.',
         SpreadsheetApp.getUi().ButtonSet.OK
       );
-    } catch (uiErr) {
-      Logger.log('(UI error alert skipped — running from trigger context)');
-    }
+    } catch (uiErr) { /* trigger context */ }
 
     throw error;
+
+  } finally {
+    lock.releaseLock();
   }
 }
 
+/**
+ * Backward-compatible alias — keeps existing trigger/menu references working.
+ * Old handler name was 'performWeeklyRollover'.
+ */
+function performWeeklyRollover() {
+  return runWaratahWeeklyRollover();
+}
+
+
 // ============================================================================
-// VALIDATION FUNCTIONS
+// VALIDATION
 // ============================================================================
 
 /**
- * Validates preconditions before rollover
+ * Validates preconditions before rollover.
+ * Throws if any check fails.
  *
- * Checks:
- * - Correct spreadsheet (working file ID matches)
- * - Venue name is WARATAH
- * - Archive folder exists
- * - Previous week dates are complete
- *
- * @throws {Error} If any validation fails
+ * @param {Spreadsheet} spreadsheet
  */
-function validatePreconditions_() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const scriptProps = PropertiesService.getScriptProperties();
+function _warValidatePreconditions_(spreadsheet) {
+  var props = PropertiesService.getScriptProperties();
 
-  // 1. Check we're in the correct file
-  const workingFileId = scriptProps.getProperty('WARATAH_WORKING_FILE_ID');
+  // Check 1: Working file ID
+  var workingFileId = props.getProperty('WARATAH_WORKING_FILE_ID');
   if (!workingFileId) {
-    throw new Error('WARATAH_WORKING_FILE_ID not set in Script Properties');
+    throw new Error('Script Property WARATAH_WORKING_FILE_ID is not set.');
+  }
+  if (spreadsheet.getId() !== workingFileId) {
+    throw new Error(
+      'Wrong file! Expected WARATAH_WORKING_FILE_ID=' + workingFileId +
+      ' but running on ' + spreadsheet.getId()
+    );
   }
 
-  if (ss.getId() !== workingFileId) {
-    throw new Error(`Wrong file! This is not "The Waratah - Current Week". Expected ID: ${workingFileId}, Got: ${ss.getId()}`);
-  }
-
-  // 2. Check venue name
-  const venueName = scriptProps.getProperty('VENUE_NAME');
+  // Check 2: Venue name
+  var venueName = props.getProperty('VENUE_NAME');
   if (venueName !== 'WARATAH') {
-    throw new Error(`Wrong venue! Expected WARATAH, got: ${venueName}`);
+    throw new Error('VENUE_NAME must be WARATAH, got: ' + venueName);
   }
 
-  // 3. Check archive folder exists
-  const archiveFolderId = scriptProps.getProperty('ARCHIVE_ROOT_FOLDER_ID');
+  // Check 3: Archive folder
+  var archiveFolderId = props.getProperty('ARCHIVE_ROOT_FOLDER_ID');
   if (!archiveFolderId) {
-    throw new Error('ARCHIVE_ROOT_FOLDER_ID not set in Script Properties');
+    throw new Error('Script Property ARCHIVE_ROOT_FOLDER_ID is not set.');
   }
-
   try {
     DriveApp.getFolderById(archiveFolderId);
   } catch (e) {
-    throw new Error(`Archive folder not found: ${archiveFolderId}`);
+    throw new Error('Archive folder not accessible: ' + archiveFolderId);
   }
 
-  // 4. Check WEDNESDAY sheet exists (date validation happens in summary generation)
-  const wednesdaySheet = getSheetByDayPrefix_(ss, 'WEDNESDAY');
+  // Check 4: Wednesday sheet exists
+  var wednesdaySheet = _warFindSheetByPrefix_(spreadsheet, 'WEDNESDAY');
   if (!wednesdaySheet) {
-    throw new Error('WEDNESDAY sheet not found');
+    throw new Error('WEDNESDAY sheet not found in spreadsheet.');
   }
 
-  const wednesdayDate = getFieldValue(wednesdaySheet, 'date');
-  if (wednesdayDate && wednesdayDate instanceof Date) {
-    Logger.log(`Validation passed. Working file: ${ss.getName()}, Previous week starting: ${wednesdayDate}`);
-  } else {
-    Logger.log(`Validation passed. Working file: ${ss.getName()}. No previous week data (fresh template).`);
+  Logger.log('_warValidatePreconditions_: passed. File: ' + spreadsheet.getName());
+}
+
+/**
+ * Idempotency check: returns true if the rollover has already run this week.
+ * Detects by comparing the WEDNESDAY tab's current date to what next-Wednesday would be.
+ *
+ * @param {Spreadsheet} spreadsheet
+ * @returns {boolean}
+ */
+function _warAlreadyRolledOver_(spreadsheet) {
+  try {
+    var wednesdaySheet = _warFindSheetByPrefix_(spreadsheet, 'WEDNESDAY');
+    if (!wednesdaySheet) return false;
+
+    var currentDateVal = wednesdaySheet.getRange('B3').getValue();
+    if (!(currentDateVal instanceof Date) || isNaN(currentDateVal.getTime())) return false;
+
+    var expectedNextWed = _warCalculateNextSunday_();
+    // expectedNextSunday - 4 days = next Wednesday
+    var expectedNextWedDate = new Date(expectedNextWed);
+    expectedNextWedDate.setDate(expectedNextWed.getDate() - 4);
+
+    var currentDateStr = Utilities.formatDate(currentDateVal, WAR_ROLLOVER_TZ, 'yyyy-MM-dd');
+    var expectedStr = Utilities.formatDate(expectedNextWedDate, WAR_ROLLOVER_TZ, 'yyyy-MM-dd');
+
+    return currentDateStr === expectedStr;
+  } catch (e) {
+    Logger.log('_warAlreadyRolledOver_: check failed (non-blocking) — ' + e.message);
+    return false;
   }
 }
 
+
 // ============================================================================
-// WEEK SUMMARY FUNCTIONS
+// WEEK SUMMARY
 // ============================================================================
 
 /**
- * Generates summary of previous week
+ * Generates a summary of the completed week (Wed–Sun).
  *
- * Calculates:
- * - Week ending date
- * - Total net revenue
- * - Total tips
- * - Number of shifts completed
- * - Total to-dos
- *
- * @returns {Object} Summary object with week statistics
+ * @param {Spreadsheet} spreadsheet
+ * @returns {Object} { weekEndDate, totalRevenue, totalTips, shiftsReported, days }
  */
-function generateWeekSummary_() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+function _warGenerateWeekSummary_(spreadsheet) {
+  var totalRevenue = 0;
+  var totalTips = 0;
+  var shiftsReported = 0;
+  var weekEndDate = null;
+  var days = [];
 
-  let totalNetRevenue = 0;
-  let totalCashTips = 0;
-  let totalCardTips = 0;
-  let shiftsCompleted = 0;
-  let totalTodos = 0;
-  let weekEndingDate = null;
-
-  // Iterate through all day sheets
-  DAY_SHEETS.forEach((dayName, index) => {
-    const sheet = getSheetByDayPrefix_(ss, dayName);
+  WAR_ROLLOVER_ACTIVE_DAYS.forEach(function(dayPrefix) {
+    var sheet = _warFindSheetByPrefix_(spreadsheet, dayPrefix);
     if (!sheet) {
-      Logger.log(`⚠️ Warning: ${dayName} sheet not found, skipping`);
+      days.push({ name: dayPrefix, date: 'N/A', revenue: 0, mod: '' });
       return;
     }
 
-    // Get date
-    const date = getFieldValue(sheet, 'date');
-    if (date && date instanceof Date) {
-      weekEndingDate = date; // Last day (Sunday) will be week ending
-      shiftsCompleted++;
+    var dateVal = '';
+    var modVal = '';
+    var revenueVal = 0;
 
-      // Get financial data
-      const netRev = parseFloat(getFieldValue(sheet, 'netRevenue')) || 0;
-      const cashTips = parseFloat(getFieldValue(sheet, 'cashTips')) || 0;
-      const cardTips = parseFloat(getFieldValue(sheet, 'cardTips')) || 0;
-
-      totalNetRevenue += netRev;
-      totalCashTips += cashTips;
-      totalCardTips += cardTips;
-
-      // Count to-dos (A53:E61 = 9 rows, merged A:E — value lives in col A)
-      // Combined A:F read — intentional, accesses both task (col A) and assignee (col F)
-      const todoRange = sheet.getRange('A53:F61');
-      const todoValues = todoRange.getValues();
-      todoValues.forEach(row => {
-        if (row[0]) totalTodos++; // If first column has content, count as todo
-      });
+    try {
+      var rawDate = sheet.getRange('B3').getValue();
+      if (rawDate instanceof Date && !isNaN(rawDate.getTime())) {
+        dateVal = Utilities.formatDate(rawDate, WAR_ROLLOVER_TZ, 'dd/MM/yyyy');
+        // Sunday is the week ending date
+        if (dayPrefix === 'SUNDAY') {
+          weekEndDate = dateVal;
+        }
+      }
+    } catch (e) {
+      Logger.log('_warGenerateWeekSummary_: date read error on ' + dayPrefix + ': ' + e.message);
     }
+
+    try {
+      var rawMod = sheet.getRange('B4').getDisplayValue();
+      modVal = (rawMod || '').trim();
+    } catch (e) { /* non-blocking */ }
+
+    try {
+      var rawRev = sheet.getRange('B34').getValue();
+      revenueVal = parseFloat(rawRev) || 0;
+      if (revenueVal > 0) shiftsReported++;
+      totalRevenue += revenueVal;
+    } catch (e) {
+      Logger.log('_warGenerateWeekSummary_: revenue read error on ' + dayPrefix + ': ' + e.message);
+    }
+
+    try {
+      var rawTips = sheet.getRange('B36').getValue();
+      totalTips += parseFloat(rawTips) || 0;
+    } catch (e) { /* non-blocking */ }
+
+    days.push({ name: dayPrefix, date: dateVal, revenue: revenueVal, mod: modVal });
   });
 
-  if (!weekEndingDate) {
-    throw new Error('No valid dates found in week. Cannot generate summary.');
+  if (!weekEndDate && days.length > 0) {
+    weekEndDate = days[days.length - 1].date || 'Unknown';
+  }
+
+  if (!weekEndDate || weekEndDate === 'N/A' || weekEndDate === 'Unknown') {
+    throw new Error('No valid dates found in active day sheets. Cannot generate summary.');
   }
 
   return {
-    weekEnding: Utilities.formatDate(weekEndingDate, 'Australia/Sydney', 'dd.MM.yyyy'),
-    weekEndingDate: weekEndingDate,
-    totalNetRevenue: totalNetRevenue,
-    totalCashTips: totalCashTips,
-    totalCardTips: totalCardTips,
-    totalTips: totalCashTips + totalCardTips,
-    shiftsCompleted: shiftsCompleted,
-    totalTodos: totalTodos
+    weekEndDate: weekEndDate,
+    totalRevenue: totalRevenue,
+    totalTips: totalTips,
+    shiftsReported: shiftsReported,
+    days: days
   };
 }
 
+
 // ============================================================================
-// ARCHIVE EXPORT FUNCTIONS
+// ARCHIVE — PDF
 // ============================================================================
 
 /**
- * Exports PDF of entire spreadsheet to archive
+ * Exports all 5 active day sheets (Wed–Sun) as a single multi-page PDF.
+ * Hides non-day sheets before export, restores visibility after.
  *
- * Creates PDF in: Archive/YYYY/YYYY-MM/pdfs/
- * Filename: "Waratah Shift Report W.E. DD.MM.YYYY.pdf"
- *
- * @param {Object} summary - Week summary object
- * @returns {File} Created PDF file
+ * @param {Spreadsheet} spreadsheet
+ * @param {string} weekEndDate - "DD/MM/YYYY"
+ * @returns {Object} { archivePath, fileUrl, exported }
  */
-function exportPdfToArchive_(summary) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const scriptProps = PropertiesService.getScriptProperties();
+function _warExportPdfToArchive_(spreadsheet, weekEndDate) {
+  var props = PropertiesService.getScriptProperties();
+  var archiveRootId = props.getProperty('ARCHIVE_ROOT_FOLDER_ID');
+  var pdfFileName = 'Waratah Shift Report W.E. ' + weekEndDate.replace(/\//g, '.') + '.pdf';
 
-  // 1. Get archive folder
-  const archiveRootId = scriptProps.getProperty('ARCHIVE_ROOT_FOLDER_ID');
-  const archiveRoot = DriveApp.getFolderById(archiveRootId);
+  var allSheets = spreadsheet.getSheets();
+  var originallyHidden = {};
+  allSheets.forEach(function(s) {
+    originallyHidden[s.getSheetId()] = s.isSheetHidden();
+  });
 
-  // 2. Create/get year/month/pdfs folder structure
-  const year = Utilities.formatDate(summary.weekEndingDate, 'Australia/Sydney', 'yyyy');
-  const yearMonth = Utilities.formatDate(summary.weekEndingDate, 'Australia/Sydney', 'yyyy-MM');
+  // Find active day sheet IDs
+  var activeDaySheetIds = {};
+  WAR_ROLLOVER_ACTIVE_DAYS.forEach(function(dayPrefix) {
+    var sheet = _warFindSheetByPrefix_(spreadsheet, dayPrefix);
+    if (sheet) activeDaySheetIds[sheet.getSheetId()] = true;
+  });
 
-  let yearFolder = getOrCreateFolder_(archiveRoot, year);
-  let monthFolder = getOrCreateFolder_(yearFolder, yearMonth);
-  let pdfsFolder = getOrCreateFolder_(monthFolder, 'pdfs');
-
-  // 3. Generate PDF
-  const blob = ss.getAs('application/pdf');
-  const filename = `Waratah Shift Report W.E. ${summary.weekEnding}.pdf`;
-
-  // 4. Create file in pdfs folder
-  const pdfFile = pdfsFolder.createFile(blob);
-  pdfFile.setName(filename);
-
-  Logger.log(`PDF created: ${filename} in ${pdfsFolder.getName()}`);
-
-  return pdfFile;
-}
-
-/**
- * Creates Google Sheets snapshot in archive
- *
- * Creates copy in: Archive/YYYY/YYYY-MM/sheets/
- * Filename: "Waratah Shift Report W.E. DD.MM.YYYY"
- *
- * Note: This is a static snapshot (scripts don't copy, which is fine)
- *
- * @param {Object} summary - Week summary object
- * @returns {File} Created snapshot file
- */
-function createArchiveSnapshot_(summary) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const scriptProps = PropertiesService.getScriptProperties();
-
-  // 1. Get archive folder
-  const archiveRootId = scriptProps.getProperty('ARCHIVE_ROOT_FOLDER_ID');
-  const archiveRoot = DriveApp.getFolderById(archiveRootId);
-
-  // 2. Create/get year/month/sheets folder structure
-  const year = Utilities.formatDate(summary.weekEndingDate, 'Australia/Sydney', 'yyyy');
-  const yearMonth = Utilities.formatDate(summary.weekEndingDate, 'Australia/Sydney', 'yyyy-MM');
-
-  let yearFolder = getOrCreateFolder_(archiveRoot, year);
-  let monthFolder = getOrCreateFolder_(yearFolder, yearMonth);
-  let sheetsFolder = getOrCreateFolder_(monthFolder, 'sheets');
-
-  // 3. Make copy
-  const filename = `Waratah Shift Report W.E. ${summary.weekEnding}`;
-  const driveFile = DriveApp.getFileById(ss.getId());
-  const snapshot = driveFile.makeCopy(filename, sheetsFolder);
-
-  Logger.log(`Snapshot created: ${filename} in ${sheetsFolder.getName()}`);
-
-  return snapshot;
-}
-
-/**
- * Finds a sheet whose name starts with the given day name
- *
- * Handles tab names with appended dates (e.g. "WEDNESDAY 26/02")
- * so lookups work before and after renaming.
- *
- * @param {Spreadsheet} ss - The spreadsheet
- * @param {string} dayName - Day prefix to match (e.g. "WEDNESDAY")
- * @returns {Sheet|null} The sheet, or null if not found
- */
-function getSheetByDayPrefix_(ss, dayName) {
-  return ss.getSheets().find(s => s.getName().startsWith(dayName)) || null;
-}
-
-/**
- * Gets existing folder or creates new one
- *
- * @param {Folder} parentFolder - Parent folder
- * @param {string} folderName - Name of folder to get/create
- * @returns {Folder} The folder
- */
-function getOrCreateFolder_(parentFolder, folderName) {
-  const folders = parentFolder.getFoldersByName(folderName);
-
-  if (folders.hasNext()) {
-    return folders.next();
-  } else {
-    return parentFolder.createFolder(folderName);
+  if (Object.keys(activeDaySheetIds).length === 0) {
+    Logger.log('_warExportPdfToArchive_: No active day sheets found. Skipping PDF export.');
+    return { exported: false, archivePath: 'N/A', fileUrl: '' };
   }
-}
 
-// ============================================================================
-// DATA CLEARING FUNCTIONS
-// ============================================================================
+  var pdfBlob = null;
 
-/**
- * Clears all data fields on all day sheets
- *
- * CRITICAL: Uses clearContent() NOT clear()
- * - clearContent() removes values only (preserves formatting, validation, formulas)
- * - clear() destroys everything (breaks merged cells, validation, formulas)
- *
- * Clears all fields in CLEARABLE_FIELD_KEYS using RunWaratah.js helpers
- */
-function clearAllSheetData_() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-
-  let totalFieldsCleared = 0;
-
-  // Iterate through all day sheets
-  DAY_SHEETS.forEach(dayName => {
-    const sheet = getSheetByDayPrefix_(ss, dayName);
-    if (!sheet) {
-      Logger.log(`⚠️ Warning: ${dayName} sheet not found, skipping`);
-      return;
-    }
-
-    Logger.log(`Clearing ${sheet.getName()}...`);
-
-    // Clear each field via named range helper (falls back to hardcoded cell if range missing)
-    CLEARABLE_FIELD_KEYS.forEach(fieldKey => {
-      try {
-        const range = getFieldRange(sheet, fieldKey);
-        range.clearContent(); // ✅ CRITICAL: clearContent() not clear()
-        totalFieldsCleared++;
-      } catch (e) {
-        Logger.log(`⚠️ Warning: Failed to clear ${dayName} ${fieldKey}: ${e.message}`);
+  try {
+    // Show active sheets, hide everything else
+    allSheets.forEach(function(s) {
+      var id = s.getSheetId();
+      if (activeDaySheetIds[id]) {
+        if (s.isSheetHidden()) s.showSheet();
+      } else {
+        if (!s.isSheetHidden()) s.hideSheet();
       }
     });
-  });
 
-  Logger.log(`✅ Cleared ${totalFieldsCleared} fields across ${DAY_SHEETS.length} sheets`);
+    var spreadsheetId = spreadsheet.getId();
+    var exportUrl =
+      'https://docs.google.com/spreadsheets/d/' + spreadsheetId + '/export?' +
+      'format=pdf&size=A4&portrait=true&fitw=true' +
+      '&top_margin=0.5&bottom_margin=0.5&left_margin=0.5&right_margin=0.5' +
+      '&sheetnames=false&printtitle=false&pagenumbers=false&gridlines=false';
+
+    var token = ScriptApp.getOAuthToken();
+    var resp = UrlFetchApp.fetch(exportUrl, {
+      headers: { Authorization: 'Bearer ' + token },
+      muteHttpExceptions: true
+    });
+
+    if (resp.getResponseCode() !== 200) {
+      throw new Error('PDF export HTTP ' + resp.getResponseCode());
+    }
+    pdfBlob = resp.getBlob().setName(pdfFileName);
+    Logger.log('_warExportPdfToArchive_: PDF generated (' + pdfBlob.getBytes().length + ' bytes)');
+
+  } finally {
+    // Always restore original visibility
+    allSheets.forEach(function(s) {
+      var id = s.getSheetId();
+      var wasHidden = originallyHidden[id];
+      if (wasHidden && !s.isSheetHidden()) {
+        s.hideSheet();
+      } else if (!wasHidden && s.isSheetHidden()) {
+        s.showSheet();
+      }
+    });
+  }
+
+  if (!pdfBlob) {
+    return { exported: false, archivePath: 'N/A', fileUrl: '' };
+  }
+
+  var archiveFolder = _warGetOrCreateArchiveSubfolder_(weekEndDate, 'pdfs', archiveRootId);
+  var pdfFile = archiveFolder.createFile(pdfBlob);
+  Logger.log('_warExportPdfToArchive_: Saved to Drive: ' + pdfFile.getName());
+
+  return {
+    exported: true,
+    archivePath: _warGetArchivePath_(weekEndDate) + '/pdfs/' + pdfFileName,
+    fileUrl: pdfFile.getUrl()
+  };
 }
 
+
 // ============================================================================
-// DATE UPDATE FUNCTIONS
+// ARCHIVE — SHEETS SNAPSHOT
 // ============================================================================
 
 /**
- * Updates all day sheet dates to next week
+ * Creates a Google Sheets copy of the working file in the archive folder.
  *
- * Calculates next Wednesday based on TODAY'S date and sets:
- * - WEDNESDAY: next Wednesday
- * - THURSDAY: next Wednesday + 1 day
- * - FRIDAY: next Wednesday + 2 days
- * - SATURDAY: next Wednesday + 3 days
- * - SUNDAY: next Wednesday + 4 days
- *
- * Updates DATE_FIELD (B3:F3) on each sheet
- *
- * @returns {Date} Next Wednesday's date
+ * @param {Spreadsheet} spreadsheet
+ * @param {string} weekEndDate - "DD/MM/YYYY"
+ * @returns {Object} { archivePath, fileUrl }
  */
-function updateDatesToNextWeek_() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+function _warCreateArchiveSnapshot_(spreadsheet, weekEndDate) {
+  var props = PropertiesService.getScriptProperties();
+  var archiveRootId = props.getProperty('ARCHIVE_ROOT_FOLDER_ID');
+  var snapshotName = 'Waratah Shift Report W.E. ' + weekEndDate.replace(/\//g, '.');
 
-  // 1. Get TODAY's date (in Australia/Sydney timezone)
-  const today = new Date();
+  var archiveFolder = _warGetOrCreateArchiveSubfolder_(weekEndDate, 'sheets', archiveRootId);
+  var workingFile = DriveApp.getFileById(spreadsheet.getId());
+  var snapshot = workingFile.makeCopy(snapshotName, archiveFolder);
 
-  // 2. Calculate next Wednesday from today
-  // Wednesday = day 3 (0=Sunday, 1=Monday, 2=Tuesday, 3=Wednesday, ...)
-  const todayDayOfWeek = today.getDay();
-  let daysUntilWednesday;
+  Logger.log('_warCreateArchiveSnapshot_: Snapshot created: ' + snapshot.getName());
 
-  if (todayDayOfWeek === 0) {
-    // Sunday → Wednesday is 3 days away
-    daysUntilWednesday = 3;
-  } else if (todayDayOfWeek === 1) {
-    // Monday → Wednesday is 2 days away
-    daysUntilWednesday = 2;
-  } else if (todayDayOfWeek === 2) {
-    // Tuesday → Wednesday is 1 day away
-    daysUntilWednesday = 1;
-  } else {
-    // Wednesday (3) through Saturday (6) → next Wednesday is 7 - dayOfWeek + 3 days away
-    daysUntilWednesday = (7 - todayDayOfWeek) + 3;
-  }
+  return {
+    archivePath: _warGetArchivePath_(weekEndDate) + '/sheets/' + snapshotName,
+    fileUrl: snapshot.getUrl()
+  };
+}
 
-  const nextWednesday = new Date(today);
-  nextWednesday.setDate(today.getDate() + daysUntilWednesday);
+/**
+ * Gets or creates a dated archive subfolder.
+ * Structure: ArchiveRoot/YYYY/YYYY-MM/{subfolderName}/
+ *
+ * @param {string} weekEndDateStr - "DD/MM/YYYY"
+ * @param {string} subfolderName  - 'pdfs' or 'sheets'
+ * @param {string} archiveRootId
+ * @returns {Folder}
+ */
+function _warGetOrCreateArchiveSubfolder_(weekEndDateStr, subfolderName, archiveRootId) {
+  var parts = weekEndDateStr.split('/');
+  var month = parseInt(parts[1], 10);
+  var year = parseInt(parts[2], 10);
 
-  Logger.log(`Today: ${Utilities.formatDate(today, 'Australia/Sydney', 'EEE dd/MM/yyyy')}`);
-  Logger.log(`Next Wednesday: ${Utilities.formatDate(nextWednesday, 'Australia/Sydney', 'dd/MM/yyyy')}`);
+  var archiveRoot = DriveApp.getFolderById(archiveRootId);
+  var yearStr = String(year);
+  var monthStr = String(month).padStart(2, '0');
+  var yearMonthStr = yearStr + '-' + monthStr;
 
-  // 3. Update each day sheet
-  DAY_SHEETS.forEach((dayName, index) => {
-    const sheet = getSheetByDayPrefix_(ss, dayName);
+  var yearFolder = _warGetOrCreateSubfolder_(archiveRoot, yearStr);
+  var monthFolder = _warGetOrCreateSubfolder_(yearFolder, yearMonthStr);
+  return _warGetOrCreateSubfolder_(monthFolder, subfolderName);
+}
+
+function _warGetOrCreateSubfolder_(parent, name) {
+  var existing = parent.getFoldersByName(name);
+  return existing.hasNext() ? existing.next() : parent.createFolder(name);
+}
+
+function _warGetArchivePath_(weekEndDateStr) {
+  var parts = weekEndDateStr.split('/');
+  var year = parts[2];
+  var month = parts[1].padStart(2, '0');
+  return 'Archive/' + year + '/' + year + '-' + month;
+}
+
+
+// ============================================================================
+// DATA CLEARING (Active days only: Wed–Sun)
+// ============================================================================
+
+/**
+ * Clears manager-input fields on active day sheets (Wed–Sun).
+ * Mon/Tue are NOT cleared — they only get renamed.
+ *
+ * Uses getClearableFieldKeys_() from RunWaratah.js (auto-excludes isFormula:true).
+ * Additional exclusion: cashCounted (C18) and cashVariance (C26) are formula cells
+ * and protected by isFormula:true so they are already excluded automatically.
+ * expectedCash (C24) IS clearable (manager input).
+ *
+ * @param {Spreadsheet} spreadsheet
+ */
+function _warClearAllSheetData_(spreadsheet) {
+  var clearableKeys = getClearableFieldKeys_(); // from RunWaratah.js
+
+  WAR_ROLLOVER_ACTIVE_DAYS.forEach(function(dayPrefix) {
+    var sheet = _warFindSheetByPrefix_(spreadsheet, dayPrefix);
     if (!sheet) {
-      Logger.log(`⚠️ Warning: ${dayName} sheet not found, skipping`);
+      Logger.log('_warClearAllSheetData_: ' + dayPrefix + ' sheet not found — skipping');
       return;
     }
 
-    // Calculate this day's date (Wednesday + index days)
-    const thisDate = new Date(nextWednesday);
-    thisDate.setDate(thisDate.getDate() + index);
+    Logger.log('Clearing ' + sheet.getName() + '...');
+    var cleared = 0;
+    var failed = 0;
 
-    // Set date in B3:F3 (merged range)
-    const dateRange = sheet.getRange(DATE_FIELD);
-    dateRange.setValue(thisDate);
-    dateRange.setNumberFormat('dd/MM/yyyy'); // Enforce AU date format regardless of template default
+    clearableKeys.forEach(function(fieldKey) {
+      try {
+        var range = getFieldRange(sheet, fieldKey); // from RunWaratah.js
+        range.clearContent(); // singular — correct for Range objects
+        cleared++;
+      } catch (e) {
+        Logger.log('_warClearAllSheetData_: could not clear ' + dayPrefix + '.' + fieldKey + ': ' + e.message);
+        failed++;
+      }
+    });
 
-    // Rename tab to include the date (e.g. "WEDNESDAY 26/02")
-    const dateLabel = Utilities.formatDate(thisDate, 'Australia/Sydney', 'dd/MM/yyyy');
-    sheet.setName(`${dayName} ${dateLabel}`);
+    Logger.log(sheet.getName() + ': cleared ' + cleared + ' fields, ' + failed + ' failed');
+  });
+}
 
-    Logger.log(`${dayName}: ${Utilities.formatDate(thisDate, 'Australia/Sydney', 'dd/MM/yyyy')}`);
+
+// ============================================================================
+// DATE UPDATE (All 7 tabs: Mon–Sun)
+// ============================================================================
+
+/**
+ * Calculates the next Sunday (week ending) from today's date.
+ * Trigger runs Monday 9pm — so "next Sunday" is 6 days away.
+ *
+ * @returns {Date} Next Sunday in Australia/Sydney timezone
+ */
+function _warCalculateNextSunday_() {
+  var today = new Date();
+  var dayOfWeek = today.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+  var daysToSunday = dayOfWeek === 0 ? 7 : 7 - dayOfWeek;
+  var nextSunday = new Date(today);
+  nextSunday.setDate(today.getDate() + daysToSunday);
+  return nextSunday;
+}
+
+/**
+ * Updates date on ALL 7 tabs (Mon–Sun) and renames tabs.
+ * Active tabs (Wed–Sun) also have their date field updated via named range.
+ * Inactive tabs (Mon/Tue) are renamed only.
+ *
+ * @param {Spreadsheet} spreadsheet
+ * @returns {Date} Next Sunday date
+ */
+function _warUpdateAllTabDates_(spreadsheet) {
+  var nextSunday = _warCalculateNextSunday_();
+
+  WAR_ROLLOVER_ALL_DAYS.forEach(function(dayName) {
+    var sheet = _warFindSheetByPrefix_(spreadsheet, dayName);
+    if (!sheet) {
+      Logger.log('_warUpdateAllTabDates_: ' + dayName + ' sheet not found — skipping');
+      return;
+    }
+
+    var offset = WAR_ROLLOVER_OFFSETS[dayName];
+    var thisDate = new Date(nextSunday);
+    thisDate.setDate(nextSunday.getDate() + offset);
+
+    var day = String(thisDate.getDate()).padStart(2, '0');
+    var month = String(thisDate.getMonth() + 1).padStart(2, '0');
+    var year = thisDate.getFullYear();
+    var formattedDate = day + '/' + month + '/' + year;
+
+    // Rename the tab regardless of active/inactive
+    var newTabName = dayName + ' ' + formattedDate;
+    sheet.setName(newTabName);
+
+    // Write date to B3:F3 on all 7 tabs (even Mon/Tue — needed for named range health)
+    try {
+      var dateRange = sheet.getRange('B3:F3');
+      dateRange.clearContent();
+      dateRange.getCell(1, 1).setValue(formattedDate);
+    } catch (e) {
+      Logger.log('_warUpdateAllTabDates_: could not stamp date on ' + dayName + ': ' + e.message);
+    }
+
+    Logger.log(dayName + ' -> "' + newTabName + '"');
   });
 
-  return nextWednesday;
+  return nextSunday;
 }
 
+
 // ============================================================================
-// NOTIFICATION FUNCTIONS
+// DRY RUN
 // ============================================================================
 
 /**
- * Sends rollover notifications via email and Slack
- *
- * @param {Object} summary - Week summary object
- * @param {Date} nextWeekStart - Next week's Monday date
- * @param {File} pdfFile - Archived PDF file
- * @param {File} snapshotFile - Archived snapshot file
+ * Dry-run mode: logs what rollover would do without making any changes.
+ * Shows UI alert with report.
  */
-function sendRolloverNotifications_(summary, nextWeekStart, pdfFile, snapshotFile) {
-  const scriptProps = PropertiesService.getScriptProperties();
+function _warDryRun_() {
+  Logger.log('========== WARATAH ROLLOVER DRY RUN ==========');
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
 
-  // 1. Build notification content
-  const weekEndingFormatted = summary.weekEnding;
-  const nextWeekFormatted = Utilities.formatDate(nextWeekStart, 'Australia/Sydney', 'dd/MM/yyyy');
+  var report = '=== ROLLOVER DRY RUN (no changes) ===\n\n';
 
-  const emailBody = `
-    <h2>Weekly Rollover Complete - The Waratah</h2>
-
-    <p><strong>Previous Week Archived:</strong> W.E. ${weekEndingFormatted}</p>
-
-    <h3>Week Summary</h3>
-    <ul>
-      <li>Shifts Completed: ${summary.shiftsCompleted}/5</li>
-      <li>Total Net Revenue: $${summary.totalNetRevenue.toFixed(2)}</li>
-      <li>Total Tips: $${summary.totalTips.toFixed(2)} (Cash: $${summary.totalCashTips.toFixed(2)}, Card: $${summary.totalCardTips.toFixed(2)})</li>
-      <li>Total To-Dos: ${summary.totalTodos}</li>
-    </ul>
-
-    <h3>Archived Files</h3>
-    <ul>
-      <li>PDF: <a href="${pdfFile.getUrl()}">${pdfFile.getName()}</a></li>
-      <li>Google Sheets Snapshot: <a href="${snapshotFile.getUrl()}">${snapshotFile.getName()}</a></li>
-    </ul>
-
-    <h3>New Week</h3>
-    <p><strong>Week Starting:</strong> ${nextWeekFormatted}</p>
-    <p>All data cleared. Dates updated. Ready for new week.</p>
-  `;
-
-  // 2. Send email
+  // Validate (read-only)
   try {
-    const recipientsProp = scriptProps.getProperty('WARATAH_EMAIL_RECIPIENTS') || '';
-    let emailTo;
-    try {
-      const recipientsMap = JSON.parse(recipientsProp);
-      emailTo = Object.keys(recipientsMap).join(',');
-    } catch (parseErr) {
-      // Fallback: treat as comma-separated string or single address
-      emailTo = recipientsProp || 'evan@pollenhospitality.com';
-    }
-    GmailApp.sendEmail(
-      emailTo,
-      `Waratah Weekly Rollover - W.E. ${weekEndingFormatted}`,
-      '',
-      { htmlBody: emailBody }
-    );
-    Logger.log('✅ Email sent to: ' + emailTo);
+    _warValidatePreconditions_(spreadsheet);
+    report += 'Preconditions: PASS\n\n';
   } catch (e) {
-    Logger.log(`⚠️ Email notification failed: ${e.message}`);
+    report += 'Preconditions: FAIL — ' + e.message + '\n\n';
   }
 
-  // 3. Send Slack notification
-  try {
-    const slackWebhook = scriptProps.getProperty('WARATAH_SLACK_WEBHOOK_LIVE');
-
-    if (slackWebhook) {
-      const slackBlocks = [
-        {
-          type: 'header',
-          text: { type: 'plain_text', text: 'Weekly Rollover Complete - The Waratah' }
-        },
-        {
-          type: 'section',
-          text: {
-            type: 'mrkdwn',
-            text: `*Previous Week Archived:* W.E. ${weekEndingFormatted}\n*New Week Starting:* ${nextWeekFormatted}`
-          }
-        },
-        {
-          type: 'section',
-          fields: [
-            { type: 'mrkdwn', text: `*Shifts:*\n${summary.shiftsCompleted}/5` },
-            { type: 'mrkdwn', text: `*Net Revenue:*\n$${summary.totalNetRevenue.toFixed(2)}` },
-            { type: 'mrkdwn', text: `*Total Tips:*\n$${summary.totalTips.toFixed(2)}` },
-            { type: 'mrkdwn', text: `*To-Dos:*\n${summary.totalTodos}` }
-          ]
-        },
-        {
-          type: 'actions',
-          elements: [
-            {
-              type: 'button',
-              text: { type: 'plain_text', text: 'View PDF' },
-              url: pdfFile.getUrl()
-            },
-            {
-              type: 'button',
-              text: { type: 'plain_text', text: 'View Snapshot' },
-              url: snapshotFile.getUrl()
-            }
-          ]
-        }
-      ];
-
-      const slackResp = UrlFetchApp.fetch(slackWebhook, {
-        method: 'post',
-        contentType: 'application/json',
-        payload: JSON.stringify({
-          blocks: slackBlocks,
-          text: `Weekly Rollover Complete - W.E. ${weekEndingFormatted}`
-        }),
-        muteHttpExceptions: true
-      });
-      const slackCode = slackResp.getResponseCode();
-      if (slackCode < 200 || slackCode >= 300) {
-        Logger.log('⚠️ Slack webhook returned HTTP ' + slackCode + ': ' + slackResp.getContentText());
-      } else {
-        Logger.log('✅ Slack notification sent');
-      }
-    }
-  } catch (e) {
-    Logger.log(`⚠️ Slack notification failed: ${e.message}`);
+  // Idempotency
+  if (_warAlreadyRolledOver_(spreadsheet)) {
+    report += 'Idempotency: Already rolled over this week — would be a no-op.\n\n';
+  } else {
+    report += 'Idempotency: Not yet rolled over — rollover would proceed.\n\n';
   }
+
+  // Next week dates
+  var nextSunday = _warCalculateNextSunday_();
+  report += '--- Next week tab renames ---\n';
+  WAR_ROLLOVER_ALL_DAYS.forEach(function(dayName) {
+    var offset = WAR_ROLLOVER_OFFSETS[dayName];
+    var thisDate = new Date(nextSunday);
+    thisDate.setDate(nextSunday.getDate() + offset);
+    var formatted = Utilities.formatDate(thisDate, WAR_ROLLOVER_TZ, 'dd/MM/yyyy');
+    var isActive = WAR_ROLLOVER_ACTIVE_DAYS.indexOf(dayName) !== -1;
+    report += '  ' + dayName + ' ' + formatted + (isActive ? ' [CLEAR + RENAME]' : ' [RENAME ONLY]') + '\n';
+  });
+
+  report += '\n--- Fields to clear per active day ---\n';
+  var clearableKeys = getClearableFieldKeys_();
+  report += '  ' + clearableKeys.length + ' fields × 5 days = ' + (clearableKeys.length * 5) + ' ranges\n';
+  report += '  Keys: ' + clearableKeys.join(', ') + '\n';
+  report += '  Formula cells excluded: cashCounted (C18), cashTakings (C19), cashVariance (C26), netRevenue (B34), etc.\n';
+
+  report += '\nDRY RUN COMPLETE — No changes made.\n';
+  report += 'Run "Run Rollover Now" to execute.';
+
+  Logger.log(report);
+
+  try {
+    SpreadsheetApp.getUi().alert('Rollover Dry Run', report, SpreadsheetApp.getUi().ButtonSet.OK);
+  } catch (uiErr) { /* trigger context */ }
 }
 
+
 // ============================================================================
-// POST-ROLLOVER VALIDATION
+// POST-ROLLOVER VALIDATION (non-blocking)
 // ============================================================================
 
 /**
- * Validates the rollover result after completion.
- * Checks each day sheet for a non-empty date and a resolvable netRevenue range.
- * Posts a Slack alert to WARATAH_SLACK_WEBHOOK_TEST if any checks fail.
- * Non-blocking — never throws; rollover is already complete by this point.
+ * Validates rollover result after completion.
+ * Checks each active day sheet for a non-empty date and resolvable netRevenue range.
+ * Posts Slack alert on failure. Never throws.
  *
+ * @param {Spreadsheet} spreadsheet
  * @returns {{ valid: boolean, issues: string[] }}
  */
-function validateRolloverResult_() {
-  const issues = [];
+function _warValidateRolloverResult_(spreadsheet) {
+  var issues = [];
 
   try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-
-    DAY_SHEETS.forEach(function(dayName) {
-      const sheet = getSheetByDayPrefix_(ss, dayName);
+    WAR_ROLLOVER_ACTIVE_DAYS.forEach(function(dayName) {
+      var sheet = _warFindSheetByPrefix_(spreadsheet, dayName);
       if (!sheet) {
-        issues.push(dayName + ': sheet not found');
+        issues.push(dayName + ': sheet not found after rollover');
         return;
       }
 
-      // Check date field is non-empty
+      // Check date field
       try {
-        const dateVal = getFieldValue(sheet, 'date');
-        if (!dateVal) {
-          issues.push(sheet.getName() + ': date field is empty after rollover');
+        var dateVal = sheet.getRange('B3').getValue();
+        if (!dateVal || dateVal === '') {
+          issues.push(sheet.getName() + ': date field empty after rollover');
         }
       } catch (e) {
-        issues.push(sheet.getName() + ': date field read error — ' + e.message);
+        issues.push(sheet.getName() + ': date read error — ' + e.message);
       }
 
-      // Check netRevenue named range resolves to a Range object
+      // Check netRevenue named range still resolves
       try {
-        const rangeObj = getFieldRange(sheet, 'netRevenue');
-        if (!rangeObj) {
+        var revRange = getFieldRange(sheet, 'netRevenue');
+        if (!revRange) {
           issues.push(sheet.getName() + ': netRevenue range did not resolve');
         }
       } catch (e) {
@@ -746,326 +766,114 @@ function validateRolloverResult_() {
       }
     });
 
-    if (issues.length === 0) {
+    var valid = issues.length === 0;
+
+    if (valid) {
       Logger.log('Post-rollover validation: PASSED');
-      return { valid: true, issues: [] };
-    }
-
-    // Post Slack alert with failure list
-    Logger.log('Post-rollover validation: FAILED — ' + issues.join('; '));
-    try {
-      const webhook = PropertiesService.getScriptProperties()
-        .getProperty('WARATAH_SLACK_WEBHOOK_TEST');
-      if (webhook) {
-        const blocks = [
-          bk_header('Rollover Validation Failed'),
-          bk_section(
-            '*The following issues were detected after weekly rollover:*\n' +
-            issues.map(function(i) { return '• ' + i; }).join('\n')
-          ),
-          bk_context(['Check Apps Script logs for full details'])
-        ];
-        bk_post(webhook, blocks, 'Waratah rollover validation failed: ' + issues.length + ' issue(s)');
+    } else {
+      Logger.log('Post-rollover validation: FAILED — ' + issues.join('; '));
+      try {
+        var webhook = PropertiesService.getScriptProperties().getProperty('WARATAH_SLACK_WEBHOOK_TEST');
+        if (webhook) {
+          var blocks = [
+            bk_header('Post-Rollover Validation FAILED'),
+            bk_section('*The Waratah* — rollover completed but validation found issues:\n' +
+              issues.map(function(i) { return '• ' + i; }).join('\n'))
+          ];
+          bk_post(webhook, blocks, 'Waratah post-rollover validation failed: ' + issues.length + ' issue(s)');
+        }
+      } catch (slackErr) {
+        Logger.log('_warValidateRolloverResult_: Slack alert failed — ' + slackErr.message);
       }
-    } catch (slackErr) {
-      Logger.log('validateRolloverResult_: Slack alert failed — ' + slackErr.message);
     }
 
-    return { valid: false, issues: issues };
+    return { valid: valid, issues: issues };
 
   } catch (e) {
-    Logger.log('validateRolloverResult_: unexpected error (non-blocking) — ' + e.message);
-    return { valid: false, issues: ['Validation check itself failed: ' + e.message] };
+    Logger.log('_warValidateRolloverResult_: unexpected error — ' + e.message);
+    return { valid: false, issues: ['Validation check failed: ' + e.message] };
   }
 }
 
-// ============================================================================
-// PREVIEW / DRY RUN FUNCTIONS
-// ============================================================================
-
-/**
- * Preview rollover without making changes (dry run)
- *
- * Shows what WOULD happen without actually:
- * - Clearing data
- * - Updating dates
- * - Creating archive files
- * - Sending notifications
- *
- * Use this to test before running actual rollover
- */
-function previewRollover() {
-  const ui = SpreadsheetApp.getUi();
-
-  try {
-    Logger.log('========================================');
-    Logger.log('PREVIEW ROLLOVER (DRY RUN)');
-    Logger.log('========================================');
-
-    // 1. Validate
-    Logger.log('Validating preconditions...');
-    validatePreconditions_();
-    Logger.log('✅ Validation passed');
-
-    // 2. Generate summary (if previous week exists)
-    Logger.log('Generating week summary...');
-    let summary;
-    try {
-      summary = generateWeekSummary_();
-    } catch (e) {
-      if (e.message.includes('No valid dates found')) {
-        // Fresh template - no previous week to summarize
-        summary = null;
-        Logger.log('⚠️ No previous week data found (fresh template)');
-      } else {
-        throw e;
-      }
-    }
-
-    // 3. Calculate next week based on today
-    const today = new Date();
-    const todayDayOfWeek = today.getDay();
-    let daysUntilWednesday;
-
-    if (todayDayOfWeek === 0) {
-      daysUntilWednesday = 3; // Sunday → Wednesday
-    } else if (todayDayOfWeek === 1) {
-      daysUntilWednesday = 2; // Monday → Wednesday
-    } else if (todayDayOfWeek === 2) {
-      daysUntilWednesday = 1; // Tuesday → Wednesday
-    } else {
-      daysUntilWednesday = (7 - todayDayOfWeek) + 3; // Wed-Sat → next Wednesday
-    }
-
-    const nextWednesday = new Date(today);
-    nextWednesday.setDate(today.getDate() + daysUntilWednesday);
-
-    // 4. Build preview report
-    let report = '=== ROLLOVER PREVIEW ===\n\n';
-
-    if (summary) {
-      // Previous week exists - show summary and archive info
-      report += '📋 PREVIOUS WEEK SUMMARY:\n';
-      report += `  Week Ending: ${summary.weekEnding}\n`;
-      report += `  Shifts Completed: ${summary.shiftsCompleted}/5\n`;
-      report += `  Total Net Revenue: $${summary.totalNetRevenue.toFixed(2)}\n`;
-      report += `  Total Tips: $${summary.totalTips.toFixed(2)}\n`;
-      report += `  Total To-Dos: ${summary.totalTodos}\n\n`;
-
-      report += '📁 ARCHIVE FILES (would create):\n';
-      report += `  PDF: Waratah Shift Report W.E. ${summary.weekEnding}.pdf\n`;
-      report += `  Snapshot: Waratah Shift Report W.E. ${summary.weekEnding}\n\n`;
-    } else {
-      // Fresh template - no previous week
-      report += '📋 PREVIOUS WEEK SUMMARY:\n';
-      report += `  No previous week data found (fresh template)\n`;
-      report += `  Archiving will be skipped\n\n`;
-    }
-
-    report += '🗑️ FIELDS TO CLEAR (per day sheet):\n';
-    CLEARABLE_FIELD_KEYS.forEach(fieldKey => {
-      const fallback = FIELD_CONFIG[fieldKey] ? FIELD_CONFIG[fieldKey].fallback : '(unknown)';
-      report += `  ${fieldKey}: ${fallback}\n`;
-    });
-    report += `\n  Total: ${CLEARABLE_FIELD_KEYS.length} fields × 5 days = ${CLEARABLE_FIELD_KEYS.length * 5} ranges\n\n`;
-
-    report += '📅 NEW WEEK DATES (would update):\n';
-    DAY_SHEETS.forEach((dayName, index) => {
-      const thisDate = new Date(nextWednesday);
-      thisDate.setDate(thisDate.getDate() + index);
-      report += `  ${dayName}: ${Utilities.formatDate(thisDate, 'Australia/Sydney', 'dd/MM/yyyy')}\n`;
-    });
-
-    report += '\n✅ PREVIEW COMPLETE - No changes made\n';
-    report += 'Run performWeeklyRollover() to execute actual rollover';
-
-    Logger.log(report);
-
-    ui.alert(
-      'Rollover Preview (Dry Run)',
-      report,
-      ui.ButtonSet.OK
-    );
-
-  } catch (error) {
-    Logger.log(`❌ Preview failed: ${error.message}`);
-    ui.alert(
-      'Preview Failed',
-      `Error: ${error.message}\n\nCheck Apps Script logs for details.`,
-      ui.ButtonSet.OK
-    );
-  }
-}
 
 // ============================================================================
-// TRIGGER SETUP FUNCTIONS
+// TRIGGER MANAGEMENT
 // ============================================================================
 
 /**
- * Creates time-based trigger for weekly rollover
+ * Creates the Monday 9pm weekly rollover trigger.
+ * Removes any existing rollover trigger first to prevent duplicates.
  *
- * Trigger: Monday 10:00am (every week)
- *
- * Run this once to set up automation.
- * Check Apps Script Editor → Triggers to verify.
+ * WARNING: clasp push destroys all time-based triggers.
+ * Re-run this after every deployment.
  */
-function createWeeklyRolloverTrigger() {
-  // Remove existing rollover triggers first
-  const triggers = ScriptApp.getProjectTriggers();
-  triggers.forEach(trigger => {
-    if (trigger.getHandlerFunction() === 'performWeeklyRollover') {
+function createRolloverTrigger_Waratah() {
+  ScriptApp.getProjectTriggers().forEach(function(trigger) {
+    var fn = trigger.getHandlerFunction();
+    if (fn === 'runWaratahWeeklyRollover' || fn === 'performWeeklyRollover') {
       ScriptApp.deleteTrigger(trigger);
-      Logger.log(`Deleted existing trigger: ${trigger.getUniqueId()}`);
+      Logger.log('createRolloverTrigger_Waratah: deleted existing trigger ' + fn);
     }
   });
 
-  // Create new trigger
-  ScriptApp.newTrigger('performWeeklyRollover')
+  ScriptApp.newTrigger('runWaratahWeeklyRollover')
     .timeBased()
     .onWeekDay(ScriptApp.WeekDay.MONDAY)
-    .atHour(10)
+    .atHour(21)
     .nearMinute(0)
     .create();
 
-  Logger.log('✅ Weekly rollover trigger created: Monday 10:00am');
+  Logger.log('createRolloverTrigger_Waratah: trigger created (Monday 9:00pm)');
 
   try {
     SpreadsheetApp.getUi().alert(
-      'Trigger Created',
-      'Weekly rollover trigger created successfully.\n\nSchedule: Monday 10:00am\n\nVerify in Apps Script Editor → Triggers',
+      'Rollover Trigger Created',
+      'Weekly rollover trigger created.\n\nSchedule: Monday 9:00pm (Australia/Sydney)\n\n' +
+      'Verify in Apps Script Editor > Triggers (clock icon).',
       SpreadsheetApp.getUi().ButtonSet.OK
     );
-  } catch (e) {
-    Logger.log('UI alert skipped — not running in a UI context');
-  }
+  } catch (e) { Logger.log('createRolloverTrigger_Waratah: UI alert skipped — trigger context'); }
 }
 
-// ============================================================================
-// ONE-OFF UTILITY FUNCTIONS
-// ============================================================================
-
 /**
- * ONE-OFF UTILITY — fixSheetNamesAndDateFormat
- *
- * Immediately renames the 5 day sheet tabs and fixes the B3 display format
- * without waiting for or running the full rollover.
- *
- * Use this when:
- *   - Tabs are currently bare names (e.g. "WEDNESDAY") and need the date appended
- *   - B3 is showing the wrong date format and needs to be set to dd/MM/yyyy
- *
- * What it does for each day sheet:
- *   1. Reads the date value from B3:F3 (the DATE_FIELD merged range)
- *   2. Formats it as 'dd/MM/yyyy' using Australia/Sydney timezone
- *   3. Renames the tab to "{DAYNAME} {formattedDate}" (e.g. "WEDNESDAY 26/02/2026")
- *   4. Calls setNumberFormat('dd/MM/yyyy') on B3:F3 to fix the display
- *
- * Safety:
- *   - If B3 is empty or contains a non-Date value, the sheet is skipped with a warning
- *   - Only the 5 day sheets are touched (matched by DAY_SHEETS prefix); all others
- *     (e.g. ADMIN, DATA) are ignored
- *
- * Usage: Run directly from the Apps Script editor (no parameters needed).
- *        Also available via: Admin Tools → Setup & Utilities → Fix Tab Names & Date Format
+ * Removes the weekly rollover trigger.
  */
-function fixSheetNamesAndDateFormat() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const timezone = 'Australia/Sydney';
-  const dateFormat = 'dd/MM/yyyy';
-
-  let fixed = 0;
-  let skipped = 0;
-
-  Logger.log('========================================');
-  Logger.log('fixSheetNamesAndDateFormat — Starting');
-  Logger.log('========================================');
-
-  DAY_SHEETS.forEach(function(dayName) {
-    // Locate the sheet — works for bare names ("WEDNESDAY") and
-    // already-renamed names ("WEDNESDAY 26/02/2026") via startsWith match
-    const sheet = getSheetByDayPrefix_(ss, dayName);
-
-    if (!sheet) {
-      Logger.log('WARNING: No sheet found with prefix "' + dayName + '" — skipping');
-      skipped++;
-      return;
-    }
-
-    // Read the raw value from B3 (left-most cell of the DATE_FIELD merged range)
-    const rawValue = sheet.getRange('B3').getValue();
-
-    // Validate: must be a JavaScript Date object (Sheets returns Date for date cells)
-    if (!rawValue || !(rawValue instanceof Date) || isNaN(rawValue.getTime())) {
-      Logger.log(
-        'WARNING: ' + sheet.getName() + ' — B3 is empty or not a valid Date ' +
-        '(got: ' + rawValue + ', type: ' + typeof rawValue + ') — skipping'
-      );
-      skipped++;
-      return;
-    }
-
-    // Format the date value
-    const formattedDate = Utilities.formatDate(rawValue, timezone, dateFormat);
-
-    // Fix the cell number format so the display renders correctly
-    sheet.getRange(DATE_FIELD).setNumberFormat(dateFormat);
-
-    // Build and apply the new tab name: e.g. "WEDNESDAY 26/02/2026"
-    const newTabName = dayName + ' ' + formattedDate;
-    sheet.setName(newTabName);
-
-    Logger.log('Fixed: "' + sheet.getName() + '" — B3 = ' + formattedDate + ', tab renamed to "' + newTabName + '"');
-    fixed++;
-  });
-
-  Logger.log('========================================');
-  Logger.log('fixSheetNamesAndDateFormat — Done. Fixed: ' + fixed + ', Skipped: ' + skipped);
-  Logger.log('========================================');
-
-  // Surface result to the user when run from the editor or menu
-  try {
-    SpreadsheetApp.getUi().alert(
-      'Fix Tab Names & Date Format — Complete',
-      'Fixed: ' + fixed + ' sheet(s)\n' +
-      'Skipped: ' + skipped + ' sheet(s) (empty B3 or sheet not found)\n\n' +
-      'Check Apps Script logs for details.',
-      SpreadsheetApp.getUi().ButtonSet.OK
-    );
-  } catch (uiErr) {
-    // getUi() is unavailable in trigger context — log only
-    Logger.log('(UI alert skipped — not running in a UI context)');
-  }
-}
-
-// ============================================================================
-// TRIGGER SETUP FUNCTIONS
-// ============================================================================
-
-/**
- * Removes weekly rollover trigger
- *
- * Use this to stop automatic rollover
- */
-function removeWeeklyRolloverTrigger() {
-  const triggers = ScriptApp.getProjectTriggers();
-  let removed = 0;
-
-  triggers.forEach(trigger => {
-    if (trigger.getHandlerFunction() === 'performWeeklyRollover') {
+function removeRolloverTrigger_Waratah() {
+  var removed = 0;
+  ScriptApp.getProjectTriggers().forEach(function(trigger) {
+    var fn = trigger.getHandlerFunction();
+    if (fn === 'runWaratahWeeklyRollover' || fn === 'performWeeklyRollover') {
       ScriptApp.deleteTrigger(trigger);
       removed++;
     }
   });
 
-  Logger.log(`Removed ${removed} rollover trigger(s)`);
+  Logger.log('removeRolloverTrigger_Waratah: removed ' + removed + ' trigger(s)');
 
   try {
     SpreadsheetApp.getUi().alert(
-      'Trigger Removed',
-      `Removed ${removed} weekly rollover trigger(s).\n\nAutomatic rollover is now disabled.`,
+      'Rollover Trigger Removed',
+      'Removed ' + removed + ' rollover trigger(s).\n\nAutomatic rollover is now disabled.',
       SpreadsheetApp.getUi().ButtonSet.OK
     );
-  } catch (e) {
-    Logger.log('UI alert skipped — not running in a UI context');
-  }
+  } catch (e) { Logger.log('removeRolloverTrigger_Waratah: UI alert skipped — trigger context'); }
+}
+
+
+// ============================================================================
+// UTILITY
+// ============================================================================
+
+/**
+ * Finds a sheet by day name prefix (case-insensitive starts-with match).
+ * Handles renamed tabs like "WEDNESDAY 21/05/2026".
+ *
+ * @param {Spreadsheet} spreadsheet
+ * @param {string} dayPrefix - e.g. "WEDNESDAY"
+ * @returns {Sheet|null}
+ */
+function _warFindSheetByPrefix_(spreadsheet, dayPrefix) {
+  return spreadsheet.getSheets().find(function(s) {
+    return s.getName().toUpperCase().startsWith(dayPrefix);
+  }) || null;
 }

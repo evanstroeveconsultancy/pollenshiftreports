@@ -1,6 +1,6 @@
 # Configuration Reference — The Waratah
 
-**Last Updated:** April 2, 2026
+**Last Updated:** May 17, 2026 (Phase 1: WARATAH_SHEET_ID added; WARATAH_WORKING_FILE_ID is now fallback)
 **Type:** Handover guide for managers
 **Audience:** Restaurant managers taking over operations, comfortable with spreadsheets, no coding required
 **Tone:** Clear, practical, friendly
@@ -51,7 +51,7 @@
 
 ---
 
-## Shift Report Settings (22 Properties — March 18, 2026)
+## Shift Report Settings (23 Properties as of Phase 1 — May 2026)
 
 > These settings control the Shift Report system — daily exports, Slack notifications, email recipients, and data warehousing. Found in the **The Waratah - Current Week** spreadsheet.
 
@@ -88,8 +88,9 @@
 | Property | Friendly Name | What It Controls | When You'd Change It |
 |----------|---------------|-----------------|---------------------|
 | `WARATAH_DATA_WAREHOUSE_ID` | Data Warehouse ID | Spreadsheet ID of the central analytics database | If the warehouse is moved or rebuilt |
-| `WARATAH_WORKING_FILE_ID` | Current Spreadsheet ID | Identifies the active shift report file | If the working file is replaced |
-| `WARATAH_SHIFT_REPORT_CURRENT_ID` | Shift Report Backup ID | Backup reference to the current shift report file | If the working file is replaced |
+| `WARATAH_SHEET_ID` | **New Sheet ID** | Primary spreadsheet ID for the new Sakura-aligned sheet (Phase 1). **Set this to activate the new sheet (Phase 2, Wed May 20).** | When activating the new sheet |
+| `WARATAH_WORKING_FILE_ID` | Current Spreadsheet ID | Identifies the active shift report file — used as fallback if `WARATAH_SHEET_ID` is not set | If the working file is replaced |
+| `WARATAH_SHIFT_REPORT_CURRENT_ID` | Shift Report Backup ID | Backup reference — fallback if `WARATAH_SHEET_ID` and `WARATAH_WORKING_FILE_ID` are not set | If the working file is replaced |
 | `WARATAH_CASH_RECON_FOLDER_ID` | Cash Reconciliation Folder | Google Drive folder for cash recon documents | If the folder is moved |
 | `ARCHIVE_ROOT_FOLDER_ID` | Archive Folder | Google Drive folder where weekly reports are saved | If the archive folder is moved |
 | `SLACK_MANAGERS_CHANNEL_WEBHOOK` | Managers Channel Hook | Slack channel where manager summaries are posted | If the webhook expires or channel changes |

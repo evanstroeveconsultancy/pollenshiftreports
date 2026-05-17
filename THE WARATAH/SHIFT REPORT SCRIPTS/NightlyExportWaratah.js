@@ -205,6 +205,18 @@ function continueExport(sheetName, isTest) {
 
     } else {
       // === LIVE PATH ===
+
+      // Guard: Monday and Tuesday are not active Waratah shift days.
+      // The new sheet has Mon/Tue tabs for visual consistency only.
+      const _sheetDayUpper = sheetName.toUpperCase();
+      if (_sheetDayUpper.startsWith('MONDAY') || _sheetDayUpper.startsWith('TUESDAY')) {
+        return {
+          success: false,
+          message: 'Monday and Tuesday are not active Waratah shift days. ' +
+            'Use Wednesday through Sunday only. This tab exists for visual consistency only.'
+        };
+      }
+
       const warnings = [];
 
       // Run integrations — non-blocking. Errors collected for Evan notification.
@@ -873,6 +885,15 @@ function postToSlackFromSheet(spreadsheet, sheet, sheetName, webhookUrl) {
   if (staffText) metaParts.push("Staff: " + staffText);
   blocks.push(bk_context(metaParts));
 
+  // --- Cash Variance (new sheet — C26) ---
+  const cashVarianceRaw = (() => {
+    try {
+      const varCell = (config.ranges && config.ranges.cashVariance) || 'C26';
+      return sheet.getRange(varCell).getDisplayValue().trim();
+    } catch (e_) { return ''; }
+  })();
+  const cashVarianceNum = parseFloat((cashVarianceRaw || '').replace(/[$,\s]/g, '')) || 0;
+
   // --- Financial Dashboard ---
   blocks.push(bk_divider());
   const finFields = [
@@ -884,6 +905,11 @@ function postToSlackFromSheet(spreadsheet, sheet, sheetName, webhookUrl) {
     if (cardTips) tipParts.push("Card " + fmtAUD(cardTips));
     if (cashTips) tipParts.push("Cash " + fmtAUD(cashTips));
     finFields.push(["Tip Split", tipParts.join(" / ")]);
+  }
+  if (cashVarianceNum !== 0 && cashVarianceRaw !== '') {
+    const varianceLabel = cashVarianceNum > 0 ? 'over' : 'under';
+    const absFmt = fmtAUD(Math.abs(cashVarianceNum));
+    finFields.push(["Cash Variance", absFmt + ' (' + varianceLabel + ')']);
   }
   blocks.push(bk_fields(finFields));
 

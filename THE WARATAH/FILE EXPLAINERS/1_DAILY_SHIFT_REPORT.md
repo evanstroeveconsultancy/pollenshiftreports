@@ -1,6 +1,6 @@
 # Daily Shift Report — The Waratah
 
-**Last Updated:** March 18, 2026 (M4-M7: AI Insights Agent upgrade — analytics-driven insights, soft launch routing)
+**Last Updated:** May 17, 2026 (Phase 1: cash reconciliation section added; Monday/Tuesday not active shift days)
 **Type:** Handover guide for managers
 **Audience:** Restaurant managers, non-developers
 
@@ -25,6 +25,7 @@
 - Cash takings — total cash reconciliation
 - Card tips and cash tips — separated
 - All financial breakdown fields (discounts, refunds, taxes, gross sales, etc.)
+- Cash reconciliation fields (new sheet): Public Till and Terrace Till drop counts. The system calculates **Cash Counted** (C18), **Cash Take** (C19), and **Cash Variance** (C26) automatically — do not type into those cells.
 
 **Strongly Recommended (Operational Notes):**
 - Shift summary — what happened during the shift (busy night, slow service, special events, etc.)
@@ -42,6 +43,7 @@
 **Important Notes:**
 - Net Revenue is a formula cell — it calculates automatically based on your other entries. Don't try to type a number into that cell; it won't work. The spreadsheet does the math for you.
 - Covers is also a formula cell — same rule applies.
+- **Cash recon formula cells (new sheet):** Cash Counted (C18), Cash Take (C19), and Cash Variance (C26) are also formula cells — they calculate automatically from your till entries. Only fill in the **Expected Cash** field (C24) — that is your POS-expected cash amount.
 
 ---
 
@@ -261,5 +263,5 @@ See [4_TROUBLESHOOTING.md](4_TROUBLESHOOTING.md) for a full list of known issues
 
 ---
 
-**Last Updated:** March 18, 2026
+**Last Updated:** May 17, 2026
 **Questions?** Contact your tech support or system administrator

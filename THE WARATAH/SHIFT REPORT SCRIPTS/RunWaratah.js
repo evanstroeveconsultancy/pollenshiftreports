@@ -86,9 +86,28 @@ const FIELD_CONFIG = {
   // --- CASH FLOW (formula cells — read only, do NOT clear) ---
   cashTakings: {
     suffix: "SR_CashTakings",
-    fallback: "B15",
+    fallback: "C19",  // New sheet: C19 = cash take (counted minus refloats). Old sheet was B15.
     isFormula: true,
-    description: "Cash takings (formula — do not clear)"
+    description: "Cash take = counted minus refloats (formula C19 — do not clear)"
+  },
+  // --- CASH RECONCILIATION (new 2-till system — new sheet only) ---
+  cashCounted: {
+    suffix: "SR_CashCounted",
+    fallback: "C18",
+    isFormula: true,
+    description: "Cash counted — sum of public + terrace tills (formula C18 — do not clear)"
+  },
+  expectedCash: {
+    suffix: "SR_ExpectedCash",
+    fallback: "C24",
+    isFormula: false,
+    description: "Expected cash from POS system (manager input — safe to clear)"
+  },
+  cashVariance: {
+    suffix: "SR_CashVariance",
+    fallback: "C26",
+    isFormula: true,
+    description: "Cash variance = counted minus expected (formula C26 — do not clear)"
   },
   grossSalesIncCash: {
     suffix: "SR_GrossSalesIncCash",
@@ -252,8 +271,8 @@ const FIELD_CONFIG = {
   }
 };
 
-// Track which fallbacks have been warned (avoid log spam)
-const _fallbackWarnings = new Set();
+// _fallbackWarnings Set removed — silent fallback eliminated in Phase 1 migration.
+// getFieldRange() now throws on missing named ranges (loud failure > silent wrong reads).
 
 
 // ============================================================================
@@ -328,14 +347,13 @@ function getFieldRange(sheet, fieldKey) {
     Logger.log(`Named range lookup error for ${namedRangeName}: ${e.message}`);
   }
 
-  // Log warning once per sheet+field combo
-  const warningKey = `${sheetName}:${fieldKey}`;
-  if (!_fallbackWarnings.has(warningKey)) {
-    Logger.log(`Named Range "${namedRangeName}" not found. Using fallback: ${config.fallback}`);
-    _fallbackWarnings.add(warningKey);
-  }
-
-  return sheet.getRange(config.fallback);
+  // Named range not found or points to wrong sheet — throw loud failure.
+  // Silent fallback is removed: wrong-cell reads are worse than a clear error.
+  // Fix: run setupWaratahNamedRanges_() from Admin Tools > Named Ranges > Setup All Named Ranges.
+  throw new Error(
+    `Named Range "${namedRangeName}" not found on sheet "${sheetName}". ` +
+    `Run setupWaratahNamedRanges_() via Admin Tools > Named Ranges > Setup All Named Ranges (New Sheet).`
+  );
 }
 
 /**

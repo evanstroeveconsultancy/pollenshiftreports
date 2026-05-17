@@ -28,7 +28,7 @@ function getIntegrationConfig_() {
   const props = PropertiesService.getScriptProperties();
   return {
     // Core spreadsheets (loaded from Script Properties — see _SETUP_ScriptProperties.js)
-    shiftReportCurrentId: props.getProperty('WARATAH_SHIFT_REPORT_CURRENT_ID'),
+    shiftReportCurrentId: props.getProperty('WARATAH_SHEET_ID') || props.getProperty('WARATAH_SHIFT_REPORT_CURRENT_ID'),
     taskManagementId: props.getProperty('WARATAH_TASK_MANAGEMENT_ID'),
     dataWarehouseId: props.getProperty('WARATAH_DATA_WAREHOUSE_ID'),
 
@@ -215,22 +215,27 @@ function extractShiftData_(sheetName, config) {
     throw new Error(`Sheet "${sheetName}" not found in this spreadsheet`);
   }
 
-  // --- BATCH READ 1: Financial data B3:B39 (37 rows) ---
+  // --- BATCH READ 1: Financial data B3:C39 (37 rows × 2 cols) ---
+  // Reads columns B and C to capture both legacy B-column fields and new C-column
+  // cash reconciliation fields (C18=CashCounted, C19=CashTake, C24=ExpectedCash, C26=CashVariance).
   // Single API call replaces ~20 individual getRange().getValue() calls.
   // Intentionally bypasses getFieldRange() helpers for performance — GAS charges
   // per API call, so one batch read is significantly faster than 20 named range lookups.
-  // Cell mapping: FIELD_CONFIG fallback cells in RunWaratah.js are authoritative.
+  // Cell mapping: FIELD_CONFIG fallback cells in RunWaratah.js (SetupWaratah.js) are authoritative.
   let finValues;
   try {
-    finValues = sheet.getRange("B3:B39").getValues(); // 37 rows x 1 col → [[val], [val], ...]
+    finValues = sheet.getRange("B3:C39").getValues(); // 37 rows × 2 cols → [[colB, colC], ...]
   } catch (e) {
-    Logger.log('extractShiftData_: could not read B3:B39 — ' + e.message);
+    Logger.log('extractShiftData_: could not read B3:C39 — ' + e.message);
     return null;
   }
 
-  // Helper: extract value by row number (1-indexed cell ref → 0-indexed array)
+  // Helper: extract B-column value by row number (1-indexed cell ref → 0-indexed array)
   const fin = (row) => finValues[row - 3] ? finValues[row - 3][0] : null;
   const finNum = (row) => parseFloat(fin(row)) || 0;
+  // Helper: extract C-column value by row number
+  const finC = (row) => finValues[row - 3] ? finValues[row - 3][1] : null;
+  const finC_Num = (row) => parseFloat(finC(row)) || 0;
 
   // Also need display values for text fields (MOD, staff)
   let finDisplay;
@@ -307,7 +312,7 @@ function extractShiftData_(sheetName, config) {
     productionAmount: finNum(8),    // B8
 
     // Cash flow
-    cashTakings: finNum(15),        // B15 (formula)
+    cashTakings: finC_Num(19),      // C19 (formula — new sheet: cash take = counted minus refloats)
     grossSalesIncCash: finNum(16),  // B16 (formula)
 
     // Deductions (merged cell pairs — value in first cell of pair)
@@ -327,6 +332,11 @@ function extractShiftData_(sheetName, config) {
     cardTips: finNum(32),           // B32
     cashTips: finNum(33),           // B33
     tipsTotal: finNum(36),          // B36 (formula)
+
+    // Cash reconciliation (new sheet only — C18/C24/C26; NULL on old-sheet rows)
+    cashCounted: finC_Num(18),        // C18: cash physically counted (sum public + terrace tills)
+    expectedCash: finC_Num(24),       // C24: POS-expected cash (manager input)
+    cashVariance: finC_Num(26),       // C26: variance = counted minus expected (formula)
 
     // Operational events
     todos: todos,
@@ -439,31 +449,50 @@ function logToDataWarehouse_(shiftData, config, skipLock) {
     Logger.log(`  ⚠ Duplicate prevented: ${shiftData.date.toDateString()} (${shiftData.mod}) already logged`);
     logResult.financialSkipped = true;
   } else {
+    // Header assertion: enforce 25-column schema before writing.
+    // Guards against half-deployed state where header row hasn't been migrated yet.
+    // Manual step (Phase 2, Wed May 20): add CashCounted, ExpectedCash, CashVariance headers
+    // to NIGHTLY_FINANCIAL row 1 columns W, X, Y before clasp push.
+    const headerRow = financialSheet.getLastRow() >= 1
+      ? financialSheet.getRange(1, 1, 1, financialSheet.getLastColumn()).getValues()[0]
+      : [];
+    const actualCols = headerRow.length;
+    if (actualCols > 0 && actualCols !== 25) {
+      throw new Error(
+        'NIGHTLY_FINANCIAL has ' + actualCols + ' columns but expected 25. ' +
+        'Add CashCounted, ExpectedCash, CashVariance headers to columns W/X/Y before deploying. ' +
+        'See Phase 2 pre-deploy checklist.'
+      );
+    }
+
     financialSheet.appendRow([
       toDateOnly_(shiftData.date),       // A: Date (midnight, no time component)
       shiftData.dayOfWeek,               // B: Day
       toDateOnly_(shiftData.weekEnding), // C: Week Ending (midnight, no time component)
-      shiftData.mod,                // D: MOD
-      shiftData.staff,              // E: Staff
-      shiftData.netRevenue,         // F: Net Revenue
-      shiftData.productionAmount,   // G: Production Amount
-      shiftData.cashTakings,        // H: Cash Takings (B15)
-      shiftData.grossSalesIncCash,  // I: Gross Sales Inc Cash (B16)
-      shiftData.cashReturns,        // J: Cash Returns (B17)
-      shiftData.cdDiscount,         // K: CD Discount (B19)
-      shiftData.refunds,            // L: Refunds (B21)
-      shiftData.cdRedeem,           // M: CD Redeem (B23)
-      shiftData.totalDiscount,      // N: Total Discount (B25)
-      shiftData.discountsCompsExcCD, // O: Discounts Comps Exc CD (B26)
-      shiftData.grossTaxableSales,  // P: Gross Taxable Sales (B27)
-      shiftData.taxes,              // Q: Taxes (B28)
-      shiftData.netSalesWTips,      // R: Net Sales w Tips (B29)
-      shiftData.cardTips,           // S: Card Tips (B32)
-      shiftData.cashTips,           // T: Cash Tips (B33)
-      shiftData.tipsTotal,          // U: Total Tips (B36)
-      new Date()                    // V: Logged At
+      shiftData.mod,                     // D: MOD
+      shiftData.staff,                   // E: Staff
+      shiftData.netRevenue,              // F: Net Revenue
+      shiftData.productionAmount,        // G: Production Amount
+      shiftData.cashTakings,             // H: Cash Takings (C19 on new sheet — cash take)
+      shiftData.grossSalesIncCash,       // I: Gross Sales Inc Cash (B16)
+      shiftData.cashReturns,             // J: Cash Returns (B17)
+      shiftData.cdDiscount,              // K: CD Discount (B19)
+      shiftData.refunds,                 // L: Refunds (B21)
+      shiftData.cdRedeem,                // M: CD Redeem (B23)
+      shiftData.totalDiscount,           // N: Total Discount (B25)
+      shiftData.discountsCompsExcCD,     // O: Discounts Comps Exc CD (B26)
+      shiftData.grossTaxableSales,       // P: Gross Taxable Sales (B27)
+      shiftData.taxes,                   // Q: Taxes (B28)
+      shiftData.netSalesWTips,           // R: Net Sales w Tips (B29)
+      shiftData.cardTips,                // S: Card Tips (B32)
+      shiftData.cashTips,                // T: Cash Tips (B33)
+      shiftData.tipsTotal,               // U: Total Tips (B36)
+      new Date(),                        // V: Logged At
+      shiftData.cashCounted  || null,    // W: Cash Counted (C18 — new sheet only; NULL for old-sheet rows)
+      shiftData.expectedCash || null,    // X: Expected Cash (C24 — new sheet only)
+      shiftData.cashVariance || null     // Y: Cash Variance (C26 — new sheet only)
     ]);
-    Logger.log(`  → Logged financial data to warehouse (22 cols)`);
+    Logger.log(`  → Logged financial data to warehouse (25 cols)`);
     logResult.financialLogged = true;
   }
 
@@ -915,7 +944,7 @@ function runValidationReport() {
         report += `   → ${warehouse.getName()}\n`;
         const finCols = financialSheet.getLastColumn();
         const evtCols = eventsSheet.getLastColumn();
-        report += `   → NIGHTLY_FINANCIAL: ${financialSheet.getLastRow() - 1} rows, ${finCols} cols (expected 22)\n`;
+        report += `   → NIGHTLY_FINANCIAL: ${financialSheet.getLastRow() - 1} rows, ${finCols} cols (expected 25 after Phase 1 migration)\n`;
         report += `   → OPERATIONAL_EVENTS: ${eventsSheet.getLastRow() - 1} rows, ${evtCols} cols (expected 8)\n`;
         if (wastageSheet) {
           const wstCols = wastageSheet.getLastColumn();

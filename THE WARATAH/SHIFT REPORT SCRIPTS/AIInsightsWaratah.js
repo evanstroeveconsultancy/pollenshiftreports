@@ -179,14 +179,15 @@ function generateShiftSummary_Waratah(shiftData) {
  * On anomaly: posts a plain-text Slack alert to WARATAH_SLACK_WEBHOOK_TEST.
  * Non-blocking: wrapped in try/catch, never throws.
  *
- * Waratah NIGHTLY_FINANCIAL col indexes (0-based, 22 cols A-V):
+ * Waratah NIGHTLY_FINANCIAL col indexes (0-based, 25 cols A-Y):
  *   A=0 Date, B=1 Day, C=2 WeekEnding, D=3 MOD, E=4 Staff,
  *   F=5 NetRevenue, G=6 ProductionAmount, H=7 CashTakings,
  *   I=8 GrossSalesIncCash, J=9 CashReturns, K=10 CDDiscount,
  *   L=11 Refunds, M=12 CDRedeem, N=13 TotalDiscount,
  *   O=14 DiscountsCompsExcCD, P=15 GrossTaxableSales,
  *   Q=16 Taxes, R=17 NetSalesWTips, S=18 CardTips,
- *   T=19 CashTips, U=20 TotalTips, V=21 LoggedAt
+ *   T=19 CashTips, U=20 TotalTips, V=21 LoggedAt,
+ *   W=22 CashCounted, X=23 ExpectedCash, Y=24 CashVariance
  *
  * @param {Object} shiftData   - Extracted shift data (from logToDataWarehouse_())
  * @param {string} warehouseId - Spreadsheet ID of the data warehouse
@@ -218,7 +219,7 @@ function detectRevenueAnomalies_Waratah(shiftData, warehouseId) {
     }
 
     const lastRow = financialSheet.getLastRow();
-    const allRows = financialSheet.getRange(2, 1, lastRow - 1, 22).getValues();
+    const allRows = financialSheet.getRange(2, 1, lastRow - 1, 25).getValues();
 
     // Filter rows matching today's day of week (col B, index 1); exclude today's own row
     const todayDateKey = shiftData.date instanceof Date ? shiftData.date.toDateString() : '';
@@ -493,7 +494,7 @@ function computeShiftAnalytics_Waratah(shiftData, warehouseId) {
     }
 
     const lastRow = financialSheet.getLastRow();
-    const allRows = financialSheet.getRange(2, 1, lastRow - 1, 22).getValues();
+    const allRows = financialSheet.getRange(2, 1, lastRow - 1, 25).getValues();
 
     // Build a normalised date key for today to exclude today's own warehouse row
     // shiftData.date is a string like "18/03/2026" — parse to compare with Date objects
