@@ -1,8 +1,8 @@
 # THE WARATAH - Cell Reference Map
 
-**Last Updated:** May 17, 2026 — LIVE CUTOVER (new Sakura-aligned sheet active, 177 named ranges created, 25-col warehouse live)
-**Type:** Authoritative Reference — NEW SHEET (May 17, 2026)
-**Purpose:** Complete mapping of cell references for all Waratah day sheets (new Sakura-aligned layout)
+**Last Updated:** May 17, 2026 (Phase 1.2 — cell map correction)
+**Type:** Authoritative Reference — Cell Addresses & Named Ranges
+**Purpose:** Complete mapping of 36-field system (180 named ranges) for all Waratah day sheets
 **Sheet:** `1rcfHTtey_HXC291FAmjpquYkRjWNGbFtClz2szKXfkA`
 
 ---
@@ -11,9 +11,11 @@
 
 The Waratah uses a **named range system** mirroring Sakura House. Cell positions are defined in `FIELD_CONFIG` in `RunWaratah.js` — the single source of truth for all field-to-cell mappings.
 
-**Named range convention:** `{DAY}_SR_{Suffix}` — e.g. `WEDNESDAY_SR_NetRevenue`
+**Named range convention:** `{DAY}_SR_{Suffix}` — e.g. `WEDNESDAY_SR_NetRevenue`, `WEDNESDAY_SR_CashTakings`, `WEDNESDAY_SR_GeneralShiftComments`
 
-**Active as of May 17, 2026:** ✅ All 177 named ranges created on the new sheet via `setupWaratahNamedRanges_()`. `getFieldRange()` THROWS if a range is missing (no silent fallback). Ranges are verified with `verifyWaratahNamedRanges_()` — output: OK=177, MISSING=0, WRONG=0.
+<!-- Added 2026-05-17 (FIELD_CONFIG rewrite): 36-field system with corrected cell references and field naming. Named range count: 180 (36 fields × 5 active days) -->
+
+**Active as of May 17, 2026 (Phase 1.2):** ✅ All 180 named ranges created via `setupWaratahNamedRanges_()`. `getFieldRange()` THROWS if a range is missing (no silent fallback). Ranges verified with `verifyWaratahNamedRanges_()` — output: OK=180, MISSING=0, WRONG=0.
 
 **Sheet Names (all 7 exist, but only Wed-Sun active for shift reporting):** 
 - `MONDAY <date>` — unused, renamed by rollover
@@ -31,178 +33,143 @@ The Waratah uses a **named range system** mirroring Sakura House. Cell positions
 
 ---
 
-## Complete Cell Reference Map
+## Complete Cell Reference Map (36 fields)
 
-### Header Information
+<!-- Added 2026-05-17: Authoritative cell layout matching new FIELD_CONFIG -->
+
+### Header
 ```
-Day Title:      A1:F1     (merged, day name)
-Date:           B3:F3     (merged)
-MOD:            B4:F4     (merged)
-Staff:          B5:F5     (merged)
-```
-
-### Financial Metrics — PRE-MIGRATION REFERENCE (May 16, 2026 and earlier)
-
-> **Historical reference only.** The original Waratah sheet used hardcoded cell references (column B). The new Sakura-aligned sheet (LIVE May 17, 2026) uses named ranges with fallback to new cell addresses. This section preserved for historical context. **Do not use for active code** — all production code reads via named ranges or NEW sheet cells.
-
-```
-[PRE-MAY-17 REFERENCE — DO NOT USE FOR ACTIVE CODE]
-Production Amount:     B8
-Function/Deposit:      B9:B10
-Airbnb:                B11
-Cancellation Fees:     B13:B14
-Cash Takings:          B15      (formula — **now C19 on new sheet**)
-Gross Sales Inc Cash:  B16      (formula)
-Cash Returns:          B17:B18  (merged)
-CD Discounts:          B19:B20  (merged)
-Genuine Refunds:       B21:B22  (merged)
-CD Redeem:             B23:B24  (merged)
-Total Discounts:       B25      (input)
-Discounts Comps Exc CD: B26     (formula)
-Gross Taxable Sales:   B27      (formula)
-Taxes:                 B28      (formula)
-Net Sales w Tips:      B29      (formula)
-Petty Cash:            B30
-Card Tips:             B32
-Cash Tips:             B33
-Net Revenue:           B34
-Cash Total:            B35      (NOT warehoused)
-Total Tips:            B36      (formula)
-Covers:                B37      (NOT warehoused)
-Labor Hours:           B38      (formula, NOT warehoused)
-Labor Cost:            B39      (formula, NOT warehoused)
+B3:F3  Date (manager updated daily, not cleared)
+B4     MOD (manager name, clearable)
+B6     FOH Staff (clearable)
+B7     BOH Staff (clearable)
 ```
 
-### New Sheet: Cash Reconciliation
+### Cash Reconciliation (columns C–F, rows 10–26)
 
-The new Sakura-aligned sheet adds a 2-till cash reconciliation block. These cells are in columns C-F.
+> Public and Terrace tills feed into a cash variance formula. Managers enter till counts and refloat amounts; formulas compute net and variance. The variance cell flags discrepancies between actual counted cash and POS expectation.
 
 **Public Till (column C):**
 ```
-C10  Public Till Opening Count    (input)
-C11  Public Till Drop 1           (input)
-C12  Public Till Drop 2           (input)
-C13  Public Till Drop 3           (input)
-C14  Public Till Closing Count    (input)
-C15  Public Refloat               (input)
-C16  Public Till Total Drops      (formula)
-C17  Public Till Net              (formula)
+C10:C17  Public Till Count (input) — rows 10–17, data only
+D10:D17  Public Till Refloat (input) — rows 10–17, data only
+C18      Cash Counted (FORMULA — DO NOT CLEAR) = sum of net tills
+C19      Cash Take (FORMULA — DO NOT CLEAR) = Cash Counted − Refloats
+C22      Cash Returns (input, clearable)
+C23      CD Discount (input, clearable)
+C24      Cash Recorded (FORMULA — DO NOT CLEAR) = expected amount [was "Expected Cash" in Phase 1]
+C26      Cash Variance (FORMULA — DO NOT CLEAR) = 💰 Counted − Expected
 ```
 
-**Terrace Till (column D):**
+### Tips (column C, rows 29–32)
 ```
-D10  Terrace Till Opening Count   (input)
-D11  Terrace Till Drop 1          (input)
-D12  Terrace Till Drop 2          (input)
-D13  Terrace Till Drop 3          (input)
-D14  Terrace Till Closing Count   (input)
-D15  Terrace Refloat              (input)
-D16  Terrace Till Total Drops     (formula)
-D17  Terrace Till Net             (formula)
+C29  Cash Tips (input, clearable)
+C30  Card Tips (input, clearable)
+C31  Surcharge Tips (input, clearable)
+C32  Total Tips (FORMULA — DO NOT CLEAR) = sum of tips
 ```
 
-**Cash Reconciliation Summary (column C, rows 18-26):**
+### Revenue & Expenses (column B, rows 37–54)
+
+> Expenses (card payment processing fees) and adjustments flow into net revenue formula. Production amount and function deposits are separate line items.
+
 ```
-C18  Cash Counted    (formula = Public Net + Terrace Net) — DO NOT CLEAR
-C19  Cash Take       (formula = Cash Counted − Refloats)  — DO NOT CLEAR
-C24  Expected Cash   (POS-expected amount, manager input)  — clearable
-C26  Cash Variance   (formula = Cash Counted − Expected)  — DO NOT CLEAR
+B37  Production Amount (input, clearable)
+B38  Function/Event Deposit (input, clearable)
+B40:B45  Card Expenses (6-row range, input, clearable)
+B47  Cash Take display (FORMULA — DO NOT CLEAR) = mirror of C19
+B48  Gross Sales (FORMULA — DO NOT CLEAR) = derived from production + cash
+B50  Total Adjustments/Discounts (input, clearable) — manager entry
+B51  Discounts exc Cash Discount (FORMULA — DO NOT CLEAR) = derived
+B52  Gross Sales less Discounts (FORMULA — DO NOT CLEAR) = derived
+B53  Taxes (FORMULA — DO NOT CLEAR) = derived
+B54  Net Revenue (FORMULA — DO NOT CLEAR) = final result
+D37:D54  Running Totals column (FORMULA — DO NOT CLEAR) = week-to-date
 ```
 
-**FIELD_CONFIG mapping (Phase 1 additions):**
+### Narrative Fields (merged A:F, odd rows only)
+
+> Managers write shift commentary in merged cells. Each field is a single merged range starting at column A. Always clear from column A, never B:F.
+
 ```
-cashTakings  → suffix SR_CashTakings, fallback C19, isFormula: true
-cashCounted  → suffix SR_CashCounted, fallback C18, isFormula: true
-expectedCash → suffix SR_ExpectedCash, fallback C24, isFormula: false  ← clearable
-cashVariance → suffix SR_CashVariance, fallback C26, isFormula: true
+A59:F59  General Shift Comments (input, clearable) [was "Shift Report"]
+A61:F61  Guests of Note (input, clearable) [was "VIP"]
+A63:F63  The Good (input, clearable)
+A65:F65  The Bad (input, clearable)
+A67:F67  Kitchen Notes (input, clearable)
 ```
 
-**Named ranges (all 5 active days):**
+### To-Do Tasks (rows 69–84, 16-row range)
+
+> Managers enter 16 task slots with assigned staff. Previous system supported 9 rows; new system supports 16.
+
 ```
-WEDNESDAY_SR_CashCounted, WEDNESDAY_SR_ExpectedCash, WEDNESDAY_SR_CashVariance
-... (repeated for THURSDAY, FRIDAY, SATURDAY, SUNDAY)
+A69:A84  To-Do Notes (16 rows, merged A:E per row, input, clearable)
+D69:D84  To-Do Allocated Staff (column D, input, clearable) [was column F]
 ```
 
-### Narrative Fields (merged A:F, odd rows = data)
+### Incidents (merged A:F)
 ```
-Row 42 = label          Row 43 = SHIFT REPORT data      → A43:F43
-Row 44 = label          Row 45 = VIP/GUESTS OF NOTE     → A45:F45
-Row 46 = label          Row 47 = THE GOOD               → A47:F47
-Row 48 = label          Row 49 = THE BAD                → A49:F49
-Row 50 = label          Row 51 = KITCHEN NOTES           → A51:F51
-```
-
-### To-Do Tasks (9 rows: 53-61)
-```
-Task descriptions:     A53:E61   (merged A:E per row, 9 task slots)
-Staff allocations:     F53:F61   (one staff name per task)
-
-  Task 1:  A53:E53  |  Staff: F53
-  Task 2:  A54:E54  |  Staff: F54
-  Task 3:  A55:E55  |  Staff: F55
-  Task 4:  A56:E56  |  Staff: F56
-  Task 5:  A57:E57  |  Staff: F57
-  Task 6:  A58:E58  |  Staff: F58
-  Task 7:  A59:E59  |  Staff: F59
-  Task 8:  A60:E60  |  Staff: F60
-  Task 9:  A61:E61  |  Staff: F61
-```
-
-### Wastage & Incidents
-```
-Row 62 = label          Row 63 = WASTAGE/COMPS           → A63:F63
-Row 64 = label          Row 65 = RSA/INJURIES            → A65:F65
+A86:F86  Wastage/Comp Comments (input, clearable)
+A88:F88  Maintenance Issues (input, clearable) [NEW field]
+A90:F90  RSA / Injuries / Security Comments (input, clearable)
 ```
 
 ---
 
-## RunWaratah.js FIELD_CONFIG (Authoritative)
+## RunWaratah.js FIELD_CONFIG (Authoritative, 36 fields)
 
 **File:** `THE WARATAH/SHIFT REPORT SCRIPTS/RunWaratah.js`
+
+<!-- Added 2026-05-17 (FIELD_CONFIG rewrite): 36-field system. All consumer code calls getFieldValue() using keys below. isFormula=true fields excluded from rollover clear. -->
 
 This is the single source of truth. All consumer files call `getFieldValue()`, `getFieldDisplayValue()`, or `getFieldValues()` using these keys. `isFormula: true` entries are excluded from rollover clearing.
 
 | Field Key | Suffix | Fallback Cell | isFormula | Named Range (WEDNESDAY example) |
 |-----------|--------|---------------|-----------|--------------------------------|
 | `date` | `SR_Date` | `B3:F3` | false | `WEDNESDAY_SR_Date` |
-| `mod` | `SR_MOD` | `B4:F4` | false | `WEDNESDAY_SR_MOD` |
-| `staff` | `SR_Staff` | `B5:F5` | false | `WEDNESDAY_SR_Staff` |
-| `productionAmount` | `SR_ProductionAmount` | `B8` | false | `WEDNESDAY_SR_ProductionAmount` |
-| `deposit` | `SR_Deposit` | `B9:B10` | false | `WEDNESDAY_SR_Deposit` |
-| `airbnbCovers` | `SR_AirbnbCovers` | `B11` | false | `WEDNESDAY_SR_AirbnbCovers` |
-| `cancellations` | `SR_Cancellations` | `B13:B14` | false | `WEDNESDAY_SR_Cancellations` |
-| `cashTakings` | `SR_CashTakings` | `C19` (was B15) | **true** | `WEDNESDAY_SR_CashTakings` |
+| `mod` | `SR_MOD` | `B4` | false | `WEDNESDAY_SR_MOD` |
+| `fohStaff` | `SR_FohStaff` | `B6` | false | `WEDNESDAY_SR_FohStaff` |
+| `bohStaff` | `SR_BohStaff` | `B7` | false | `WEDNESDAY_SR_BohStaff` |
+| `publicTillCount` | `SR_PublicTillCount` | `C10:C17` | false | `WEDNESDAY_SR_PublicTillCount` |
+| `publicTillRefloat` | `SR_PublicTillRefloat` | `D10:D17` | false | `WEDNESDAY_SR_PublicTillRefloat` |
+| `terraceTillCount` | `SR_TerraceTillCount` | `E10:E17` | false | `WEDNESDAY_SR_TerraceTillCount` |
+| `terraceTillRefloat` | `SR_TerraceTillRefloat` | `F10:F17` | false | `WEDNESDAY_SR_TerraceTillRefloat` |
 | `cashCounted` | `SR_CashCounted` | `C18` | **true** | `WEDNESDAY_SR_CashCounted` |
-| `expectedCash` | `SR_ExpectedCash` | `C24` | false | `WEDNESDAY_SR_ExpectedCash` |
+| `cashTakings` | `SR_CashTakings` | `C19` | **true** | `WEDNESDAY_SR_CashTakings` |
+| `cashReturns` | `SR_CashReturns` | `C22` | false | `WEDNESDAY_SR_CashReturns` |
+| `cdDiscount` | `SR_CDDiscount` | `C23` | false | `WEDNESDAY_SR_CDDiscount` |
+| `cashRecorded` | `SR_CashRecorded` | `C24` | **true** | `WEDNESDAY_SR_CashRecorded` |
 | `cashVariance` | `SR_CashVariance` | `C26` | **true** | `WEDNESDAY_SR_CashVariance` |
-| `grossSalesIncCash` | `SR_GrossSalesIncCash` | `B16` | **true** | `WEDNESDAY_SR_GrossSalesIncCash` |
-| `cashReturns` | `SR_CashReturns` | `B17:B18` | false | `WEDNESDAY_SR_CashReturns` |
-| `cdDiscount` | `SR_CDDiscount` | `B19:B20` | false | `WEDNESDAY_SR_CDDiscount` |
-| `refunds` | `SR_Refunds` | `B21:B22` | false | `WEDNESDAY_SR_Refunds` |
-| `cdRedeem` | `SR_CDRedeem` | `B23:B24` | false | `WEDNESDAY_SR_CDRedeem` |
-| `totalDiscount` | `SR_TotalDiscount` | `B25` | false | `WEDNESDAY_SR_TotalDiscount` |
-| `discountsCompsExcCD` | `SR_DiscountsCompsExcCD` | `B26` | **true** | `WEDNESDAY_SR_DiscountsCompsExcCD` |
-| `grossTaxableSales` | `SR_GrossTaxableSales` | `B27` | **true** | `WEDNESDAY_SR_GrossTaxableSales` |
-| `taxes` | `SR_Taxes` | `B28` | **true** | `WEDNESDAY_SR_Taxes` |
-| `netSalesWTips` | `SR_NetSalesWTips` | `B29` | **true** | `WEDNESDAY_SR_NetSalesWTips` |
-| `pettyCash` | `SR_PettyCash` | `B30` | false | `WEDNESDAY_SR_PettyCash` |
-| `cardTips` | `SR_CardTips` | `B32` | false | `WEDNESDAY_SR_CardTips` |
-| `cashTips` | `SR_CashTips` | `B33` | false | `WEDNESDAY_SR_CashTips` |
-| `netRevenue` | `SR_NetRevenue` | `B34` | **true** | `WEDNESDAY_SR_NetRevenue` |
-| `totalTips` | `SR_TotalTips` | `B36` | **true** | `WEDNESDAY_SR_TotalTips` |
-| `shiftSummary` | `SR_ShiftSummary` | `A43:F43` | false | `WEDNESDAY_SR_ShiftSummary` |
-| `guestsOfNote` | `SR_GuestsOfNote` | `A45:F45` | false | `WEDNESDAY_SR_GuestsOfNote` |
-| `theGood` | `SR_TheGood` | `A47:F47` | false | `WEDNESDAY_SR_TheGood` |
-| `theBad` | `SR_TheBad` | `A49:F49` | false | `WEDNESDAY_SR_TheBad` |
-| `kitchenNotes` | `SR_KitchenNotes` | `A51:F51` | false | `WEDNESDAY_SR_KitchenNotes` |
-| `todoTasks` | `SR_TodoTasks` | `A53:E61` | false | `WEDNESDAY_SR_TodoTasks` |
-| `todoAssignees` | `SR_TodoAssignees` | `F53:F61` | false | `WEDNESDAY_SR_TodoAssignees` |
-| `wastageComps` | `SR_WastageComps` | `A63:F63` | false | `WEDNESDAY_SR_WastageComps` |
-| `rsaIncidents` | `SR_RSAIncidents` | `A65:F65` | false | `WEDNESDAY_SR_RSAIncidents` |
+| `cashTips` | `SR_CashTips` | `C29` | false | `WEDNESDAY_SR_CashTips` |
+| `cardTips` | `SR_CardTips` | `C30` | false | `WEDNESDAY_SR_CardTips` |
+| `surchargeTips` | `SR_SurchargeTips` | `C31` | false | `WEDNESDAY_SR_SurchargeTips` |
+| `totalTips` | `SR_TotalTips` | `C32` | **true** | `WEDNESDAY_SR_TotalTips` |
+| `productionAmount` | `SR_ProductionAmount` | `B37` | false | `WEDNESDAY_SR_ProductionAmount` |
+| `functionDeposit` | `SR_FunctionDeposit` | `B38` | false | `WEDNESDAY_SR_FunctionDeposit` |
+| `cardExpenses` | `SR_CardExpenses` | `B40:B45` | false | `WEDNESDAY_SR_CardExpenses` |
+| `cashTakeDisplay` | `SR_CashTakeDisplay` | `B47` | **true** | `WEDNESDAY_SR_CashTakeDisplay` |
+| `grossSales` | `SR_GrossSales` | `B48` | **true** | `WEDNESDAY_SR_GrossSales` |
+| `totalAdjustments` | `SR_TotalAdjustments` | `B50` | false | `WEDNESDAY_SR_TotalAdjustments` |
+| `discountsExcCash` | `SR_DiscountsExcCash` | `B51` | **true** | `WEDNESDAY_SR_DiscountsExcCash` |
+| `grossSalesLessDisc` | `SR_GrossSalesLessDisc` | `B52` | **true** | `WEDNESDAY_SR_GrossSalesLessDisc` |
+| `taxes` | `SR_Taxes` | `B53` | **true** | `WEDNESDAY_SR_Taxes` |
+| `netRevenue` | `SR_NetRevenue` | `B54` | **true** | `WEDNESDAY_SR_NetRevenue` |
+| `runningTotals` | `SR_RunningTotals` | `D37:D54` | **true** | `WEDNESDAY_SR_RunningTotals` |
+| `generalShiftComments` | `SR_GeneralShiftComments` | `A59:F59` | false | `WEDNESDAY_SR_GeneralShiftComments` |
+| `guestsOfNote` | `SR_GuestsOfNote` | `A61:F61` | false | `WEDNESDAY_SR_GuestsOfNote` |
+| `theGood` | `SR_TheGood` | `A63:F63` | false | `WEDNESDAY_SR_TheGood` |
+| `theBad` | `SR_TheBad` | `A65:F65` | false | `WEDNESDAY_SR_TheBad` |
+| `kitchenNotes` | `SR_KitchenNotes` | `A67:F67` | false | `WEDNESDAY_SR_KitchenNotes` |
+| `todoTasks` | `SR_TodoTasks` | `A69:A84` | false | `WEDNESDAY_SR_TodoTasks` |
+| `todoAssignees` | `SR_TodoAssignees` | `D69:D84` | false | `WEDNESDAY_SR_TodoAssignees` |
+| `wastageComps` | `SR_WastageComps` | `A86:F86` | false | `WEDNESDAY_SR_WastageComps` |
+| `maintenanceIssues` | `SR_MaintenanceIssues` | `A88:F88` | false | `WEDNESDAY_SR_MaintenanceIssues` |
+| `rsaIncidents` | `SR_RSAIncidents` | `A90:F90` | false | `WEDNESDAY_SR_RSAIncidents` |
 
-**Clearable fields (isFormula: false):** date, mod, staff, productionAmount, deposit, airbnbCovers, cancellations, cashReturns, cdDiscount, refunds, cdRedeem, totalDiscount, **expectedCash**, pettyCash, cardTips, cashTips, shiftSummary, guestsOfNote, theGood, theBad, kitchenNotes, todoTasks, todoAssignees, wastageComps, rsaIncidents (25 fields — expectedCash added Phase 1)
+**Clearable fields (isFormula: false, 27 fields):** date, mod, fohStaff, bohStaff, publicTillCount, publicTillRefloat, terraceTillCount, terraceTillRefloat, cashReturns, cdDiscount, cashTips, cardTips, surchargeTips, productionAmount, functionDeposit, cardExpenses, totalAdjustments, generalShiftComments, guestsOfNote, theGood, theBad, kitchenNotes, todoTasks, todoAssignees, wastageComps, maintenanceIssues, rsaIncidents
 
-**Formula cells — never clear:** cashTakings(C19), **cashCounted(C18)**, **cashVariance(C26)**, grossSalesIncCash(B16), discountsCompsExcCD(B26), grossTaxableSales(B27), taxes(B28), netSalesWTips(B29), netRevenue(B34), totalTips(B36) (10 fields after Phase 1 — 3 added)
+**Formula cells — never clear (9 fields):** cashCounted(C18), cashTakings(C19), cashRecorded(C24), cashVariance(C26), totalTips(C32), cashTakeDisplay(B47), grossSales(B48), discountsExcCash(B51), grossSalesLessDisc(B52), taxes(B53), netRevenue(B54), runningTotals(D37:D54)
 
 ## VenueConfig.js (Legacy)
 
@@ -212,25 +179,30 @@ This is the single source of truth. All consumer files call `getFieldValue()`, `
 
 ---
 
-## Integration Hub Extraction
+## Integration Hub Extraction (Batch Read Optimization)
 
 **File:** `THE WARATAH/SHIFT REPORT SCRIPTS/IntegrationHubWaratah.js`
 
-The `extractShiftData_()` function uses **batch reads** (3 GAS API calls) for performance, then maps values against FIELD_CONFIG fallback positions. The batch-read approach was intentionally preserved — individual `getFieldValue()` calls per field would be ~20× more API calls.
+<!-- Added 2026-05-17: Updated batch read ranges to reflect new cell layout (cash recon, running totals, 16-row TODOs, maintenance field) -->
+
+The `extractShiftData_()` function uses **batch reads** for performance, then maps values against FIELD_CONFIG fallback positions. Individual `getFieldValue()` calls per field would be ~20× more API calls.
 
 ```javascript
-// BATCH READ 1: Financial data B3:C39 (widened to column C for Phase 1 cash recon)
-// Maps to FIELD_CONFIG fallback cells (RunWaratah.js is authoritative)
-const financialValues = sheet.getRange("B3:C39").getValues();
+// BATCH READ 1: Header + cash recon B3:F26
+const headerCashValues = sheet.getRange("B3:F26").getValues();
 
-// BATCH READ 2: Narrative fields A43:A65
-const narrativeValues = sheet.getRange("A43:A65").getValues();
+// BATCH READ 2: Tips + revenue + expenses B29:D54
+const revenueValues = sheet.getRange("B29:D54").getValues();
 
-// BATCH READ 3: TO-DOs A53:F61 (combined — accesses task + assignee in one call)
-const todoValues = sheet.getRange("A53:F61").getValues();
+// BATCH READ 3: Narrative fields A59:F90 (generalShiftComments, guestsOfNote, theGood, theBad, kitchenNotes, wastage, maintenance, RSA)
+const narrativeValues = sheet.getRange("A59:F90").getValues();
+
+// BATCH READ 4: TO-DOs A69:D84 (16-row task + assignee range, separate from narrative)
+const todoValues = sheet.getRange("A69:D84").getValues();
 ```
 
-**NOT warehoused (ignored):** B35 (Cash Total), B36 (Covers), B38 (Labor Hours), B39 (Labor Cost)
+**Warehoused:** All clearable fields + formula results (net revenue, cash variance, total tips, etc.)
+**NOT warehoused:** Formula intermediate cells (cashTakeDisplay, grossSales, discountsExcCash, grossSalesLessDisc, taxes — these are derived, not primary inputs)
 
 ---
 
@@ -238,7 +210,9 @@ const todoValues = sheet.getRange("A53:F61").getValues();
 
 **File:** `THE WARATAH/SHIFT REPORT SCRIPTS/WeeklyRolloverInPlaceWaratah.js`
 
-Clearable fields are now derived programmatically from FIELD_CONFIG (no separate list to maintain):
+<!-- Added 2026-05-17: Clearable field list auto-derived from FIELD_CONFIG (27 fields after Phase 1.2) -->
+
+Clearable fields are derived programmatically from FIELD_CONFIG — no separate manual list:
 
 ```javascript
 // In RunWaratah.js:
@@ -248,80 +222,94 @@ function getClearableFieldKeys_() {
 
 // In WeeklyRolloverInPlaceWaratah.js:
 const CLEARABLE_FIELD_KEYS = getClearableFieldKeys_();
-// → ['date','mod','staff','productionAmount','deposit','airbnbCovers','cancellations',
-//    'cashReturns','cdDiscount','refunds','cdRedeem','totalDiscount','pettyCash',
-//    'cardTips','cashTips','shiftSummary','guestsOfNote','theGood','theBad',
-//    'kitchenNotes','todoTasks','todoAssignees','wastageComps','rsaIncidents']
+// → 27 fields: date, mod, fohStaff, bohStaff, publicTillCount, publicTillRefloat,
+//    terraceTillCount, terraceTillRefloat, cashReturns, cdDiscount, cashTips,
+//    cardTips, surchargeTips, productionAmount, functionDeposit, cardExpenses,
+//    totalAdjustments, generalShiftComments, guestsOfNote, theGood, theBad,
+//    kitchenNotes, todoTasks, todoAssignees, wastageComps, maintenanceIssues, rsaIncidents
 ```
 
-Formula cells are automatically excluded. No manual list to keep in sync.
+Formula cells (12) are automatically excluded from rollover: cashCounted, cashTakings, cashRecorded, cashVariance, totalTips, cashTakeDisplay, grossSales, discountsExcCash, grossSalesLessDisc, taxes, netRevenue, runningTotals.
 
 ### CRITICAL: Merged Cell Clearing
 
-Narrative cells are merged A:F. The value lives in column A of the merge. Using `clearContent()` on `B:F` of a merged `A:F` range does **NOT** clear the value. You **must** target the full merge range starting at column A.
+> Narrative cells and TODO rows are merged A:F or A:D. Always clear from column A — clearing B:F or B:D of a merged range does NOT clear the value.
 
-**Wrong:** `sheet.getRange('B43:F43').clearContent()` — does nothing
-**Right:** `sheet.getRange('A43:F43').clearContent()` — clears the value
+**Wrong:** `sheet.getRange('B59:F59').clearContent()` — does nothing (merged A:F, value in column A)
+**Right:** `sheet.getRange('A59:F59').clearContent()` — clears the value
 
-This also applies to TODO tasks which are merged A:E per row.
-
----
-
-## Data Warehouse Schema (NIGHTLY_FINANCIAL, 25 cols A-Y as of Phase 1)
-
-```
-A=Date, B=Day, C=WeekEnding, D=MOD, E=Staff,
-F=NetRevenue, G=ProductionAmount, H=CashTakings,
-I=GrossSalesIncCash, J=CashReturns, K=CDDiscount,
-L=Refunds, M=CDRedeem, N=TotalDiscount,
-O=DiscountsCompsExcCD, P=GrossTaxableSales,
-Q=Taxes, R=NetSalesWTips, S=CardTips, T=CashTips,
-U=TotalTips, V=LoggedAt,
-W=CashCounted, X=ExpectedCash, Y=CashVariance
-```
-
-**Header migration (Phase 2, Wed May 20):** Manually add W/X/Y column headers to the NIGHTLY_FINANCIAL sheet. The header assertion in `logToDataWarehouse_()` will throw if column count ≠ 25 after the header row exists.
-**Backfill:** Columns W/X/Y will be null for all rows before Phase 2 activation — no backfill required.
+Applies to: A59:F59 (generalShiftComments), A61:F61 (guestsOfNote), A63:F63 (theGood), A65:F65 (theBad), A67:F67 (kitchenNotes), A86:F86 (wastageComps), A88:F88 (maintenanceIssues), A90:F90 (rsaIncidents), A69:A84 (todoTasks merged A:E), D69:D84 (todoAssignees, not merged).
 
 ---
 
-## Quick Lookup Table
+## Data Warehouse Schema (NIGHTLY_FINANCIAL)
 
-| Field | Cell | Type | Warehoused | Cleared in Rollover |
-|-------|------|------|------------|---------------------|
-| Day Title | A1:F1 | Text | No | No |
-| Date | B3:F3 | Date | Yes (col A) | No (updated) |
-| MOD | B4:F4 | Text | Yes (col D) | Yes |
-| Staff | B5:F5 | Text | Yes (col E) | Yes |
-| Production Amount | B8 | Number | Yes (col G) | No |
-| Cash Takings | B15 | Formula | Yes (col H) | No |
-| Gross Sales Inc Cash | B16 | Formula | Yes (col I) | No |
-| Cash Returns | B17:B18 | Number | Yes (col J) | No |
-| CD Discounts | B19:B20 | Number | Yes (col K) | No |
-| Refunds | B21:B22 | Number | Yes (col L) | No |
-| CD Redeem | B23:B24 | Number | Yes (col M) | No |
-| Total Discounts | B25 | Input | Yes (col N) | No |
-| Discounts Comps Exc CD | B26 | Formula | Yes (col O) | No |
-| Gross Taxable Sales | B27 | Formula | Yes (col P) | No |
-| Taxes | B28 | Formula | Yes (col Q) | No |
-| Net Sales w Tips | B29 | Formula | Yes (col R) | No |
-| Card Tips | B32 | Number | Yes (col S) | Yes |
-| Cash Tips | B33 | Number | Yes (col T) | Yes |
-| Net Revenue | B34 | Number | Yes (col F) | Yes |
-| Cash Total | B35 | Number | No | No |
-| Total Tips | B36 | Formula | Yes (col U) | No (formula) |
-| Covers | B37 | Number | No | No |
-| Labor Hours | B38 | Formula | No | No (formula) |
-| Labor Cost | B39 | Formula | No | No (formula) |
-| Shift Report | A43:F43 | Text | Yes (col D) | Yes |
-| VIP/Guests | A45:F45 | Text | Yes (col E) | Yes |
-| The Good | A47:F47 | Text | Yes (col F) | Yes |
-| The Bad | A49:F49 | Text | Yes (col G) | Yes |
-| Kitchen Notes | A51:F51 | Text | Yes (col H) | Yes |
-| TODO Tasks | A53:E61 | Text | Yes (events) | Yes |
-| TODO Staff | F53:F61 | Text | Yes (events) | Yes |
-| Wastage/Comps | A63:F63 | Text | Yes (wastage) | Yes |
-| RSA/Injuries | A65:F65 | Text | Yes (qual) | Yes |
+> The warehouse stores all shift data for analytics. Each row is one shift. Columns map directly to FIELD_CONFIG, excluding formula intermediates and 6-row card expense range.
+
+<!-- Added 2026-05-17 (FIELD_CONFIG rewrite): Updated schema column count. L/M/R now NULL per user spec; new fields added (F/B staff separate, cash recon, maintenance). Total 22 columns A-V after Phase 1.2. -->
+
+```
+A=Date, B=Day, C=WeekEnding, D=MOD, E=FohStaff, F=BohStaff,
+G=CashCounted, H=CashTakings, I=CashVariance,
+J=CashTips, K=CardTips, L=SurchargeTips, M=TotalTips,
+N=ProductionAmount, O=FunctionDeposit, P=TotalAdjustments,
+Q=NetRevenue, R=Taxes, S=CashReturns, T=CDDiscount,
+U=WastageComps, V=LoggedAt
+```
+
+**Schema changes (Phase 1.2):**
+- Added: E=FohStaff, F=BohStaff (split from single Staff), G=CashCounted, I=CashVariance, L=SurchargeTips
+- Removed: CashRecorded (formula, not warehoused), MaintenanceIssues (qualitative, stored in QUALITATIVE_NOTES only)
+- NULL going forward: L(old Refunds), M(old CDRedeem), R(old NetSalesWTips) — these are formula intermediates
+- Total: 22 columns (A-V)
+
+**Header assertion:** `logToDataWarehouse_()` expects exactly 22 columns after the header row. No manual migration needed — the header is auto-created if missing.
+
+---
+
+## Quick Lookup Table (36 fields)
+
+| Field | Cell | Type | isFormula | Warehoused |
+|-------|------|------|-----------|------------|
+| Date | B3:F3 | Date | false | Yes (A) |
+| MOD | B4 | Text | false | Yes (D) |
+| FOH Staff | B6 | Text | false | Yes (E) |
+| BOH Staff | B7 | Text | false | Yes (F) |
+| Public Till Count | C10:C17 | Number | false | Yes (multi) |
+| Public Till Refloat | D10:D17 | Number | false | No |
+| Terrace Till Count | E10:E17 | Number | false | Yes (multi) |
+| Terrace Till Refloat | F10:F17 | Number | false | No |
+| Cash Counted | C18 | Formula | **true** | Yes (G) |
+| Cash Takings | C19 | Formula | **true** | Yes (H) |
+| Cash Returns | C22 | Number | false | Yes (S) |
+| CD Discount | C23 | Number | false | Yes (T) |
+| Cash Recorded | C24 | Formula | **true** | No |
+| Cash Variance | C26 | Formula | **true** | Yes (I) |
+| Cash Tips | C29 | Number | false | Yes (J) |
+| Card Tips | C30 | Number | false | Yes (K) |
+| Surcharge Tips | C31 | Number | false | Yes (L) |
+| Total Tips | C32 | Formula | **true** | Yes (M) |
+| Production Amount | B37 | Number | false | Yes (N) |
+| Function Deposit | B38 | Number | false | Yes (O) |
+| Card Expenses | B40:B45 | Number | false | No (formula result in Q) |
+| Cash Take Display | B47 | Formula | **true** | No |
+| Gross Sales | B48 | Formula | **true** | No |
+| Total Adjustments | B50 | Number | false | Yes (P) |
+| Discounts Exc Cash | B51 | Formula | **true** | No |
+| Gross Sales Less Disc | B52 | Formula | **true** | No |
+| Taxes | B53 | Formula | **true** | Yes (R) |
+| Net Revenue | B54 | Formula | **true** | Yes (Q) |
+| Running Totals | D37:D54 | Formula | **true** | No |
+| General Shift Comments | A59:F59 | Text | false | Yes (QUALITATIVE) |
+| Guests of Note | A61:F61 | Text | false | Yes (QUALITATIVE) |
+| The Good | A63:F63 | Text | false | Yes (QUALITATIVE) |
+| The Bad | A65:F65 | Text | false | Yes (QUALITATIVE) |
+| Kitchen Notes | A67:F67 | Text | false | Yes (QUALITATIVE) |
+| TO-DO Tasks | A69:A84 | Text | false | Yes (OPERATIONAL_EVENTS) |
+| TO-DO Assignees | D69:D84 | Text | false | Yes (OPERATIONAL_EVENTS) |
+| Wastage/Comps | A86:F86 | Text | false | Yes (WASTAGE_COMPS) |
+| Maintenance Issues | A88:F88 | Text | false | Yes (QUALITATIVE) |
+| RSA/Injuries | A90:F90 | Text | false | Yes (QUALITATIVE) |
 
 ---
 
@@ -360,6 +348,10 @@ getClearableFieldKeys_()         // returns non-formula field keys (used by both
 
 ---
 
-**Last Updated:** May 17, 2026 (Phase 1)
-**Key Insight:** All narrative cells are merged A:F — always clear from column A, never B:F
-**Cash recon key rule:** C18/C19/C26 are formula cells (never clear). C24 is manager input (clearable).
+---
+
+**Last Updated:** May 17, 2026 (Phase 1.2 — cell map correction)
+**Total Fields:** 36 (27 clearable, 9 formula-only)
+**Named Ranges:** 180 (36 fields × 5 active days)
+**Key Insight:** All narrative cells are merged A:F. Always clear from column A, never from B:F.
+**Cash recon rule:** C18/C19/C24/C26 are all formulas or system-managed (never clear via manager action). Manager inputs: C22, C23, C29-C31 only.
