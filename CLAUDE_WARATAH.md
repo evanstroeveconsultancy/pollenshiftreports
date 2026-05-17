@@ -1,6 +1,6 @@
 # THE WARATAH - Quick Reference
 
-**Last Updated:** April 2, 2026 (Date parsing hardening + Task Management changes + F9-F11 refactoring)
+**Last Updated:** May 17, 2026 (Joffy added to staff roster; Jaiden + Joffy personal Slack DM webhooks activated; departed-staff references purged from docs)
 **Status:** 🟢 PRODUCTION READY
 **Operating Days:** 5 days (Wed-Sun)
 **Cell References:** Named range system (`WEDNESDAY_SR_NetRevenue`) via `RunWaratah.js` — falls back to hardcoded cells when ranges absent. See [CELL_REFERENCE_MAP.md](docs/waratah/CELL_REFERENCE_MAP.md)

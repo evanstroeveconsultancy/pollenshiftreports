@@ -224,7 +224,7 @@ This is in the **Master Actionables Sheet** Script Properties.
 
 **Current format:**
 ```
-{"Evan":"https://hooks.slack.com/services/...","Cynthia":"...","Adam":"...","Jaiden":"...","Nick":"..."}
+{"Evan":"https://hooks.slack.com/services/...","Cynthia":"...","Adam":"...","Jaiden":"...","Joffy":"...","Nick":"..."}
 ```
 
 Note: Howie is configured with an empty webhook (no DM notifications).

@@ -266,7 +266,7 @@ NEW → TO DO → IN PROGRESS → DONE
 **Assigning a task to someone:**
 
 - Click the "Staff Allocated" cell and choose from the dropdown
-- Names must match exactly: Evan, Cynthia, Adam, Jaiden, Nick, Howie
+- Names must match exactly: Evan, Cynthia, Adam, Jaiden, Joffy, Nick, Howie
 
 **Moving tasks back to TO DO after discussion:**
 
@@ -292,7 +292,7 @@ NEW → TO DO → IN PROGRESS → DONE
 | Problem | Likely Cause | How to Fix |
 |---------|-------------|-----------|
 | **TO-DOs from shift reports not appearing in the Master Actionables Sheet** | The Shift Report spreadsheet has the wrong Task Management spreadsheet ID in its Script Properties | Open the Shift Report spreadsheet → Tools > Script Editor → Project Settings (gear icon) → View Script Properties (in left sidebar) → Check TASK_MANAGEMENT_SPREADSHEET_ID matches the Master Actionables Sheet's ID |
-| **Staff not getting Slack DMs with task summaries** | Staff name doesn't match exactly in the SLACK_DM_WEBHOOKS setting, or they don't have a DM webhook configured | Go to Task Management spreadsheet → Tools > Script Editor → Project Settings → View Script Properties → Find SLACK_DM_WEBHOOKS (it's a JSON object) → check the names are exactly "Evan", "Cynthia", "Adam", "Jaiden", "Nick" (case-sensitive, note: Howie has no DM webhook) |
+| **Staff not getting Slack DMs with task summaries** | Staff name doesn't match exactly in the SLACK_DM_WEBHOOKS setting, or they don't have a DM webhook configured | Go to Task Management spreadsheet → Tools > Script Editor → Project Settings → View Script Properties → Find SLACK_DM_WEBHOOKS (it's a JSON object) → check the names are exactly "Evan", "Cynthia", "Adam", "Jaiden", "Joffy", "Nick" (case-sensitive, note: Howie has no DM webhook) |
 | **Tasks not auto-sorting when you edit them** | The on-edit trigger was destroyed (usually happens after clasp deployment) | Go to Task Management > Admin Tools > Cleanup > Sort Tasks — this manually re-sorts the sheet; if issues persist, Task Management > Admin Tools > Setup Triggers > Edit Auto-Sort Trigger |
 | **Bi-hourly cleanup not running** | The cleanup trigger was destroyed or disabled | Go to Task Management > Admin Tools > Setup Triggers > Bi-Hourly Cleanup — verify it's set to run every 2 hours |
 | **Dashboard tab is missing or shows errors** | The tab was accidentally deleted or needs rebuild | Task Management > Admin Tools > Dashboard > Build / Rebuild Task Dashboard — it will recreate the entire tab from scratch |
@@ -308,11 +308,12 @@ NEW → TO DO → IN PROGRESS → DONE
 
 > The system knows about your current staff and validates their names. If someone leaves or joins, the dropdown list in "Staff Allocated" needs to be updated.
 
-**Current staff (as of May 4, 2026):**
+**Current staff (as of May 17, 2026):**
 - Evan
 - Cynthia
 - Adam
 - Jaiden
+- Joffy
 - Nick
 - Howie
 

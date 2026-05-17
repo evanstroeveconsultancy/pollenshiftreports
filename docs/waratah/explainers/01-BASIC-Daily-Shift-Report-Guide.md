@@ -138,7 +138,7 @@ This is the most important step. When you've finished filling everything in:
 When you clicked Confirm & Send, the system did all of this in one go:
 
 - Generated a PDF of tonight's shift report
-- Emailed that PDF to 9 managers (Evan, Andie, Cynthia, Dipti, Chef, Howie, Adam, Lily, Blade)
+- Emailed that PDF to 6 managers (Evan, Cynthia, Nick, Chef, Howie, Adam)
 - Posted a formatted summary to the Waratah Slack channel
 - Saved tonight's financial data to the data warehouse (for analytics)
 - Copied your tasks to the Master Actionables list

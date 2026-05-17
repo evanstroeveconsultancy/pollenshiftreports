@@ -170,7 +170,7 @@ clasp push --force
 
 After a successful `clasp push`, commit and push the changes to the git repository. This is the backup/history step — `clasp push` to Google is the primary deployment action.
 
-**Remote:** `origin` at `https://github.com/thewaratah/pollenshiftreports.git`
+**Remote:** `origin` at `https://github.com/evanstroeveconsultancy/pollenshiftreports.git`
 
 **Branching model:**
 ```

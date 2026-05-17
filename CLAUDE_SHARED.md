@@ -718,7 +718,7 @@ try {
 
 **6. Deployment: clasp push + git push (independent):**
 - `clasp push` deploys to Google Apps Script (production runtime)
-- `git push` commits to GitHub at `github.com/thewaratah/pollenshiftreports` (version history only)
+- `git push` commits to GitHub at `github.com/evanstroeveconsultancy/pollenshiftreports` (version history only)
 - These are independent -- `git push` does not affect production; `clasp push` does not update git
 - Standard workflow: edit --> `clasp push` --> `git commit` + `git push`
 - `_SETUP_*` files (webhook secrets), `.clasp.json`, and `.claude/` are gitignored

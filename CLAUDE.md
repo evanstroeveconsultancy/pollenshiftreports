@@ -1,6 +1,6 @@
 # SHIFT REPORTS 3.0 - Navigation Guide
 
-**Last Updated:** April 2, 2026
+**Last Updated:** May 17, 2026
 **Project Type:** Google Apps Script (Multi-Venue Hospitality Management System)
 **Venues:** Sakura House, The Waratah
 
@@ -109,7 +109,7 @@ SHIFT REPORTS 3.0 is a comprehensive hospitality automation system that manages 
 ## Project Structure
 
 ```
-SHIFT REPORTS 3.0/                       # Git repo: github.com/thewaratah/pollenshiftreports
+SHIFT REPORTS 3.0/                       # Git repo: github.com/evanstroeveconsultancy/pollenshiftreports
 ├── SAKURA HOUSE/
 │   ├── SHIFT REPORT SCRIPTS/         # 13 .gs + 3 .html, ~5,700 LOC
 │   ├── TASK MANAGEMENT SCRIPTS/      # 9 .gs + 1 .html, ~3,800 LOC
@@ -190,7 +190,7 @@ Specialist agents live in `.claude/agents/` (version-controlled). Auto-routing r
 
 **Git Repository & Deployment Workflow:**
 
-The project is version-controlled at `https://github.com/thewaratah/pollenshiftreports.git` (branch: `main`, remote: `origin`).
+The project is version-controlled at `https://github.com/evanstroeveconsultancy/pollenshiftreports.git` (branch: `main`, remote: `origin`).
 
 `clasp push` and `git push` are **independent** and go to **different places:**
 - `clasp push` deploys code to Google Apps Script (production runtime)
@@ -233,8 +233,24 @@ main                          ← stable, merged code only
 
 ---
 
-**Last Updated:** April 2, 2026 (Dashboard layout cleanup, analytics consolidation, date handling, task management, F4-F11 refactoring)
+**Last Updated:** May 17, 2026 (Waratah staff: Joffy + Jaiden DM webhooks; April 2 dashboard cleanup, analytics consolidation, date handling, task management, F4-F11 refactoring)
 **Status:** Both venues fully operational and production-ready ✅
+
+**Deployment (May 17, 2026) — Waratah Joffy + Jaiden Slack DM Webhooks:**
+- Waratah: Added `"Joffy"` to `STAFF_LIST` in `EnhancedTaskManagementWaratah.gs` — appears in task assignment dropdowns
+- Waratah: Personal Slack DM webhooks activated for Jaiden (added May 4 without webhook) and Joffy (new staff) via `SLACK_DM_WEBHOOKS` Script Property
+- Documentation: `CLAUDE_WARATAH.md`, `THE WARATAH/FILE EXPLAINERS/2_TASK_MANAGEMENT.md` + `5_CONFIGURATION_REFERENCE.md` updated to reflect 6-person DM list (Evan, Cynthia, Adam, Jaiden, Joffy, Nick); `docs/waratah/explainers/01-BASIC...` + `02-INTERMEDIATE...` + `docs/waratah/DEEP_DIVE_ARCHITECTURE.md` staff lists refreshed; departed-staff references (Lily, Blade, Andie, Dipti) purged
+- Git hygiene: Rescued May 4 staff roster commit (was deployed via clasp May 4 but never `git commit`'d — 13-day production-vs-git drift now corrected)
+- GitHub: Repo moved to `github.com/evanstroeveconsultancy/pollenshiftreports` — `origin` remote and 5 doc files updated (CLAUDE.md, CLAUDE_SHARED.md, .claude/agents/deployment-agent.md, .claude/commands/deploy.md)
+- Manual post-deploy: User updated `SLACK_DM_WEBHOOKS` Script Property with both webhooks; ran `reapplyFormattingAndValidation()`
+
+**Deployment (May 4, 2026) — Waratah Staff Roster Update:**
+- Waratah: `STAFF_LIST` in `EnhancedTaskManagementWaratah.gs` updated — removed Lily, Blade, Andie, Dipti; added Jaiden, Nick
+- Waratah: Email recipient list updated to 6 managers (Evan, Cynthia, Nick, Chef, Howie, Adam)
+- Jaiden: Slack integration deferred to managers channel only (no personal DM webhook at the time — later activated May 17)
+- Nick: Added with personal Slack DM webhook
+- Manual post-deploy: Script Properties (`SLACK_DM_WEBHOOKS`, `WARATAH_EMAIL_RECIPIENTS`) updated; `reapplyFormattingAndValidation()` re-run for dropdowns
+- Git: clasp push completed May 4 1:29am; `git commit` step missed at the time — committed retroactively May 17 (see entry above)
 
 **Deployment (Apr 2, 2026) — F4-F11 Code Refactoring & Cleanup:**
 - F4: CLAUDE.md trimmed 320→284 lines (pipeline diagram extracted, duplicate agent routing consolidated)
@@ -279,6 +295,12 @@ main                          ← stable, merged code only
 - Both venues: All `appendRow()` calls in `logToDataWarehouse_()` now wrap `shiftData.date` and `shiftData.weekEnding` with `toDateOnly_()` — NIGHTLY_FINANCIAL, OPERATIONAL_EVENTS, WASTAGE_COMPS, QUALITATIVE_NOTES
 - **Sakura schema change:** NIGHTLY_FINANCIAL column J "Total Tips" deleted (redundant with H "Tips Total" from cell C32); schema now 16 columns (A-P) after March 6's expansion to 17 columns minus deleted J
 - Manual action required: Fix the `1/4/2026 19:00:00` row in NIGHTLY_FINANCIAL — correct to April 1, 2026 with no time component
+
+**Recent Updates (May 17, 2026):**
+- Waratah: Joffy added to staff roster; Jaiden + Joffy personal Slack DM webhooks activated
+- Waratah: Documentation sweep — departed-staff references (Lily, Blade, Andie, Dipti) purged from /docs/waratah/, FILE EXPLAINERS, and CLAUDE_WARATAH.md
+- GitHub: Repo moved to `evanstroeveconsultancy/pollenshiftreports` — `origin` remote + 5 doc references updated
+- Git hygiene: Rescued May 4 staff roster commit that had been deployed via clasp but never committed to git
 
 **Recent Updates (Apr 2, 2026):**
 - F4-F11: Code refactoring & cleanup — Sakura dead functions removed, schema validation fixed, Claude API deduplicated; Waratah HTML templates symlinked (1.2MB saved), file naming standardized; documentation consolidated to .md SSOT

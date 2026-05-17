@@ -8,7 +8,7 @@ The agent will:
 3. Execute `clasp push` in the right directory (primary deployment to Google)
 4. Guide post-deployment verification steps
 5. Git commit and push to the venue develop branch (backup/history — only after clasp push succeeds)
-   - Remote: `https://github.com/thewaratah/pollenshiftreports.git`
+   - Remote: `https://github.com/evanstroeveconsultancy/pollenshiftreports.git`
    - Branch: `sakura/develop` (Sakura work) or `waratah/develop` (Waratah work) — never push directly to `main`
    - Stage specific changed files (not `git add -A`)
    - Commit message format: `deploy: [Venue] [System] — [description]`

@@ -85,9 +85,9 @@ The system creates a PDF of tonight's shift report tab. It uses A4 portrait layo
 
 ### Step 8: Email Distribution
 
-The PDF is emailed to 9 recipients:
+The PDF is emailed to 6 recipients:
 
-Evan, Andie, Cynthia, Dipti, Chef, Howie, Adam, Lily, Blade
+Evan, Cynthia, Nick, Chef, Howie, Adam
 
 The email includes the PDF as an attachment and a link to the live Google Sheet.
 
