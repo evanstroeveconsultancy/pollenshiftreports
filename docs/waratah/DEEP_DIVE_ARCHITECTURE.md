@@ -154,7 +154,7 @@ resetScriptProperties()
 **File:** [`EnhancedTaskManagementWaratah.gs`](../../THE%20WARATAH/TASK%20MANAGEMENT%20SCRIPTS/EnhancedTaskManagementWaratah.gs)
 
 **Staff List (with Slack DM integration):**
-- Evan, Cynthia, Adam, Lily, Dipti (individual DM webhooks configured)
+- Evan, Cynthia, Adam, Jaiden, Joffy, Nick (individual DM webhooks configured)
 - Bar Team, Kitchen Team, FOH Team, General Management, Marketing Explicit (group assignments)
 - All, Contractor (special categories)
 

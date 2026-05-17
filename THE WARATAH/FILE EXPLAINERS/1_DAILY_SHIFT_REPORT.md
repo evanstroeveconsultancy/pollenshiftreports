@@ -89,7 +89,7 @@ No password is required. Managers can send reports directly from the menu.
 
 **1. PDF is emailed to managers**
 - A formatted, professional PDF of your shift report is created
-- It's emailed to all managers on the recipient list (Evan, Cynthia, Dipti, Chef, Howie, Adam, Lily as of March 2026)
+- It's emailed to all managers on the recipient list (Evan, Cynthia, Nick, Chef, Howie, Adam as of May 2026)
 - The email includes an AI-written summary at the top — either a basic 2-3 sentence summary OR an upgraded analytics-driven insight (depending on system configuration). Insights include performance metrics (revenue vs benchmarks, trends), discount impact analysis, and recommended actions. This is generated automatically and requires no extra input from you. If the AI system is unavailable, the email sends normally without the summary.
 
 **2. Slack message is posted**
@@ -192,14 +192,13 @@ No password is required. Managers can send reports directly from the menu.
 
 > The email is sent to a configured list of managers. You can check or update this list if needed.
 
-**Current recipients (as of March 2026):**
+**Current recipients (as of May 2026):**
 - Evan
 - Cynthia
-- Dipti
+- Nick
 - Chef
 - Howie
 - Adam
-- Lily
 
 **To change who gets the email:**
 See [5_CONFIGURATION_REFERENCE.md](5_CONFIGURATION_REFERENCE.md) — search for "Changing Email Recipients" for step-by-step instructions.
