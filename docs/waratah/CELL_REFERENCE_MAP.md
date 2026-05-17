@@ -15,7 +15,7 @@ The Waratah uses a **named range system** mirroring Sakura House. Cell positions
 
 <!-- Added 2026-05-17 (FIELD_CONFIG rewrite): 36-field system with corrected cell references and field naming. Named range count: 180 (36 fields × 5 active days) -->
 
-**Active as of May 17, 2026 (Phase 1.2):** ✅ All 180 named ranges created via `setupWaratahNamedRanges_()`. `getFieldRange()` THROWS if a range is missing (no silent fallback). Ranges verified with `verifyWaratahNamedRanges_()` — output: OK=180, MISSING=0, WRONG=0.
+**Active as of May 17, 2026 (Phase 1.3):** ✅ All 197 named ranges created via `setupWaratahNamedRanges_()` (36 fields × 5 days = 180 base + 17 multi-row ranges for till entries, card expenses, TODO tasks). `getFieldRange()` THROWS if a range is missing (no silent fallback). Ranges verified with `verifyWaratahNamedRanges_()` — output: OK=197, MISSING=0, WRONG=0.
 
 **Sheet Names (all 7 exist, but only Wed-Sun active for shift reporting):** 
 - `MONDAY <date>` — unused, renamed by rollover
@@ -30,6 +30,25 @@ The Waratah uses a **named range system** mirroring Sakura House. Cell positions
 - Row 42 = "SHIFT REPORT" label, Row 43 = shift report data
 - Row 44 = "VIP/GUESTS OF NOTE" label, Row 45 = VIP data
 - etc.
+
+---
+
+## Known Issue & Fix Procedure — Setup Script Misbound Named Ranges
+
+<!-- Added 2026-05-17 (Phase 1.3): Setup script can misalign named ranges to wrong sheet if run AFTER tab duplication/rename -->
+
+**Symptom:** After running `setupWaratahNamedRanges_()`, some ranges (e.g., all `SATURDAY_SR_*` ranges) are bound to the wrong day tab (e.g., SUNDAY instead of SATURDAY).
+
+**Root cause:** The setup script creates named ranges based on **sheet position** (first sheet = MONDAY, second = TUESDAY, etc.) but if the sheet tabs have been renamed out of order or duplicated incorrectly, the name-to-sheet mapping breaks.
+
+**Fix procedure:**
+1. Open the shift report spreadsheet
+2. Go to **Data → Named ranges** (Google Sheets menu)
+3. Look for any ranges with mismatched sheet names (e.g., `SATURDAY_SR_NetRevenue` pointing to SUNDAY tab)
+4. Delete all misbound ranges (select and remove)
+5. Ensure all 7 day tabs are in the correct order: MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY
+6. Re-run `Waratah Tools → Admin → Named Ranges → Setup All Named Ranges` to create them correctly
+7. Verify: `Waratah Tools → Admin → Named Ranges → Verify Named Ranges` should show OK=197, MISSING=0, WRONG=0
 
 ---
 
@@ -350,8 +369,8 @@ getClearableFieldKeys_()         // returns non-formula field keys (used by both
 
 ---
 
-**Last Updated:** May 17, 2026 (Phase 1.2 — cell map correction)
+**Last Updated:** May 17, 2026 (Phase 1.3 — setup script known issue documented)
 **Total Fields:** 36 (27 clearable, 9 formula-only)
-**Named Ranges:** 180 (36 fields × 5 active days)
+**Named Ranges:** 197 (36 fields × 5 days + multi-row ranges)
 **Key Insight:** All narrative cells are merged A:F. Always clear from column A, never from B:F.
 **Cash recon rule:** C18/C19/C24/C26 are all formulas or system-managed (never clear via manager action). Manager inputs: C22, C23, C29-C31 only.

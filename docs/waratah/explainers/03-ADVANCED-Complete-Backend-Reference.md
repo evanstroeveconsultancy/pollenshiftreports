@@ -1,4 +1,4 @@
-**Last updated:** May 17, 2026 (Phase 1.2 — cell map correction)
+**Last updated:** May 17, 2026 (Phase 1.3 — setup script known issue documented)
 **Audience:** Managers who want to understand the complete system, or anyone receiving a technical handover
 **Prerequisite:** Read 01-BASIC and 02-INTERMEDIATE first — this guide assumes you understand the daily workflow and system components
 
@@ -206,8 +206,8 @@ Every function that the system exposes (callable from menus, triggers, or HTML d
 
 | Function | How It's Called | What It Does |
 |----------|----------------|-------------|
-| `setupWaratahNamedRanges_()` | Menu: Admin > Named Ranges > Setup All Named Ranges | Idempotent. Creates or updates all 177 named ranges from a config map. Logs created/skipped/errors. |
-| `verifyWaratahNamedRanges_()` | Menu: Admin > Named Ranges > Verify Named Ranges | Diagnostic. Lists missing ranges, mis-targeted ranges, and unexpected leftover ranges. Output via Logger and UI alert. |
+| `setupWaratahNamedRanges_()` | Menu: Admin > Named Ranges > Setup All Named Ranges | Idempotent. Creates or updates all 197 named ranges from a config map. Logs created/skipped/errors. See Known Issue section above if ranges bind to wrong sheet. |
+| `verifyWaratahNamedRanges_()` | Menu: Admin > Named Ranges > Verify Named Ranges | Diagnostic. Lists missing ranges, mis-targeted ranges, and unexpected leftover ranges. Output via Logger and UI alert. Expect: OK=197, MISSING=0, WRONG=0. |
 
 ### MenuWaratah.js — Menu and Access Control
 
@@ -242,9 +242,9 @@ Every function that the system exposes (callable from menus, triggers, or HTML d
 
 ---
 
-## Named Range System (May 17, 2026)
+## Named Range System (May 17, 2026 — Phase 1.3)
 
-> The new system uses 177 named ranges to manage cell access. This replaces hardcoded cell addresses and provides a flexible, self-documenting reference layer. Named ranges follow the convention: `DAY_SR_FieldName` (e.g., `WEDNESDAY_SR_NetRevenue`, `FRIDAY_SR_CashVariance`).
+> The new system uses 197 named ranges to manage cell access (36 fields × 5 days, plus multi-row ranges for till entries, card expenses, and TODO tasks). This replaces hardcoded cell addresses and provides a flexible, self-documenting reference layer. Named ranges follow the convention: `DAY_SR_FieldName` (e.g., `WEDNESDAY_SR_NetRevenue`, `FRIDAY_SR_CashVariance`).
 
 This means:
 - Code never references a cell directly (e.g., never `sheet.getRange('B34')`)
@@ -252,7 +252,7 @@ This means:
 - If the layout changes, only the named range definition updates — code stays the same
 - The system auto-verifies named ranges exist on every deployment
 
-The full list of 177 named ranges is maintained in `docs/waratah/CELL_REFERENCE_MAP.md`. Examples:
+The full list of 197 named ranges is maintained in `docs/waratah/CELL_REFERENCE_MAP.md`. Examples:
 - `WEDNESDAY_SR_Date` — the date cell for Wednesday's shift report
 - `THURSDAY_SR_NetRevenue` — Thursday's net revenue cell
 - `FRIDAY_SR_CashCounted` — Friday's total cash counted (new)
@@ -261,11 +261,35 @@ The full list of 177 named ranges is maintained in `docs/waratah/CELL_REFERENCE_
 
 ---
 
-## Cell Layout (Phase 1.2 — 36 Fields, 180 Named Ranges)
+## Known Issue & Maintenance Procedure — Setup Script Named Range Binding
+
+<!-- Added 2026-05-17 (Phase 1.3): Documented setup-script misbound-ranges issue + recovery procedure -->
+
+> When `setupWaratahNamedRanges_()` is run AFTER sheets have been manually renamed or duplicated, some named ranges can bind to the wrong day tab. This is a one-time issue during deployment but can recur if sheet operations are performed out of order.
+
+**Symptom:** After setup, a subset of named ranges (e.g., all `SATURDAY_SR_*` ranges) are bound to the wrong sheet. Exports using those ranges silently read/write the wrong cells (e.g., reading Saturday revenue from Sunday's tab).
+
+**Root cause:** The setup script maps named ranges based on **relative sheet position** (position 1 = MONDAY, position 2 = TUESDAY, etc.), not by sheet name. If sheets are out of order, the mapping breaks.
+
+**Recovery procedure (manual):**
+1. Open the shift report spreadsheet
+2. Go to **Data → Named ranges**
+3. Identify any mismatched ranges (e.g., `SATURDAY_SR_NetRevenue` pointing to "SUNDAY" in the range definition)
+4. **Delete all misbound named ranges** — select each one and remove it
+5. Verify sheet order in the sheet tabs: left-to-right should be MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY (all 7)
+6. **Re-run setup:** Waratah Tools → Admin → Named Ranges → Setup All Named Ranges
+7. **Verify:** Waratah Tools → Admin → Named Ranges → Verify Named Ranges → should output: OK=197, MISSING=0, WRONG=0
+8. **Test:** Send a test export to confirm data is now correct
+
+**Prevention:** Avoid renaming or moving sheet tabs except during the automated rollover (which handles it safely).
+
+---
+
+## Cell Layout (Phase 1.3 — 36 Fields, 197 Named Ranges)
 
 <!-- Added 2026-05-17 (FIELD_CONFIG rewrite): Updated cell layout to match new field system. All cells accessed via named ranges (e.g. WEDNESDAY_SR_NetRevenue); hardcoded addresses listed for reference/fallback. -->
 
-> Every shift report tab (WEDNESDAY–SUNDAY) has the same layout. All cells are accessed via named ranges like `WEDNESDAY_SR_NetRevenue`, `THURSDAY_SR_CashTakings`, etc. The 180 total named ranges (36 fields × 5 days) are auto-created by `setupWaratahNamedRanges_()`. Hardcoded cell addresses below are fallback references only.
+> Every shift report tab (WEDNESDAY–SUNDAY) has the same layout. All cells are accessed via named ranges like `WEDNESDAY_SR_NetRevenue`, `THURSDAY_SR_CashTakings`, etc. The 197 total named ranges (36 fields × 5 days = 180 base + 17 multi-row ranges) are auto-created by `setupWaratahNamedRanges_()`. Hardcoded cell addresses below are fallback references only.
 
 ### Header (rows 3–7)
 
