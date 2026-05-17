@@ -461,15 +461,15 @@ runValidationReport()    // Full system validation
 ## 📖 Detailed Guides (Load on Demand)
 
 **Architecture & Setup:**
-- 📘 [DEEP_DIVE_ARCHITECTURE.md](docs/waratah/DEEP_DIVE_ARCHITECTURE.md) - File structure, venue config, script properties, task system
+- 📘 Architecture: see [for-developers/01-architecture-and-data-flow.md](docs/waratah/for-developers/01-architecture-and-data-flow.md) (canonical, Phase 4); legacy `DEEP_DIVE_ARCHITECTURE.md` archived 2026-05-17
 
 **Workflows:**
 - 📗 [WORKFLOW_SHIFT_REPORTS.md](WORKFLOW_SHIFT_REPORTS.md) - Daily shift report workflow (user + backend perspective)
-- 📗 [WORKFLOW_WEEKLY.md](docs/waratah/WORKFLOW_WEEKLY.md) - Weekly rollover workflow (automation, archiving, dates)
+- 📗 Weekly rollover: see [for-developers/05-rollover-and-triggers.md](docs/waratah/for-developers/05-rollover-and-triggers.md) (canonical, Phase 4); legacy `WORKFLOW_WEEKLY.md` archived 2026-05-17
 
 **Reference:**
-- 📙 [CELL_REFERENCE_MAP.md](docs/waratah/CELL_REFERENCE_MAP.md) - FIELD_CONFIG table, named range names, fallback cells
-- 📙 [INTEGRATION_FLOWS.md](docs/waratah/INTEGRATION_FLOWS.md) - Data warehouse, Slack, email, task integrations
+- 📙 Cell reference and FIELD_CONFIG: see [for-developers/02-cell-reference-and-field-config.md](docs/waratah/for-developers/02-cell-reference-and-field-config.md) (canonical, Phase 4); legacy `CELL_REFERENCE_MAP.md` archived 2026-05-17
+- 📙 Integration flows: see [for-developers/03-integration-pipeline.md](docs/waratah/for-developers/03-integration-pipeline.md) and [04-warehouse-schemas.md](docs/waratah/for-developers/04-warehouse-schemas.md) (canonical, Phase 4); legacy `INTEGRATION_FLOWS.md` archived 2026-05-17
 
 **Audience-Tiered Documentation (in progress, 2026-05-17 consolidation):**
 
@@ -491,17 +491,19 @@ For Admins (admin operators with Script Properties and clasp access):
 - 📖 [03-advanced-troubleshooting.md](docs/waratah/for-admins/03-advanced-troubleshooting.md) - Log inspection, rollover recovery, trigger destruction recovery
 - 📖 [04-deployment-and-clasp.md](docs/waratah/for-admins/04-deployment-and-clasp.md) - Pre/post-deploy checklist, trigger reinstall procedure
 
-For Developers (Phase 4, pending): `/docs/waratah/for-developers/` - Architecture, cell maps, integration, schemas, triggers
+For Developers (developers and Claude AI agents; canonical technical reference):
+- 📘 [Developer Directory](docs/waratah/for-developers/README.md) - Developer entry point, key rules, AI agent routing
+- 📘 [01-architecture-and-data-flow.md](docs/waratah/for-developers/01-architecture-and-data-flow.md) - File structure, dependency layering, key technical rules
+- 📘 [02-cell-reference-and-field-config.md](docs/waratah/for-developers/02-cell-reference-and-field-config.md) - 36 fields, 197 named ranges, FIELD_CONFIG, setup-bug procedure
+- 📘 [03-integration-pipeline.md](docs/waratah/for-developers/03-integration-pipeline.md) - End-to-end nightly send pipeline, 5 destinations
+- 📘 [04-warehouse-schemas.md](docs/waratah/for-developers/04-warehouse-schemas.md) - NIGHTLY_FINANCIAL (25-col), OPERATIONAL_EVENTS, WASTAGE_COMPS, QUALITATIVE_LOG; duplicate prevention, date helpers
+- 📘 [05-rollover-and-triggers.md](docs/waratah/for-developers/05-rollover-and-triggers.md) - Weekly rollover internals, trigger management, safe-clear semantics
+- 📘 [06-task-management-internals.md](docs/waratah/for-developers/06-task-management-internals.md) - 9-status state machine, escalation, recurring tasks, audit trail
 
-Legacy explainers (still authoritative for developer content until Phase 4):
-- 📖 [02-INTERMEDIATE-How-The-System-Works.md](docs/waratah/explainers/02-INTERMEDIATE-How-The-System-Works.md) - Partially superseded (Phases 2 and 3); developer overflow only
-- 📖 [03-ADVANCED-Complete-Backend-Reference.md](docs/waratah/explainers/03-ADVANCED-Complete-Backend-Reference.md) - Full backend reference (Phase 4 target)
-
-Legacy FILE EXPLAINERS (only developer content remains until Phase 4):
-- 📖 [2_TASK_MANAGEMENT.md](THE%20WARATAH/FILE%20EXPLAINERS/2_TASK_MANAGEMENT.md) - Partially superseded (Phases 2 and 3); developer audit trail internals only
-- 📖 [3_WEEKLY_AUTOMATED_EVENTS.md](THE%20WARATAH/FILE%20EXPLAINERS/3_WEEKLY_AUTOMATED_EVENTS.md) - Partially superseded (Phases 2 and 3); developer trigger internals only
-- 📖 [4_TROUBLESHOOTING.md](THE%20WARATAH/FILE%20EXPLAINERS/4_TROUBLESHOOTING.md) - Partially superseded (Phases 2 and 3); developer named-range debugging only
-- 5_CONFIGURATION_REFERENCE.md - **ARCHIVED 2026-05-17 (Phase 3)**. Superseded by `for-admins/01-configuration-reference.md` and `02-staff-and-access-management.md`.
+All legacy documentation has been archived to `/docs/waratah/_archive/` as of 2026-05-17 (Phase 4 complete). The 4-phase consolidation is now complete:
+- Phase 1 archived: `1_DAILY_SHIFT_REPORT.md`, `01-BASIC-Daily-Shift-Report-Guide.md`
+- Phase 3 archived: `5_CONFIGURATION_REFERENCE.md`
+- Phase 4 archived: `CELL_REFERENCE_MAP.md`, `DEEP_DIVE_ARCHITECTURE.md`, `INTEGRATION_FLOWS.md`, `WORKFLOW_WEEKLY.md`, `02-INTERMEDIATE-How-The-System-Works.md`, `03-ADVANCED-Complete-Backend-Reference.md`, `2_TASK_MANAGEMENT.md`, `3_WEEKLY_AUTOMATED_EVENTS.md`, `4_TROUBLESHOOTING.md`
 
 ---
 

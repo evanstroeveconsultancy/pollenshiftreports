@@ -18,19 +18,19 @@ You fill in the shift report at the end of each shift and click Send. You don't 
 
 You oversee daily reports, manage tasks, watch weekly numbers, and step in when something needs attention. You change small things (a missed task, a wastage entry) but you don't touch the underlying configuration.
 
-**Go to:** [`for-managers/`](for-managers/) *(Phase 2 in progress, see legacy paths below until complete)*
+**Go to:** [`for-managers/`](for-managers/) (Phase 2 complete)
 
 ### I am an admin or IT-savvy operator
 
 You configure Script Properties, manage the staff and recipient lists, change Slack webhooks, recover the system when something breaks, and deploy code changes via clasp.
 
-**Go to:** [`for-admins/`](for-admins/) *(Phase 3 in progress, see legacy paths below until complete)*
+**Go to:** [`for-admins/`](for-admins/) (Phase 3 complete)
 
 ### I am a developer or Claude AI agent
 
 You modify the codebase, work with named ranges and cell maps, read warehouse schemas, manage triggers, and deploy. You need exhaustive reference material rather than narrative walkthroughs.
 
-**Go to:** [`for-developers/`](for-developers/) *(Phase 4 in progress, see legacy paths below until complete)*
+**Go to:** [`for-developers/`](for-developers/) (Phase 4 complete)
 
 ---
 
@@ -54,14 +54,14 @@ This documentation is being consolidated from 12 older files into the audience-t
 
 | Phase | Tier | Status | Notes |
 |---|---|---|---|
-| 1 | Daily User | In progress (2026-05-17) | Daily user walkthrough plus this README |
-| 2 | Manager | Pending | Six files |
-| 3 | Admin | Pending | Five files |
-| 4 | Developer | Pending | Seven files |
+| 1 | Daily User | **Complete (2026-05-17)** | Daily user walkthrough plus this README |
+| 2 | Manager | **Complete (2026-05-17)** | Six files |
+| 3 | Admin | **Complete (2026-05-17)** | Five files |
+| 4 | Developer | **Complete (2026-05-17)** | Seven files |
 
 The full design and content migration map lives at [`/docs/plans/2026-05-17-waratah-docs-consolidation-design.md`](../plans/2026-05-17-waratah-docs-consolidation-design.md).
 
-Until each phase completes, the legacy files remain readable in `_archive/`. Older manager-facing files also still sit in [`THE WARATAH/FILE EXPLAINERS/`](../../THE%20WARATAH/FILE%20EXPLAINERS/) until Phase 4 finishes.
+All legacy files have been archived to `_archive/`. The `THE WARATAH/FILE EXPLAINERS/` directory now contains only a `README.md` stub pointing here.
 
 ---
 

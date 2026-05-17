@@ -1,6 +1,6 @@
-<!-- PARTIALLY SUPERSEDED 2026-05-17 (Phases 2 and 3 of Waratah docs consolidation). Manager-tier content canonicalised to /docs/waratah/for-managers/05-troubleshooting.md (Phase 2). Admin-tier content (log inspection, rollover recovery, password change) canonicalised to /docs/waratah/for-admins/03-advanced-troubleshooting.md and /02-staff-and-access-management.md (Phase 3). Only developer content (hardcoded cell debugging) remains here pending Phase 4. See /docs/plans/2026-05-17-waratah-docs-consolidation-design.md. -->
+<!-- ARCHIVED 2026-05-17 (Phase 4 of Waratah docs consolidation). Content fully migrated: manager to /docs/waratah/for-managers/05-troubleshooting.md (Phase 2); admin to /docs/waratah/for-admins/03-advanced-troubleshooting.md and /02-staff-and-access-management.md (Phase 3); developer named-range debugging to /docs/waratah/for-developers/02-cell-reference-and-field-config.md (Phase 4). This file is preserved for historical reference. Do not edit. -->
 
-> ⚠️ **Partially Superseded (Phases 2 and 3 of 2026-05-17 consolidation).** Manager-tier content moved to [`/docs/waratah/for-managers/05-troubleshooting.md`](../../docs/waratah/for-managers/05-troubleshooting.md). Admin-tier content moved to [`/docs/waratah/for-admins/03-advanced-troubleshooting.md`](../../docs/waratah/for-admins/03-advanced-troubleshooting.md) and [`02-staff-and-access-management.md`](../../docs/waratah/for-admins/02-staff-and-access-management.md). Developer content (named-range debugging) remains here pending Phase 4.
+> 🗄️ **Archived (2026-05-17).** Manager → `for-managers/05-troubleshooting.md`; admin → `for-admins/03-advanced-troubleshooting.md` + `/02-staff-and-access-management.md`; developer → `for-developers/02-cell-reference-and-field-config.md`.
 
 ---
 
