@@ -1,17 +1,19 @@
 # THE WARATAH - Quick Reference
 
-**Last Updated:** May 17, 2026 (Phase 1: Sakura-alignment migration — named range hardening, 3-col cash recon schema extension, new rollover system, Mon/Tue guard)
-**Status:** 🟢 PRODUCTION READY
+**Last Updated:** May 17, 2026 — LIVE CUTOVER (new Sakura-aligned sheet active; 177 named ranges; 25-col warehouse; triggers pending setup)
+**Status:** 🟢 PRODUCTION READY (manual operations until triggers created)
 **Operating Days:** 5 days (Wed-Sun)
-**Cell References:** Named range system (`WEDNESDAY_SR_NetRevenue`) via `RunWaratah.js` — falls back to hardcoded cells when ranges absent. See [CELL_REFERENCE_MAP.md](docs/waratah/CELL_REFERENCE_MAP.md)
-**Rollover:** In-place system ✅ Automated
+**Cell References:** Named range system (`WEDNESDAY_SR_NetRevenue`) via `RunWaratah.js`. All 177 ranges active on new sheet. See [CELL_REFERENCE_MAP.md](docs/waratah/CELL_REFERENCE_MAP.md)
+**Rollover:** In-place system ✅ Code ready; automated trigger pending Mon May 18 setup
 
 ---
 
-## Phase 1 — Sakura Alignment Migration (May 17, 2026)
+## Phase 1 — Sakura Alignment Migration (COMPLETED May 17, 2026)
+
+> Cutover happened today: new Sakura-aligned sheet (`1rcfHTtey_HXC291FAmjpquYkRjWNGbFtClz2szKXfkA`) is now **LIVE** with all shift reporting code active. OLD sheet is dormant (triggers deleted). Triggers must be manually created on the new project before Mon May 18 operations.
 
 **Design doc:** `docs/plans/2026-05-17-waratah-shift-report-sakura-alignment-design.md`
-**Status:** Code complete. Deploy Phase 2 (Wed May 20) — update `WARATAH_SHEET_ID` Script Property.
+**Status:** ✅ Code deployed. ✅ Named ranges created (177 total). ✅ New sheet live. ⏳ Triggers pending manual creation.
 
 ### What Changed
 
@@ -30,12 +32,53 @@
 - `AnalyticsDashboardWaratah.js` — schema comment updated to 25 cols
 - `VenueConfig.js` — `cashTakings: 'B15'` → `'C19'`; added `cashCounted`, `expectedCash`, `cashVariance`
 
-### Phase 2 Manual Steps (Wed May 20)
-1. Run `setupWaratahNamedRanges_()` against the new sheet via Admin Tools
-2. Flip `WARATAH_SHEET_ID` Script Property to `1rcfHTtey_HXC291FAmjpquYkRjWNGbFtClz2szKXfkA`
-3. Add NIGHTLY_FINANCIAL header row: add columns W=CashCounted, X=ExpectedCash, Y=CashVariance
-4. Run `clasp push` to deploy all Phase 1 code
-5. Verify with `verifyWaratahNamedRanges_()` and a test export
+### Phase 2 Manual Steps (COMPLETED May 17, 2026)
+✅ 1. Ran `setupWaratahNamedRanges_()` — created 177 named ranges on new sheet
+✅ 2. Flipped `WARATAH_SHEET_ID` Script Property to `1rcfHTtey_HXC291FAmjpquYkRjWNGbFtClz2szKXfkA`
+✅ 3. Extended NIGHTLY_FINANCIAL header row from 22 → 25 columns (W=CashCounted, X=ExpectedCash, Y=CashVariance)
+✅ 4. Deployed all Phase 1 code via `clasp push` to NEW project
+✅ 5. Verified with `verifyWaratahNamedRanges_()` — OK=177, MISSING=0, WRONG=0
+
+### Phase 3 — Trigger Setup (PENDING Mon May 18)
+⏳ Create time-based triggers on the NEW project:
+  - `runWaratahNightlyExport()` — Wed, Thu, Fri, Sat, Sun, ~11:30pm (after shift completion)
+  - `runWaratahWeeklyRollover()` — Mon 9:00pm (after Weekly Revenue Digest at 4pm)
+  - `sendWeeklyRevenueDigest_Waratah()` — Mon 4:00pm
+  - Any Saturday email export trigger if previously configured
+
+**Until triggers are created:** All exports must be run manually via `Waratah Tools → Daily Reports → Export & Email PDF (LIVE)` menu item.
+
+---
+
+## 📁 Apps Script Projects & Sheet IDs (May 17, 2026)
+
+> The Waratah system now uses TWO Apps Script projects and TWO spreadsheets. The NEW project is live; the OLD project is dormant.
+
+**NEW Project (LIVE — May 17, 2026 cutover):**
+- **Script ID:** `1YATiIFCp6zOM4xGscZOodacGhfxyPr3nvepnJ0SrJ7e5P73HrBFbqnqH`
+- **URL:** https://script.google.com/u/0/home/projects/1YATiIFCp6zOM4xGscZOodacGhfxyPr3nvepnJ0SrJ7e5P73HrBFbqnqH
+- **Bound Sheet:** `1rcfHTtey_HXC291FAmjpquYkRjWNGbFtClz2szKXfkA` (NEW Sakura-aligned Waratah sheet)
+- **Status:** ✅ All code deployed, all named ranges created (177), warehouse live
+- **Triggers:** ⏳ Pending creation (see Phase 3 above)
+- **`.clasp.json`:** Points to NEW project; local backup of old config saved as `.clasp.json.bak-old-project`
+
+**OLD Project (DORMANT — May 17, 2026 end-of-life):**
+- **Script ID:** `1hVHqRKw772uODidsOVxl9S1h6oqOWvxqevFFVFv6p6HNGl_-CO7PrVjz`
+- **Bound Sheet:** OLD Waratah sheet (cell references: B15, B32, B34, etc.)
+- **Status:** 🛑 All triggers DELETED. Code remains (Phase 1 push accidentally sent; harmless now triggers are gone)
+- **Decision Pending:** Delete entirely or archive as historical reference?
+
+**OLD Sheet Archive (PENDING manual action):**
+- Name TBD: `ARCHIVED OLD WARATAH 2026-05-17` (pending rename by user)
+- Status: view-only (pending permission change by user)
+- Purpose: Historical reference; not accessed by any active code
+
+**Historical Cell References (May 16, 2026 and earlier):**
+- Financial: B5 (staff), B8 (production), B15 (cash takings), B32–B34 (tips/revenue), B36 (total tips formula)
+- Narrative: A43, A45, A47, A49, A51 (merged A:F)
+- Tasks: A53:E61 (description, merged A:E), F53:F61 (staff allocation)
+- Wastage/RSA: A63, A65 (merged A:F)
+- **No longer valid for any active code** — all code now reads via named ranges or hardcoded NEW sheet cell addresses
 
 ---
 
@@ -528,26 +571,34 @@ archiveCompletedTasks()          // Auto-archive after 30 days
 
 **File:** `_SETUP_ScriptProperties.js`
 
+**File:** `_SETUP_ScriptProperties.js` in NEW project (May 17, 2026)
+
 ```javascript
 setupScriptProperties()     // Run once to configure all properties
 verifyScriptProperties()    // Verify setup is correct
 resetScriptProperties()     // CAUTION: Deletes all properties
 ```
 
-**Key Properties:**
+**Key Properties (May 17, 2026 — NEW project):**
 ```
 VENUE_NAME: "WARATAH"
 MENU_PASSWORD: "chocolateteapot"                       // S1: Read by requirePassword_() in MenuWaratah.js
-SHEET_PROTECTION_OWNER_EMAIL: "evan@pollenhospitality.com"  // Only user allowed to edit protected sheet areas; falls back to script owner if not set
-WARATAH_SHEET_ID: "[new_sheet_id]"                            // Phase 1 (May 20): flip to 1rcfHTtey_... to activate new sheet
-WARATAH_WORKING_FILE_ID: "[current_week_spreadsheet_id]"    // Fallback if WARATAH_SHEET_ID not set
+SHEET_PROTECTION_OWNER_EMAIL: "evan@pollenhospitality.com"  // Only user allowed to edit protected sheet areas
+
+WARATAH_SHEET_ID: "1rcfHTtey_HXC291FAmjpquYkRjWNGbFtClz2szKXfkA"  // ✅ NEW sheet (active May 17, 2026)
+WARATAH_WORKING_FILE_ID: "1rcfHTtey_HXC291FAmjpquYkRjWNGbFtClz2szKXfkA"  // Fallback; same as above
+WARATAH_SHIFT_REPORT_CURRENT_ID: "1rcfHTtey_HXC291FAmjpquYkRjWNGbFtClz2szKXfkA"  // Alternative name for same ID
 WARATAH_DATA_WAREHOUSE_ID: "[warehouse_spreadsheet_id]"
 ARCHIVE_ROOT_FOLDER_ID: "[archive_folder_id]"
+
 WARATAH_SLACK_WEBHOOK_LIVE: "https://hooks.slack.com/..."
+WARATAH_SLACK_WEBHOOK_TEST: "https://hooks.slack.com/..."  // Test channel for diagnostic posts
 WARATAH_EMAIL_RECIPIENTS: '["email1@...", "email2@..."]'
-ANTHROPIC_API_KEY: "sk-ant-..."                        // M1: AI shift summaries via AIInsightsWaratah.js (optional — feature gracefully disabled if absent)
-AI_INSIGHTS_MODE: "evan_only"                          // M6: Soft launch routing — 'evan_only' (default) or 'live'
-AI_INSIGHTS_EVAN_EMAIL: "evan@pollenhospitality.com"   // M6: Evan's email for evan_only mode delivery
+SLACK_MANAGERS_CHANNEL_WEBHOOK: "https://hooks.slack.com/..."
+
+ANTHROPIC_API_KEY: "sk-ant-..."                        // M1: AI shift summaries via AIInsightsWaratah.js (optional)
+AI_INSIGHTS_MODE: "evan_only"                          // M6: Soft launch routing — 'evan_only' or 'live'
+AI_INSIGHTS_EVAN_EMAIL: "evan@pollenhospitality.com"   // M6: Evan's email for evan_only mode
 ```
 
 See [DEEP_DIVE_ARCHITECTURE.md](docs/waratah/DEEP_DIVE_ARCHITECTURE.md#script-properties-configuration) for complete list.
@@ -563,7 +614,7 @@ See [DEEP_DIVE_ARCHITECTURE.md](docs/waratah/DEEP_DIVE_ARCHITECTURE.md#script-pr
 **Auto-Build Behavior (S8, Mar 18, 2026):** The ANALYTICS tab is auto-created on first warehouse write if missing. LockService re-entrancy fixed via `skipLock` parameter — when backfill calls `logToDataWarehouse_()`, it passes `skipLock=true` to prevent deadlock.
 
 ```
-1. NIGHTLY_FINANCIAL      (25 cols A-Y as of Phase 1 May 2026) - Full financial breakdown
+1. NIGHTLY_FINANCIAL      (25 cols A-Y, active May 17, 2026) - Full financial breakdown + cash recon
    A=Date, B=Day, C=WeekEnding, D=MOD, E=Staff,
    F=NetRevenue, G=ProductionAmount, H=CashTakings,
    I=GrossSalesIncCash, J=CashReturns, K=CDDiscount,
@@ -571,7 +622,7 @@ See [DEEP_DIVE_ARCHITECTURE.md](docs/waratah/DEEP_DIVE_ARCHITECTURE.md#script-pr
    O=DiscountsCompsExcCD, P=GrossTaxableSales,
    Q=Taxes, R=NetSalesWTips, S=CardTips, T=CashTips,
    U=TotalTips, V=LoggedAt,
-   W=CashCounted, X=ExpectedCash, Y=CashVariance
+   W=CashCounted (C18, formula), X=ExpectedCash (C24, input), Y=CashVariance (C26, formula)
 
 2. OPERATIONAL_EVENTS     (8 cols A-H) - TO-DOs (one row per TODO)
    A=Date, B=Day, C=MOD, D=Description, E=Assignee,
@@ -634,13 +685,16 @@ setupWeeklyDigestTrigger_Waratah()       // Installs Monday 9am trigger (safe to
 
 ## 📅 Weekly Rollover Details
 
-**Automated:** Monday 9:00pm (Australia/Sydney)
+**Automated Timing:** Monday 9:00pm (Australia/Sydney) — ⏳ **trigger not yet created (pending May 18)**
 
 **What It Does:**
-1. Archives previous week (PDF + Sheets snapshot)
-2. Clears all data fields (preserves structure)
+1. Archives previous week (PDF + Sheets snapshot) to Drive
+2. Clears all data fields (preserves formulas, formatting, validation)
 3. Updates dates to next Wednesday-Sunday
-4. Sends notifications (email + Slack)
+4. Sends notifications (email + Slack to managers channel)
+5. Validates rollover completion via `verifyWaratahNamedRanges_()`
+
+**Until trigger is created:** Run manually via menu: `Waratah Tools → Weekly Reports → Weekly Rollover (In-Place) → Run Rollover Now`
 
 **Archive Structure:**
 ```
