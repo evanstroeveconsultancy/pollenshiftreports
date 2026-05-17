@@ -1,4 +1,4 @@
-**Last updated:** May 17, 2026 (Phase 1.1 refinements: accuracy fixes, trigger status clarification, gap content added)
+**Last updated:** May 17, 2026 (Phase 1.2 — cell map correction)
 **Audience:** Managers who want to understand the complete system, or anyone receiving a technical handover
 **Prerequisite:** Read 01-BASIC and 02-INTERMEDIATE first — this guide assumes you understand the daily workflow and system components
 
@@ -9,14 +9,14 @@
 > The Waratah shift report system was migrated to a new spreadsheet and new Apps Script project on May 17, 2026. This section documents the new system. The old system is dormant but archived for reference.
 
 **Old system (dormant):**
-- Spreadsheet: <!-- VERIFY: actual OLD spreadsheet ID --> (archived — do not edit)
+- Spreadsheet: (redacted — archive only)
 - Apps Script: `1hVHqRKw772uODidsOVxl9S1h6oqOWvxqevFFVFv6p6HNGl_-CO7PrVjz` (archived — triggers deleted)
 
 **New system (LIVE):**
 - Spreadsheet: `1rcfHTtey_HXC291FAmjpquYkRjWNGbFtClz2szKXfkA`
 - Apps Script: `1YATiIFCp6zOM4xGscZOodacGhfxyPr3nvepnJ0SrJ7e5P73HrBFbqnqH`
 
-**Triggers status (May 17–May 18):** Triggers are manually created on May 18 at 9am. Until then, all nightly exports must be manually triggered by an admin.
+**Triggers status (May 17–May 18):** Triggers are scheduled for creation on May 18, 2026 — Mon 9pm rollover, Mon 4pm Weekly Revenue Digest, Wed–Sun nightly exports. Until then, all exports must be manually triggered via the Admin Tools menu.
 
 ---
 
@@ -261,77 +261,85 @@ The full list of 177 named ranges is maintained in `docs/waratah/CELL_REFERENCE_
 
 ---
 
-## Cell Layout (Updated for Cash Reconciliation — May 17, 2026)
+## Cell Layout (Phase 1.2 — 36 Fields, 180 Named Ranges)
 
-> Every shift report tab has the same layout. Cells are accessed via named ranges (e.g. `WEDNESDAY_SR_NetRevenue`). Hardcoded cell addresses are listed here for reference only.
+<!-- Added 2026-05-17 (FIELD_CONFIG rewrite): Updated cell layout to match new field system. All cells accessed via named ranges (e.g. WEDNESDAY_SR_NetRevenue); hardcoded addresses listed for reference/fallback. -->
 
-### Till Reconciliation Cells (NEW — May 17)
+> Every shift report tab (WEDNESDAY–SUNDAY) has the same layout. All cells are accessed via named ranges like `WEDNESDAY_SR_NetRevenue`, `THURSDAY_SR_CashTakings`, etc. The 180 total named ranges (36 fields × 5 days) are auto-created by `setupWaratahNamedRanges_()`. Hardcoded cell addresses below are fallback references only.
 
-| Cells | Field | Type | Warehouse Column |
-|-------|-------|------|-----------------|
-| C10:C17 | Public Till Count | Manual entry | Part of CashCounted |
-| D10:D17 | Public Till Refloat | Manual entry | Not warehoused |
-| E10:E17 | Terrace Till Count | Manual entry | Part of CashCounted |
-| F10:F17 | Terrace Till Refloat | Manual entry | Not warehoused |
-| C18 | Cash Counted | **Formula** (DO NOT CLEAR) | V: CashCounted |
-| C19 | Cash Take | **Formula** (DO NOT CLEAR) | Not warehoused |
-| C24 | Expected Cash | Manual entry | W: ExpectedCash |
-| C26 | Cash Variance | **Formula** (DO NOT CLEAR) | X: CashVariance |
+### Header (rows 3–7)
 
-### Financial Cells
+| Cell(s) | Field | Type | Warehouse Column |
+|---------|-------|------|-----------------|
+| B3:F3 | Date | Merged, pre-filled by rollover | A |
+| B4 | MOD | Single cell, manual entry | D |
+| B6 | FOH Staff | Single cell, manual entry | E |
+| B7 | BOH Staff | Single cell, manual entry | F |
 
-| Cells | Field | Type | Warehouse Column |
-|-------|-------|------|-----------------|
-| B3:F3 | Date | Merged, pre-filled by rollover | A: Date |
-| B4:F4 | MOD | Merged, manual entry | D: MOD |
-| B5:F5 | Staff | Merged, manual entry | E: Staff |
-| B8 | Production amount | Manual entry | G: ProductionAmount |
-| B9:B10 | Deposit | Manual entry | Not warehoused |
-| B11 | Airbnb covers | Manual entry | Not warehoused |
-| B13:B14 | Cancellations | Manual entry | Not warehoused |
-| C19 | Cash takings | **Formula** (from new C19, calculated in till recon) | H: CashTakings |
-| B16 | Gross sales inc cash | **Formula or entry** | I: GrossSalesIncCash |
-| B17 | Cash returns | **Formula or entry** | J: CashReturns |
-| B19 | CD discount | **Formula or entry** | K: CDDiscount |
-| B21 | Refunds | **Formula or entry** | L: Refunds |
-| B23 | CD redeem | **Formula or entry** | M: CDRedeem |
-| B25 | Total discount | Manual entry | N: TotalDiscount |
-| B26 | Discounts/comps exc CD | **Formula** | O: DiscountsCompsExcCD |
-| B27 | Gross taxable sales | **Formula** | P: GrossTaxableSales |
-| B28 | Taxes | **Formula** | Q: Taxes |
-| B29 | Net sales with tips | **Formula** | R: NetSalesWTips |
-| B30 | Petty cash | Manual entry | Not warehoused |
-| B32 | Card tips | Manual entry | S: CardTips |
-| B33 | Cash tips | Manual entry | T: CashTips |
-| B34 | Net revenue | Manual entry | F: NetRevenue |
-| B36 | Total tips | **Formula** (DO NOT CLEAR) | U: TotalTips |
-| B37 | Covers | Manual entry | Not warehoused |
-| B38 | Labour hours | **Formula** (DO NOT CLEAR) | Not warehoused |
-| B39 | Labour cost | **Formula** (DO NOT CLEAR) | Not warehoused |
+### Cash Reconciliation (rows 10–26)
 
-### Narrative Cells (Merged A:F, value in column A)
+| Cells | Field | Type | Formula? | Warehouse Column |
+|-------|-------|------|----------|-----------------|
+| C10:C17 | Public Till Count | Data entry (8 rows) | No | Included in G |
+| D10:D17 | Public Till Refloat | Data entry (8 rows) | No | Not warehoused |
+| E10:E17 | Terrace Till Count | Data entry (8 rows) | No | Included in G |
+| F10:F17 | Terrace Till Refloat | Data entry (8 rows) | No | Not warehoused |
+| C18 | Cash Counted | **FORMULA — DO NOT CLEAR** | **Yes** | G |
+| C19 | Cash Takings | **FORMULA — DO NOT CLEAR** | **Yes** | H |
+| C22 | Cash Returns | Manual entry | No | S |
+| C23 | CD Discount | Manual entry | No | T |
+| C24 | Cash Recorded | **FORMULA — DO NOT CLEAR** | **Yes** | Not warehoused |
+| C26 | 💰 Cash Variance | **FORMULA — DO NOT CLEAR** | **Yes** | I |
 
-| Cell | Field | Warehouse Column |
-|------|-------|-----------------|
-| A43 | Shift summary | QUALITATIVE_LOG: ShiftSummary |
-| A45 | VIP / Guests of note | QUALITATIVE_LOG: VIPNotes |
-| A47 | The Good | QUALITATIVE_LOG: TheGood |
-| A49 | The Bad / Issues | QUALITATIVE_LOG: TheBad |
-| A51 | Kitchen notes | QUALITATIVE_LOG: KitchenNotes |
+### Tips (rows 29–32)
 
-### Task Cells
+| Cell | Field | Type | Formula? | Warehouse Column |
+|------|-------|------|----------|-----------------|
+| C29 | Cash Tips | Manual entry | No | J |
+| C30 | Card Tips | Manual entry | No | K |
+| C31 | Surcharge Tips | Manual entry | No | L |
+| C32 | Total Tips | **FORMULA — DO NOT CLEAR** | **Yes** | M |
 
-| Cell Range | Field | Destination |
-|------------|-------|-------------|
-| A53:E61 | Task descriptions (9 rows, merged A:E per row) | OPERATIONAL_EVENTS + Master Actionables |
-| F53:F61 | Task assignees (9 rows) | OPERATIONAL_EVENTS + Master Actionables |
+### Revenue & Expenses (rows 37–54)
 
-### Incident Cells (Merged A:F)
+| Cells | Field | Type | Formula? | Warehouse Column |
+|-------|-------|------|----------|-----------------|
+| B37 | Production Amount | Manual entry | No | N |
+| B38 | Function Deposit | Manual entry | No | O |
+| B40:B45 | Card Expenses | Manual entry (6 rows) | No | Derived into Q |
+| B47 | Cash Take Display | **FORMULA — DO NOT CLEAR** | **Yes** | Not warehoused |
+| B48 | Gross Sales | **FORMULA — DO NOT CLEAR** | **Yes** | Not warehoused |
+| B50 | Total Adjustments | Manual entry | No | P |
+| B51 | Discounts Exc Cash | **FORMULA — DO NOT CLEAR** | **Yes** | Not warehoused |
+| B52 | Gross Sales Less Disc | **FORMULA — DO NOT CLEAR** | **Yes** | Not warehoused |
+| B53 | Taxes | **FORMULA — DO NOT CLEAR** | **Yes** | R |
+| B54 | Net Revenue | **FORMULA — DO NOT CLEAR** | **Yes** | Q |
+| D37:D54 | Running Totals | **FORMULA — DO NOT CLEAR** | **Yes** | Not warehoused |
 
-| Cell | Field | Warehouse Column |
-|------|-------|-----------------|
-| A63:F63 | Wastage/comps | WASTAGE_COMPS + QUALITATIVE_LOG |
-| A65:F65 | RSA incidents | QUALITATIVE_LOG: RSAIncidents |
+### Narrative (rows 59–90, merged A:F)
+
+| Cell(s) | Field | Type | Warehouse Sheet |
+|---------|-------|------|-----------------|
+| A59:F59 | General Shift Comments | Merged, manual entry | QUALITATIVE_NOTES |
+| A61:F61 | Guests of Note | Merged, manual entry | QUALITATIVE_NOTES |
+| A63:F63 | The Good | Merged, manual entry | QUALITATIVE_NOTES |
+| A65:F65 | The Bad | Merged, manual entry | QUALITATIVE_NOTES |
+| A67:F67 | Kitchen Notes | Merged, manual entry | QUALITATIVE_NOTES |
+
+### Tasks (rows 69–84)
+
+| Cell(s) | Field | Type | Destination |
+|---------|-------|------|-------------|
+| A69:A84 | TO-DO Tasks | 16 rows, merged A:E per row, manual entry | OPERATIONAL_EVENTS + Master Actionables |
+| D69:D84 | TO-DO Assignees | 16 rows, single cell per row, staff name | OPERATIONAL_EVENTS + Master Actionables |
+
+### Incidents (rows 86–90, merged A:F)
+
+| Cell(s) | Field | Type | Warehouse Sheet(s) |
+|---------|-------|------|-------------------|
+| A86:F86 | Wastage/Comps | Merged, manual entry | WASTAGE_COMPS |
+| A88:F88 | Maintenance Issues | Merged, manual entry (NEW) | QUALITATIVE_NOTES |
+| A90:F90 | RSA / Injuries | Merged, manual entry | QUALITATIVE_NOTES |
 
 ---
 
