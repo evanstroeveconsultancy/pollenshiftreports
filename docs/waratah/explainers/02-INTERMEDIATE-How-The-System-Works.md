@@ -1,4 +1,10 @@
-**Last updated:** May 17, 2026 (Phase 1.3 — 197 named ranges, no triggers yet)
+<!-- PARTIALLY SUPERSEDED 2026-05-17 (Phase 2 of Waratah docs consolidation). Manager-tier content has been canonicalised to /docs/waratah/for-managers/ (01-shift-reports.md, 02-task-management.md, 03-weekly-automation.md, 05-troubleshooting.md, plus glossary in for-managers/README.md). Admin and developer content remains here pending Phases 3 and 4. See /docs/plans/2026-05-17-waratah-docs-consolidation-design.md. -->
+
+> ⚠️ **Partially Superseded (2026-05-17).** Manager-tier content has moved to [`/docs/waratah/for-managers/`](../for-managers/) (split across `01-shift-reports.md`, `02-task-management.md`, `03-weekly-automation.md`, `05-troubleshooting.md`, and the glossary in `README.md`). Admin and developer content remains here until Phases 3 and 4 of the [documentation consolidation](../../plans/2026-05-17-waratah-docs-consolidation-design.md) complete.
+
+---
+
+**Last updated:** May 17, 2026 (Phase 1.3, 197 named ranges, no triggers yet)
 **Audience:** Managers who want to understand what happens behind the scenes
 **Prerequisite:** Read the Daily User Walkthrough first ([`/docs/waratah/for-daily-users/shift-report-walkthrough.md`](../for-daily-users/shift-report-walkthrough.md)). This guide builds on it. The former `01-BASIC-Daily-Shift-Report-Guide.md` was archived on 2026-05-17 and superseded by the canonical walkthrough.
 

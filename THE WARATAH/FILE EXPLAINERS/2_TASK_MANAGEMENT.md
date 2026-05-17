@@ -1,4 +1,10 @@
-# Task Management — The Waratah
+<!-- PARTIALLY SUPERSEDED 2026-05-17 (Phase 2 of Waratah docs consolidation). Manager-tier content has been canonicalised to /docs/waratah/for-managers/02-task-management.md (and to 04-staff-and-recipients.md for the staff sections). Admin content (Script Properties, staff change procedures) remains here pending Phase 3. Developer content (audit trail internals) remains here pending Phase 4. See /docs/plans/2026-05-17-waratah-docs-consolidation-design.md. -->
+
+> ⚠️ **Partially Superseded (2026-05-17).** Manager-tier content has moved to [`/docs/waratah/for-managers/02-task-management.md`](../../docs/waratah/for-managers/02-task-management.md) and [`04-staff-and-recipients.md`](../../docs/waratah/for-managers/04-staff-and-recipients.md). Admin and developer content remains here until Phases 3 and 4 of the [documentation consolidation](../../docs/plans/2026-05-17-waratah-docs-consolidation-design.md) complete.
+
+---
+
+# Task Management, The Waratah
 
 **Last Updated:** April 2, 2026
 **Type:** Handover guide for managers

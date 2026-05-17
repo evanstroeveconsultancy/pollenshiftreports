@@ -1,4 +1,10 @@
-# Troubleshooting — The Waratah
+<!-- PARTIALLY SUPERSEDED 2026-05-17 (Phase 2 of Waratah docs consolidation). Manager-tier content has been canonicalised to /docs/waratah/for-managers/05-troubleshooting.md. Admin-tier content (log inspection, rollover recovery, password change) remains here pending Phase 3. Developer content (hardcoded cell debugging) remains here pending Phase 4. See /docs/plans/2026-05-17-waratah-docs-consolidation-design.md. -->
+
+> ⚠️ **Partially Superseded (2026-05-17).** Manager-tier content has moved to [`/docs/waratah/for-managers/05-troubleshooting.md`](../../docs/waratah/for-managers/05-troubleshooting.md). Admin and developer content remains here until Phases 3 and 4 of the [documentation consolidation](../../docs/plans/2026-05-17-waratah-docs-consolidation-design.md) complete.
+
+---
+
+# Troubleshooting, The Waratah
 
 **Last Updated:** May 17, 2026 (Phase 1.3: rollover Mon 9pm, digest Mon 4pm, named-range system replaces hardcoded cells)
 **Type:** Handover guide for managers

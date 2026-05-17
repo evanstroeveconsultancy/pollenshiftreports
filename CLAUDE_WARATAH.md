@@ -471,13 +471,31 @@ runValidationReport()    // Full system validation
 - 📙 [CELL_REFERENCE_MAP.md](docs/waratah/CELL_REFERENCE_MAP.md) - FIELD_CONFIG table, named range names, fallback cells
 - 📙 [INTEGRATION_FLOWS.md](docs/waratah/INTEGRATION_FLOWS.md) - Data warehouse, Slack, email, task integrations
 
-**Manager Explainers (Google Docs-ready .txt, non-technical audience):**
-- 📖 [Daily User Walkthrough — shift-report-walkthrough.md](docs/waratah/for-daily-users/shift-report-walkthrough.md) - How to fill out and send shift reports (Phase 1 canonical, supersedes 01-BASIC archived 2026-05-17)
-- 📖 [02-INTERMEDIATE-How-The-System-Works.txt](docs/waratah/explainers/02-INTERMEDIATE-How-The-System-Works.txt) - What happens behind the scenes
-- 📖 [03-ADVANCED-Complete-Backend-Reference.txt](docs/waratah/explainers/03-ADVANCED-Complete-Backend-Reference.txt) - Full backend reference for power users
-- 📖 [04-BASIC-Task-Management-Guide.txt](docs/waratah/explainers/04-BASIC-Task-Management-Guide.txt) - How to use task management day-to-day
-- 📖 [05-INTERMEDIATE-Task-Management-System.txt](docs/waratah/explainers/05-INTERMEDIATE-Task-Management-System.txt) - Task system mechanics and automation
-- 📖 [06-ADVANCED-Task-Management-Backend.txt](docs/waratah/explainers/06-ADVANCED-Task-Management-Backend.txt) - Full task management backend reference
+**Audience-Tiered Documentation (in progress, 2026-05-17 consolidation):**
+
+For Daily Users (floor staff filling reports):
+- 📖 [Daily User Walkthrough](docs/waratah/for-daily-users/shift-report-walkthrough.md) - How to fill out and send shift reports (Phase 1 canonical)
+
+For Managers (venue managers, daily oversight):
+- 📖 [Manager Directory](docs/waratah/for-managers/README.md) - Manager entry point with glossary
+- 📖 [01-shift-reports.md](docs/waratah/for-managers/01-shift-reports.md) - Manager's view of shift reports
+- 📖 [02-task-management.md](docs/waratah/for-managers/02-task-management.md) - Task Management system, 9-status workflow
+- 📖 [03-weekly-automation.md](docs/waratah/for-managers/03-weekly-automation.md) - Weekly rollover, digest, dashboards
+- 📖 [04-staff-and-recipients.md](docs/waratah/for-managers/04-staff-and-recipients.md) - Staff roster, email and Slack recipients
+- 📖 [05-troubleshooting.md](docs/waratah/for-managers/05-troubleshooting.md) - Manager-fixable problems
+
+For Admins (Phase 3, pending): `/docs/waratah/for-admins/` - Script Properties, recipients, deployment, recovery
+For Developers (Phase 4, pending): `/docs/waratah/for-developers/` - Architecture, cell maps, integration, schemas, triggers
+
+Legacy explainers (still authoritative for admin and developer content until Phases 3 and 4):
+- 📖 [02-INTERMEDIATE-How-The-System-Works.md](docs/waratah/explainers/02-INTERMEDIATE-How-The-System-Works.md) - Partially superseded; admin and dev content only
+- 📖 [03-ADVANCED-Complete-Backend-Reference.md](docs/waratah/explainers/03-ADVANCED-Complete-Backend-Reference.md) - Full backend reference (Phase 4 target)
+
+Legacy FILE EXPLAINERS (still authoritative for admin and developer content until Phases 3 and 4):
+- 📖 [2_TASK_MANAGEMENT.md](THE%20WARATAH/FILE%20EXPLAINERS/2_TASK_MANAGEMENT.md) - Partially superseded
+- 📖 [3_WEEKLY_AUTOMATED_EVENTS.md](THE%20WARATAH/FILE%20EXPLAINERS/3_WEEKLY_AUTOMATED_EVENTS.md) - Partially superseded
+- 📖 [4_TROUBLESHOOTING.md](THE%20WARATAH/FILE%20EXPLAINERS/4_TROUBLESHOOTING.md) - Partially superseded
+- 📖 [5_CONFIGURATION_REFERENCE.md](THE%20WARATAH/FILE%20EXPLAINERS/5_CONFIGURATION_REFERENCE.md) - Phase 3 target (still authoritative)
 
 ---
 
