@@ -1,4 +1,4 @@
-**Last updated:** May 17, 2026
+**Last updated:** May 17, 2026 (Phase 1.1 refinements)
 **Audience:** All venue managers — no technical knowledge required
 **When to read:** Your first shift as MOD, or anytime you need a refresher
 
@@ -167,7 +167,7 @@ This is the most important step. When you've finished filling everything in:
 When you clicked Confirm & Send, the system did all of this in one go:
 
 - Generated a PDF of tonight's shift report
-- Emailed that PDF to 6 managers (Evan, Cynthia, Nick, Chef, Howie, Adam)
+- Emailed that PDF to 9 recipients (management team and key stakeholders)
 - Posted a formatted summary to the Waratah Slack channel (including **💰 Cash Variance: $X.XX** so managers can see if the till balanced)
 - Saved tonight's financial data to the data warehouse (for analytics)
 - Copied your tasks to the Master Actionables list
@@ -188,9 +188,9 @@ If you want to preview the report before sending it to everyone:
 
 ---
 
-## What Happens on Monday Morning (The Weekly Rollover)
+## What Happens on Monday Evening (The Weekly Rollover)
 
-Every Monday at 10am, the system automatically:
+Every Monday at 9pm, the system automatically:
 
 1. **Archives** last week's reports (saved as a PDF and a spreadsheet copy in Google Drive)
 2. **Clears** all the data you entered last week

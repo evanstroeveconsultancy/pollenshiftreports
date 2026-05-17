@@ -1,4 +1,4 @@
-**Last updated:** May 17, 2026 (Major update: New spreadsheet system, 177 named ranges, new Apps Script project)
+**Last updated:** May 17, 2026 (Phase 1.1 refinements: accuracy fixes, trigger status clarification, gap content added)
 **Audience:** Managers who want to understand the complete system, or anyone receiving a technical handover
 **Prerequisite:** Read 01-BASIC and 02-INTERMEDIATE first — this guide assumes you understand the daily workflow and system components
 
@@ -9,8 +9,8 @@
 > The Waratah shift report system was migrated to a new spreadsheet and new Apps Script project on May 17, 2026. This section documents the new system. The old system is dormant but archived for reference.
 
 **Old system (dormant):**
-- Spreadsheet: `1kxvEXU...` (archived — do not edit)
-- Apps Script: `1hVHqRKw...` (archived — triggers deleted)
+- Spreadsheet: <!-- VERIFY: actual OLD spreadsheet ID --> (archived — do not edit)
+- Apps Script: `1hVHqRKw772uODidsOVxl9S1h6oqOWvxqevFFVFv6p6HNGl_-CO7PrVjz` (archived — triggers deleted)
 
 **New system (LIVE):**
 - Spreadsheet: `1rcfHTtey_HXC291FAmjpquYkRjWNGbFtClz2szKXfkA`
@@ -56,7 +56,8 @@ The system consists of 16 JavaScript files and 4 HTML files. Together they conta
 
 | File | Lines | What It Does |
 |------|-------|-------------|
-| **_SETUP_ScriptProperties.js** | 222 | One-time setup script that creates all 18 configuration properties. Contains webhook secrets — excluded from version control. |
+| **SetupWaratah.js** | 156 | Named range setup and verification for new sheet. Creates 177 named ranges from a config map. Provides verify diagnostic. Used during deployment and after layout changes. |
+| **_SETUP_ScriptProperties.js** | 222 | One-time setup script that creates all 20 configuration properties. Contains webhook secrets — excluded from version control. |
 | **TEST_DataExtractionVerification.js** | 332 | Verifies that IntegrationHub reads the correct cells. Compares extracted data against manual cell reads. |
 | **TEST_VenueConfig.js** | 212 | Test suite for the venue configuration system. |
 | **TEST_SlackBlockKitLibrary.js** | 103 | Tests the Slack message builder functions. |
@@ -201,6 +202,13 @@ Every function that the system exposes (callable from menus, triggers, or HTML d
 | `sendWeeklyRevenueDigest_Waratah()` | Automatic trigger: Monday 9am + Menu (password required) | Reads warehouse data, compares this week vs last week, posts to Slack. |
 | `setupWeeklyDigestTrigger_Waratah()` | Menu: Admin > Weekly Digest > Setup Trigger | Installs the Monday 9am timer. |
 
+### SetupWaratah.js — Named Range Management
+
+| Function | How It's Called | What It Does |
+|----------|----------------|-------------|
+| `setupWaratahNamedRanges_()` | Menu: Admin > Named Ranges > Setup All Named Ranges | Idempotent. Creates or updates all 177 named ranges from a config map. Logs created/skipped/errors. |
+| `verifyWaratahNamedRanges_()` | Menu: Admin > Named Ranges > Verify Named Ranges | Diagnostic. Lists missing ranges, mis-targeted ranges, and unexpected leftover ranges. Output via Logger and UI alert. |
+
 ### MenuWaratah.js — Menu and Access Control
 
 | Function | How It's Called | What It Does |
@@ -220,6 +228,17 @@ Every function that the system exposes (callable from menus, triggers, or HTML d
 | Function | How It's Called | What It Does |
 |----------|----------------|-------------|
 | `sendShiftReportBasic()` | Menu: Daily Reports > Send Basic Report | Self-contained export: validates, generates PDF, emails, posts plain-text Slack, copies TO-DOs. No warehouse logging, no task push. |
+
+### AIInsightsWaratah.js — AI-Powered Shift Summarization
+
+| Function | How It's Called | What It Does |
+|----------|----------------|-------------|
+| `generateShiftSummary_Waratah(shiftData)` | Called from NightlyExportWaratah during Slack message building | Sends shift data to Claude API to generate a concise 2-3 sentence AI summary. Requires `ANTHROPIC_API_KEY` in Script Properties. Returns null if API key not set or if API call fails (non-blocking — export continues). |
+| `callClaudeApi_(systemPrompt, userPrompt, apiKey)` | Called from generateShiftSummary_Waratah | Helper function that handles the UrlFetchApp call to Claude API. Manages request formatting, response parsing, and error logging. |
+
+**Distribution:** Output is routed based on `AI_INSIGHTS_MODE` property. In `evan_only` mode (default), the AI summary goes to Evan only; other recipients see a generic summary. In `live` mode, the AI summary replaces the generic summary for all recipients.
+
+**Data sent to Claude:** Shift date, MOD name, financial totals (revenue, tips), and all narrative fields (summary, VIP notes, good, bad, kitchen notes). Narratives are truncated to 300 chars each to stay under token limits.
 
 ---
 
@@ -244,7 +263,7 @@ The full list of 177 named ranges is maintained in `docs/waratah/CELL_REFERENCE_
 
 ## Cell Layout (Updated for Cash Reconciliation — May 17, 2026)
 
-Every shift report tab has the same layout. Cells are accessed via named ranges; hardcoded cell addresses are listed here for reference only.
+> Every shift report tab has the same layout. Cells are accessed via named ranges (e.g. `WEDNESDAY_SR_NetRevenue`). Hardcoded cell addresses are listed here for reference only.
 
 ### Till Reconciliation Cells (NEW — May 17)
 
@@ -254,9 +273,9 @@ Every shift report tab has the same layout. Cells are accessed via named ranges;
 | D10:D17 | Public Till Refloat | Manual entry | Not warehoused |
 | E10:E17 | Terrace Till Count | Manual entry | Part of CashCounted |
 | F10:F17 | Terrace Till Refloat | Manual entry | Not warehoused |
-| C18 | Cash Counted | **Formula** | V: CashCounted |
-| C19 | Cash Take | **Formula** | Not warehoused |
-| C24 | Expected Cash | Manual/pulled | W: ExpectedCash |
+| C18 | Cash Counted | **Formula** (DO NOT CLEAR) | V: CashCounted |
+| C19 | Cash Take | **Formula** (DO NOT CLEAR) | Not warehoused |
+| C24 | Expected Cash | Manual entry | W: ExpectedCash |
 | C26 | Cash Variance | **Formula** (DO NOT CLEAR) | X: CashVariance |
 
 ### Financial Cells
@@ -270,13 +289,13 @@ Every shift report tab has the same layout. Cells are accessed via named ranges;
 | B9:B10 | Deposit | Manual entry | Not warehoused |
 | B11 | Airbnb covers | Manual entry | Not warehoused |
 | B13:B14 | Cancellations | Manual entry | Not warehoused |
-| B15 | Cash takings | **Formula** | H: CashTakings |
+| C19 | Cash takings | **Formula** (from new C19, calculated in till recon) | H: CashTakings |
 | B16 | Gross sales inc cash | **Formula or entry** | I: GrossSalesIncCash |
-| B17:B18 | Cash returns | Merged pair | J: CashReturns |
-| B19:B20 | CD discount | Merged pair | K: CDDiscount |
-| B21:B22 | Refunds | Merged pair | L: Refunds |
-| B23:B24 | CD redeem | Merged pair | M: CDRedeem |
-| B25 | Total discount | Entry | N: TotalDiscount |
+| B17 | Cash returns | **Formula or entry** | J: CashReturns |
+| B19 | CD discount | **Formula or entry** | K: CDDiscount |
+| B21 | Refunds | **Formula or entry** | L: Refunds |
+| B23 | CD redeem | **Formula or entry** | M: CDRedeem |
+| B25 | Total discount | Manual entry | N: TotalDiscount |
 | B26 | Discounts/comps exc CD | **Formula** | O: DiscountsCompsExcCD |
 | B27 | Gross taxable sales | **Formula** | P: GrossTaxableSales |
 | B28 | Taxes | **Formula** | Q: Taxes |
@@ -318,13 +337,15 @@ Every shift report tab has the same layout. Cells are accessed via named ranges;
 
 ## Automated Triggers
 
-Three time-based triggers run the automated components. These are set up once and run indefinitely until removed.
+> **TRIGGERS PENDING CREATION** — As of May 17, 2026, no time-based triggers are installed on the new Apps Script project. All exports must be manually triggered until setup completes on May 18, 2026. The schedule and function names below show the planned configuration.
 
-| Trigger | Schedule | Function | File | Purpose |
-|---------|----------|----------|------|---------|
-| Weekly Rollover | Monday 10:00am AEST | `performWeeklyRollover()` | WeeklyRolloverInPlaceWaratah.js | Archive, clear, update dates, notify |
-| Weekly Revenue Digest | Monday 9:00am AEST | `sendWeeklyRevenueDigest_Waratah()` | WeeklyDigestWaratah.js | This-week vs last-week Slack comparison |
-| Weekly Backfill | Monday 8:00am AEST | `runWeeklyBackfill_()` | IntegrationHubWaratah.js | Catch unlogged shifts |
+Three time-based triggers will run the automated components once created. These are set up once and run indefinitely until removed.
+
+| Trigger | Schedule | Function | File | Status |
+|---------|----------|----------|------|--------|
+| Weekly Rollover | Monday 9:00pm AEST | `performWeeklyRollover()` | WeeklyRolloverInPlaceWaratah.js | PENDING |
+| Weekly Revenue Digest | Monday 4:00pm AEST | `sendWeeklyRevenueDigest_Waratah()` | WeeklyDigestWaratah.js | PENDING |
+| Weekly Backfill | Monday 8:00am AEST | `runWeeklyBackfill_()` | IntegrationHubWaratah.js | PENDING |
 
 Plus one event trigger:
 
@@ -348,7 +369,7 @@ The system stores 18 configuration values as Google Apps Script "Script Properti
 | `MENU_PASSWORD` | Password required for admin menu functions |
 | `WARATAH_SLACK_WEBHOOK_LIVE` | Slack webhook URL for the live Waratah channel |
 | `WARATAH_SLACK_WEBHOOK_TEST` | Slack webhook URL for the test channel |
-| `WARATAH_EMAIL_RECIPIENTS` | JSON array of 9 email addresses for report distribution |
+| `WARATAH_EMAIL_RECIPIENTS` | JSON object mapping email → name, containing 9 recipients for report distribution |
 | `WARATAH_SHIFT_REPORT_CURRENT_ID` | Google Sheets ID of the current shift report spreadsheet |
 | `WARATAH_WORKING_FILE_ID` | Same as above — used by rollover for validation |
 | `WARATAH_DATA_WAREHOUSE_ID` | Google Sheets ID of the data warehouse |
@@ -412,6 +433,35 @@ graph LR
 
 ---
 
+## Deployment Workflow
+
+> The Waratah code is version-controlled on `waratah/develop` branch. Deployment uses `clasp push` (not `git push`). Understanding the two-project setup and branch model matters.
+
+**Git Branch Model:**
+- `main` — stable, merged code only
+- `waratah/develop` — ongoing Waratah development
+- `sakura/develop` — Sakura development (separate but shares documentation files)
+
+**Two-Project Trap (Critical):**
+- `.clasp.json` in THE WARATAH/ directory contains the Apps Script project ID
+- This ID must point to the **LIVE** project (`1YATiIFCp6zOM4xGscZOodacGhfxyPr3nvepnJ0SrJ7e5P73HrBFbqnqH`) after the May 17 cutover
+- Pushing with the wrong `.clasp.json` deploys code to the old (dormant) project — no visible error, but code goes nowhere
+- After any `.clasp.json` change, always verify: `clasp status` should show the correct Script ID
+
+**Standard Deployment Order:**
+1. Code changes → edit `.js` files in THE WARATAH/SHIFT REPORT SCRIPTS/
+2. Documentation updates → edit `.md` files in docs/waratah/explainers/ and CLAUDE_WARATAH.md
+3. `clasp push` → deploys code from THE WARATAH/ to the LIVE project
+4. `git commit` + `git push` (optional) → saves to GitHub for version history (does NOT affect production)
+
+**Cross-Merge Rule (Mandatory):**
+If your commit touches shared files (docs/, CLAUDE_*.md), immediately cross-merge to the other venue branch:
+```bash
+git checkout sakura/develop && git merge waratah/develop && git checkout waratah/develop
+```
+
+---
+
 ## Error Handling Philosophy
 
 The system is designed to be **non-destructive and fault-tolerant:**
@@ -423,6 +473,41 @@ The system is designed to be **non-destructive and fault-tolerant:**
 - The weekly rollover uses a **lock** to prevent two copies from running at the same time (for example, if someone manually triggers it while the automatic timer is also running). The second instance waits up to 30 seconds for the first to finish, then gives up.
 
 - All warehouse writes use **duplicate prevention**. The system checks if today's data has already been logged before writing. This means re-running the export or backfill is always safe — it won't create duplicate rows.
+
+---
+
+## Rollover Safety Design
+
+> The weekly rollover is designed for idempotency and safety. Running it twice won't double-clear or corrupt data.
+
+**Idempotency:**
+- Running the rollover twice in the same week is a no-op (detects by comparing tab dates to expected dates)
+- Safe to re-run if the automatic trigger misfires
+
+**Dry-Run Mode:**
+- `runWaratahWeeklyRollover({ dryRun: true })` logs intended changes without executing them
+- Use this to preview what will happen before running manually
+
+**Lock Acquisition:**
+- `LockService.getScriptLock()` prevents concurrent runs (30-second timeout)
+- If the automatic trigger fires while a manual run is in progress, the second waits for the first to finish
+
+**Cell-Clear Whitelist:**
+- Only clears manager-input cells (till counts, refloats, narrative fields, todos, financial entries)
+- Formula cells (`C18`, `C19`, `C26`, `B36`, `B38`, `B39`) explicitly excluded — they are never cleared
+- **Never uses `sheet.clear()`** (which destroys formatting) — uses `range.clearContent()` on specific ranges
+
+**Day-Prefix Matching:**
+- Finds tabs by case-insensitive day name match (handles minor typos in tab names)
+- Renames all 7 tabs (Mon–Sun) for visual consistency; only Wed–Sun are cleared
+
+**Australian Timezone Explicit:**
+- Date computation uses `Session.getScriptTimeZone()` which returns `'Australia/Sydney'`
+- Ensures dates are calculated in the venue's timezone, not the script executor's timezone
+
+**Post-Rollover Verification:**
+- After successful rollover, calls `verifyWaratahNamedRanges_()` and fails loud if any named ranges are missing
+- Prevents silent degradation from accidental layout corruption
 
 ---
 
@@ -519,6 +604,35 @@ Some functions can run both from a menu click (interactive) and from an automati
 | I | WastageNotes |
 | J | RSAIncidents |
 | K | LoggedAt |
+
+---
+
+## Slack Block Kit Message Structure
+
+> The Slack posts for shift reports use Block Kit formatting — a structured JSON layout that makes messages readable and actionable.
+
+**Block Sequence (in order):**
+1. **Header block** — date, day of week, and "Shift Report Summary" title
+2. **Context block** — MOD name, staff list, timestamps
+3. **Financial section block** — Net Revenue, Card Tips, Cash Tips, Total Tips (in a 2-column layout), plus the new **Cash Variance: $X.XX** line showing if the till balanced
+4. **Divider** — visual separator
+5. **Narrative section block** — Shift Summary, VIP Notes, The Good, The Bad, Kitchen Notes (5 fields)
+6. **Divider** — visual separator
+7. **Tasks section block** — list of tasks with assignees (if any tasks were entered)
+8. **Wastage & RSA block** — wastage notes and RSA incidents (if any)
+9. **Action buttons** — "View PDF in Drive" and "Open Shift Report Sheet" buttons
+10. **Footer context** — logged timestamp
+
+**Character Limits:**
+- Slack section blocks have a 3000-character limit per section
+- Long narratives (especially "The Bad" field) can exceed this limit
+- `truncateForSlack_()` helper function truncates narrative fields to fit within limits (typically 400–500 chars per field)
+- If truncation occurs, "..." is appended to indicate more content
+
+**Webhook Configuration:**
+- LIVE Slack post: `WARATAH_SLACK_WEBHOOK_LIVE` Script Property
+- TEST Slack post: `WARATAH_SLACK_WEBHOOK_TEST` Script Property
+- Both are Incoming Webhook URLs configured in Slack workspace settings
 
 ---
 

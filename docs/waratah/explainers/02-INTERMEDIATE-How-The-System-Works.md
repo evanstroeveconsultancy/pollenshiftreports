@@ -1,10 +1,30 @@
-**Last updated:** May 17, 2026
+**Last updated:** May 17, 2026 (Phase 1.1 refinements)
 **Audience:** Managers who want to understand what happens behind the scenes
 **Prerequisite:** Read 01-BASIC first — this guide builds on it
 
 # How the Shift Report System Works
 
 You know how to fill in the shift report and send it. This guide explains what happens after you click "Confirm & Send", what the automated systems do overnight and weekly, and how all the pieces connect.
+
+---
+
+## Two Apps Script Projects (May 17, 2026 Cutover)
+
+> The Waratah system migrated from an old spreadsheet and Apps Script project to a new Sakura-aligned sheet and project on May 17, 2026. Understanding this two-project structure matters when troubleshooting.
+
+**LIVE Project (Active):**
+- Apps Script ID: `1YATiIFCp6zOM4xGscZOodacGhfxyPr3nvepnJ0SrJ7e5P73HrBFbqnqH`
+- Bound Sheet: `1rcfHTtey_HXC291FAmjpquYkRjWNGbFtClz2szKXfkA` (new Sakura-aligned Waratah sheet)
+- All code deployed and active; 177 named ranges created
+- Triggers: pending manual creation on May 18
+
+**OLD Project (Dormant):**
+- Apps Script ID: `1hVHqRKw772uODidsOVxl9S1h6oqOWvxqevFFVFv6p6HNGl_-CO7PrVjz`
+- Bound Sheet: old Waratah sheet (hardcoded cell references; archived)
+- All triggers deleted; code remains but not executed
+- Not accessed by any active system
+
+Each Google Sheet has its own "container-bound" Apps Script project that cannot be changed. When the sheet changed, a new project was created automatically. Script Properties are per-project, so configuration had to be manually migrated.
 
 ---
 
@@ -15,8 +35,8 @@ The Waratah shift report system has four main components:
 | Component | What It Does | When It Runs |
 |-----------|-------------|--------------|
 | **The Nightly Export** | Sends tonight's report (PDF, email, Slack, data logging) | When you click "Export & Email PDF (LIVE)" |
-| **The Weekly Rollover** | Archives last week and resets the spreadsheet | Monday at 10am (automatic) |
-| **The Weekly Digest** | Posts a revenue comparison (this week vs last) to Slack | Monday at 9am (automatic) |
+| **The Weekly Rollover** | Archives last week and resets the spreadsheet | Monday at 9pm (automatic) |
+| **The Weekly Digest** | Posts a revenue comparison (this week vs last) to Slack | Monday at 4pm (automatic) |
 | **The Weekly Backfill** | Catches any days that didn't get logged to the data warehouse | Monday at 8am (automatic) |
 
 ---
@@ -40,13 +60,13 @@ The "Confirm & Send" button is physically disabled until both are ticked. This i
 
 ### Step 3: Data Warehouse Logging
 
-The system reads approximately 30 cells from tonight's sheet and saves the data to the **Data Warehouse** — a separate Google Spreadsheet used for long-term analytics.
+The system reads 25 financial cells (columns A through P of the financial section), 5 narrative cells (shift summary, VIP, good, bad, kitchen), 9 task rows (2 cells per row: description + assignee), and 2 incident cells (wastage, RSA) from tonight's sheet and saves the data to the **Data Warehouse** — a separate Google Spreadsheet used for long-term analytics.
 
 It saves to four different sheets in the warehouse:
 
 | Warehouse Sheet | What Gets Saved |
 |-----------------|----------------|
-| **NIGHTLY_FINANCIAL** | All financial figures: revenue, tips, production, discounts, taxes (22 columns) |
+| **NIGHTLY_FINANCIAL** | All financial figures: revenue, tips, production, discounts, taxes (25 columns, including cash reconciliation) |
 | **OPERATIONAL_EVENTS** | Each task from your TO-DOs section (one row per task) |
 | **WASTAGE_COMPS** | Wastage and comp notes (if you entered any) |
 | **QUALITATIVE_LOG** | All five narrative fields plus wastage and RSA text |
@@ -85,9 +105,9 @@ The system creates a PDF of tonight's shift report tab. It uses A4 portrait layo
 
 ### Step 8: Email Distribution
 
-The PDF is emailed to 6 recipients:
+The PDF is emailed to 9 recipients:
 
-Evan, Cynthia, Nick, Chef, Howie, Adam
+Recipients are configured in Script Properties (`WARATAH_EMAIL_RECIPIENTS`) and include the management team and key stakeholders. See Admin section for recipient list configuration.
 
 The email includes the PDF as an attachment and a link to the live Google Sheet.
 
@@ -102,7 +122,7 @@ If any of the previous steps had errors (but didn't stop the pipeline), a notifi
 | | LIVE Mode | TEST Mode |
 |---|-----------|-----------|
 | **Menu path** | Export & Email PDF (LIVE) | Export & Email (TEST to me) |
-| **Email goes to** | All 9 recipients | Evan only |
+| **Email goes to** | All 9 configured recipients | Evan only |
 | **Slack posts to** | Live Waratah channel | Test channel only |
 | **Tasks pushed to Master Actionables** | Yes | No |
 | **Data warehouse logging** | Yes | Yes (but flagged as test) |
@@ -114,7 +134,7 @@ If any of the previous steps had errors (but didn't stop the pipeline), a notifi
 ## The Weekly Rollover: What Happens Monday Morning
 
 **Triggered by:** An automatic timer — no one presses anything
-**When:** Monday at 10:00am Sydney time
+**When:** Monday at 9:00pm Sydney time
 **What you'll notice:** When you open the spreadsheet on Wednesday, it will be clean with new dates
 
 Here's what the rollover does, step by step:
@@ -151,7 +171,7 @@ Each tab gets updated with the new week's dates (next Wednesday through Sunday) 
 
 ### 7. Notify the Team
 
-An email goes to all 9 recipients with:
+An email goes to all 9 configured recipients with:
 - Last week's summary (total revenue, tips, number of shifts)
 - Links to the archived PDF and spreadsheet copy
 - Confirmation that the new week is ready
@@ -163,7 +183,7 @@ A Slack message with the same information is posted to the Waratah channel.
 ## The Weekly Digest: Revenue at a Glance
 
 **Triggered by:** Automatic timer
-**When:** Monday at 9:00am Sydney time
+**When:** Monday at 4:00pm Sydney time
 **What it does:** Posts a revenue comparison to Slack
 
 The digest reads from the data warehouse and compares:
