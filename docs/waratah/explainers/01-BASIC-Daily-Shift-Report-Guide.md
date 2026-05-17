@@ -1,4 +1,4 @@
-**Last updated:** March 6, 2026
+**Last updated:** May 17, 2026
 **Audience:** All venue managers — no technical knowledge required
 **When to read:** Your first shift as MOD, or anytime you need a refresher
 
@@ -12,19 +12,23 @@ This guide walks you through your shift report from start to finish. After follo
 
 ## What You're Working With
 
-The Waratah shift report lives in a Google Spreadsheet. When you open it, you'll see tabs across the bottom — one for each day of the week:
+> The Waratah shift report lives in a Google Spreadsheet. The system uses seven tabs, one for each day of the week, but only five of them are active (Wed–Sun). Monday and Tuesday tabs exist but aren't used because the venue is closed those days.
 
-| Tab | Day |
-|-----|-----|
-| WEDNESDAY | First day of the Waratah week |
-| THURSDAY | |
-| FRIDAY | |
-| SATURDAY | |
-| SUNDAY | Last day of the Waratah week |
+When you open it, you'll see tabs across the bottom:
 
-There's also a **TO-DOs** tab that collects tasks from all five days in one place.
+| Tab | Day | Status |
+|-----|-----|--------|
+| MONDAY 18/05/2026 | Unused (closed) | Empty |
+| TUESDAY 19/05/2026 | Unused (closed) | Empty |
+| WEDNESDAY 20/05/2026 | First active day of week | Fill this |
+| THURSDAY 21/05/2026 | | Fill this |
+| FRIDAY 22/05/2026 | | Fill this |
+| SATURDAY 23/05/2026 | | Fill this |
+| SUNDAY 24/05/2026 | Last active day of week | Fill this |
 
-**Click on tonight's tab** to get started.
+There's also a **TO-DOs** tab that collects tasks from all five active days in one place.
+
+**Click on tonight's tab** to get started. The dates on each tab update automatically every Monday night.
 
 ---
 
@@ -38,7 +42,32 @@ At the top of the sheet:
 
 ---
 
-## Step 2: Enter the Financial Figures
+## Step 2: Count and Reconcile the Cash Tills
+
+> Before you fill in financial figures, you need to count the physical cash from the two tills (Public and Terrace) and record the counts and refloats. This is the cash reconciliation process — it's now part of the shift report instead of being done separately.
+
+At the top of the financial section, you'll find **four till columns**:
+
+| Column | What to Enter | Why |
+|--------|---------------|-----|
+| **Public Till Count** | Cash you counted from the public till | Must match what the till says |
+| **Public Till Refloat** | New cash put back in the till to refloat it | To start tomorrow with cash on hand |
+| **Terrace Till Count** | Cash you counted from the terrace till | Must match what the terrace till says |
+| **Terrace Till Refloat** | New cash put back in the terrace till | To start tomorrow with cash on hand |
+
+**Below these four columns, the system calculates three numbers for you:**
+
+| Field | What It Shows | What It Means |
+|-------|---------------|---------------|
+| **Cash Counted** | Sum of both tills | Total physical cash you counted tonight |
+| **Cash Take** | Counted cash minus refloats | Actual money leaving the venue |
+| **Cash Variance** | Your take minus what POS expected | Did the till balance? (should be ~$0) |
+
+**If cash variance is large (more than ±$50):** Stop. Recount the tills. There's a discrepancy between what came through the POS and what's physically in the tills.
+
+---
+
+## Step 3: Enter the Financial Figures
 
 Work your way down the left column. Here's what to fill in:
 
@@ -77,7 +106,7 @@ Some cells contain formulas that calculate automatically. If you accidentally de
 
 ---
 
-## Step 3: Write Your Shift Notes
+## Step 4: Write Your Shift Notes
 
 Below the financial section, you'll find five narrative fields. These are where you write what happened tonight. Be concise but specific — these go straight to the management team.
 
@@ -93,7 +122,7 @@ Below the financial section, you'll find five narrative fields. These are where 
 
 ---
 
-## Step 4: Add Tasks (TO-DOs)
+## Step 5: Add Tasks (TO-DOs)
 
 Below the notes, there's a tasks section with 9 rows. For each task that came up during service:
 
@@ -106,7 +135,7 @@ Leave unused rows empty. These tasks automatically get collected into the TO-DOs
 
 ---
 
-## Step 5: Record Wastage and RSA Incidents
+## Step 6: Record Wastage and RSA Incidents
 
 At the bottom of the sheet:
 
@@ -117,7 +146,7 @@ If nothing to report, leave these blank.
 
 ---
 
-## Step 6: Send the Report
+## Step 7: Send the Report
 
 This is the most important step. When you've finished filling everything in:
 
@@ -139,7 +168,7 @@ When you clicked Confirm & Send, the system did all of this in one go:
 
 - Generated a PDF of tonight's shift report
 - Emailed that PDF to 6 managers (Evan, Cynthia, Nick, Chef, Howie, Adam)
-- Posted a formatted summary to the Waratah Slack channel
+- Posted a formatted summary to the Waratah Slack channel (including **💰 Cash Variance: $X.XX** so managers can see if the till balanced)
 - Saved tonight's financial data to the data warehouse (for analytics)
 - Copied your tasks to the Master Actionables list
 - Updated the TO-DOs summary tab
@@ -148,7 +177,7 @@ When you clicked Confirm & Send, the system did all of this in one go:
 
 ---
 
-## Step 7: TEST Mode (Optional)
+## Step 8: TEST Mode (Optional)
 
 If you want to preview the report before sending it to everyone:
 

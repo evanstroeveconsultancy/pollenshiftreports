@@ -17,7 +17,8 @@ You are the institutional memory keeper for Shift Reports 3.0. **You run before 
 - `docs/waratah/CELL_REFERENCE_MAP.md`, `docs/waratah/DEEP_DIVE_ARCHITECTURE.md`, `docs/waratah/INTEGRATION_FLOWS.md`, `docs/waratah/WORKFLOW_WEEKLY.md`
 - `SAKURA HOUSE/FILE EXPLAINERS/1_DAILY_SHIFT_REPORT.md`, `SAKURA HOUSE/FILE EXPLAINERS/2_TASK_MANAGEMENT.md`, `SAKURA HOUSE/FILE EXPLAINERS/3_WEEKLY_AUTOMATED_EVENTS.md`, `SAKURA HOUSE/FILE EXPLAINERS/4_TROUBLESHOOTING.md`, `SAKURA HOUSE/FILE EXPLAINERS/5_CONFIGURATION_REFERENCE.md`
 - `THE WARATAH/FILE EXPLAINERS/1_DAILY_SHIFT_REPORT.md`, `THE WARATAH/FILE EXPLAINERS/2_TASK_MANAGEMENT.md`, `THE WARATAH/FILE EXPLAINERS/3_WEEKLY_AUTOMATED_EVENTS.md`, `THE WARATAH/FILE EXPLAINERS/4_TROUBLESHOOTING.md`, `THE WARATAH/FILE EXPLAINERS/5_CONFIGURATION_REFERENCE.md`
-- `docs/waratah/explainers/01-BASIC-Daily-Shift-Report-Guide.md`, `docs/waratah/explainers/02-INTERMEDIATE-How-The-System-Works.md`, `docs/waratah/explainers/03-ADVANCED-Complete-Backend-Reference.md`
+- `docs/waratah/explainers/01-BASIC-Daily-Shift-Report-Guide.md`, `docs/waratah/explainers/02-INTERMEDIATE-How-The-System-Works.md`, `docs/waratah/explainers/03-ADVANCED-Complete-Backend-Reference.md` <!-- Added 2026-05-17: Waratah manager-facing explainers now in scope for documentation-agent; treat as required-check files for any sheet structure, named range, cell layout, warehouse schema, or trigger schedule changes -->
+- `docs/sakura/explainers/` (if it exists) — parallel manager-facing explainers for Sakura <!-- Added 2026-05-17: If Sakura equivalent explainers exist, they are also in scope -->
 - `.claude/commands/review.md`, `.claude/commands/sakura.md`, `.claude/commands/waratah.md`, `.claude/commands/plan.md`, `.claude/commands/docs.md`, `.claude/commands/rollover.md`, `.claude/commands/slack.md`, `.claude/commands/orchestrate.md`, `.claude/commands/deploy.md`, `.claude/commands/saks.md`, `.claude/commands/tah.md`
 
 Only update the files that are actually affected by the code change — do not touch unrelated docs.
@@ -123,7 +124,7 @@ git checkout waratah/develop
 - `docs/_archive/plans/` — archived implementation plans
 - `WORKFLOW_SHIFT_REPORTS.md` — shift report workflow documentation
 - `THE WARATAH/FILE EXPLAINERS/` — 5 manager-facing handover docs (1_DAILY_SHIFT_REPORT, 2_TASK_MANAGEMENT, 3_WEEKLY_AUTOMATED_EVENTS, 4_TROUBLESHOOTING, 5_CONFIGURATION_REFERENCE)
-- `docs/waratah/explainers/` — 3-tier manager-facing explainers (01-BASIC-Daily-Shift-Report-Guide, 02-INTERMEDIATE-How-The-System-Works, 03-ADVANCED-Complete-Backend-Reference)
+- `docs/waratah/explainers/` — 3 manager-facing tiers (01-BASIC-Daily-Shift-Report-Guide, 02-INTERMEDIATE-How-The-System-Works, 03-ADVANCED-Complete-Backend-Reference) — UPDATE WHEN: sheet structure, named ranges, cell layouts, cash recon, warehouse schema, trigger schedule, or system cutover occurs <!-- Added 2026-05-17: These explainers are required-check files, not optional -->
 
 **`.claude/commands/` (slash command definitions — update when agent routing, pipeline phases, or command behavior changes):**
 - `saks.md`, `tah.md` — full pipeline commands (Sakura / Waratah)

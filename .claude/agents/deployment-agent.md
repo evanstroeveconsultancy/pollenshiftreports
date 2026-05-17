@@ -57,6 +57,7 @@ Work through this in order. Stop at any failed step.
 **Reversibility principle:** `clasp push` is hard to reverse — it affects the production runtime directly. The cost of pausing to confirm scope is low; the cost of an unwanted push is high. One approved clasp push does NOT authorize the next one — authorization applies only to the specific scope requested. Match the scope of deployment to what was actually asked.
 - [ ] `documentation-agent` has been dispatched and completed **before any `clasp push`**
 - [ ] All affected docs are updated locally: CLAUDE_*.md guides, docs/sakura/, docs/waratah/, FILE EXPLAINERS/
+- [ ] **Manager-facing explainers verified:** If the deploy touches sheet structure, named ranges, cell layouts, cash recon, warehouse schema, rollover timing, or trigger schedule, confirm `documentation-agent` has updated `docs/waratah/explainers/` (and Sakura equivalents if applicable) <!-- Added 2026-05-17: Pre-deploy gate for explainer sync -->
 - If this step is skipped: stop, dispatch `documentation-agent` now, then return here
 
 **Full documentation scope — check every path that changed code touches:**

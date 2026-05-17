@@ -96,9 +96,11 @@ The rollover system is in-place with fresh-template handling (specific to Warata
 
 Only load these when you need implementation-level detail. Start with `CLAUDE_WARATAH.md`.
 
-## Handover Documentation (FILE EXPLAINERS)
+## Handover Documentation (FILE EXPLAINERS & MANAGER EXPLAINERS)
 
 After any code change that affects user-facing behavior, update the relevant handover doc in `THE WARATAH/FILE EXPLAINERS/`. These are manager-facing docs — keep tone non-technical (no function names, no code, no line counts).
+
+**IMPORTANT — Completion Report Flagging (Added 2026-05-17):** When your code change affects manager-facing behavior (cell layouts, sheet structure, Slack formats, menu items, cash recon logic, trigger timing, warehouse schema), explicitly flag this in your completion report so `documentation-agent` knows to update `docs/waratah/explainers/`. Format: `**Manager-facing behavior change:** [brief description] → requires update to [BASIC / INTERMEDIATE / ADVANCED]`.
 
 **Code file → Handover doc mapping:**
 
