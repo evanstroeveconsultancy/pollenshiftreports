@@ -650,7 +650,7 @@ function computeShiftAnalytics_Waratah(shiftData, warehouseId) {
     // discountImpact (Waratah-only): today's discount rate vs 8w avg
     // -------------------------------------------------------------------------
     var todayGross        = parseFloat(shiftData.grossSales || shiftData.grossSalesIncCash || 0) || 0;
-    var todayDiscount     = parseFloat(shiftData.totalDiscount || 0) || 0;
+    var todayDiscount     = parseFloat(shiftData.totalAdjustmentsDiscounts || shiftData.totalDiscount || 0) || 0;
     var todayDiscRate     = todayGross > 0 ? todayDiscount / todayGross : 0;
 
     // Compute 8w average discount rate from warehouse

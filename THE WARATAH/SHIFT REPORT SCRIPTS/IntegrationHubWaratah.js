@@ -87,7 +87,7 @@ function runIntegrations(sheetName) {
     Logger.log("Step 1/3: Extracting shift data...");
     const shiftData = extractShiftData_(sheetName, INTEGRATION_CONFIG);
     results.integrations.dataExtraction = {success: true};
-    Logger.log(`  ✓ Extracted: ${shiftData.mod} | ${shiftData.dayOfWeek} | Revenue $${shiftData.netRevenue} | Staff: ${shiftData.staff}`);
+    Logger.log(`  ✓ Extracted: ${shiftData.mod} | ${shiftData.dayOfWeek} | Revenue $${shiftData.netRevenue} | FOH: ${shiftData.fohStaff} | BOH: ${shiftData.bohStaff}`);
 
     // 2. Validate data integrity FIRST (before any writes)
     Logger.log("Step 2/3: Validating data...");
@@ -199,8 +199,27 @@ function toDateOnly_(d) {
  * Extract all relevant data from shift report
  * Returns standardized data object
  *
- * Uses batched reads (3 API calls) instead of individual cell reads (~30 calls)
+ * Uses batched reads (3 API calls) instead of individual cell reads (~40 calls)
  * for significantly better performance in GAS.
+ *
+ * New sheet layout (live May 2026):
+ *   FOH staff: B6, BOH staff: B7
+ *   Till counts/refloats: C10:F17
+ *   Cash recon: C18 (cashCounted, formula), C19 (cashTake, formula),
+ *               C22 (cashReturns), C23 (cdDiscount), C24 (totalCashRecorded, formula),
+ *               C26 (cashVariance, formula)
+ *   Tips: C29 (cashTips), C30 (cardTips), C31 (surchargeTips), C32 (totalTips, formula)
+ *   Revenue: B37 (productionAmount), B38 (deposit)
+ *   Financial calcs: B48 (grossSales, formula), B50 (totalAdjustmentsDiscounts),
+ *                    B51 (discountsExcCashDiscount, formula), B52 (grossSalesLessDiscounts, formula),
+ *                    B53 (taxes, formula), B54 (netRevenue, formula)
+ *   Narrative: A59, A61, A63, A65, A67
+ *   Tasks: A69:A84 (descriptions), D69:D84 (assignees)
+ *   Incidents: A86 (wastage), A88 (maintenance), A90 (RSA)
+ *
+ * Intentionally bypasses getFieldRange() helpers for performance — GAS charges
+ * per API call, so batch reads are significantly faster than per-field named range lookups.
+ * Cell mapping: FIELD_CONFIG fallback cells in RunWaratah.js are authoritative.
  *
  * @param {string} sheetName - Name of the shift report sheet
  * @param {Object} [config]  - Optional pre-loaded INTEGRATION_CONFIG
@@ -215,35 +234,34 @@ function extractShiftData_(sheetName, config) {
     throw new Error(`Sheet "${sheetName}" not found in this spreadsheet`);
   }
 
-  // --- BATCH READ 1: Financial data B3:C39 (37 rows × 2 cols) ---
-  // Reads columns B and C to capture both legacy B-column fields and new C-column
-  // cash reconciliation fields (C18=CashCounted, C19=CashTake, C24=ExpectedCash, C26=CashVariance).
-  // Single API call replaces ~20 individual getRange().getValue() calls.
-  // Intentionally bypasses getFieldRange() helpers for performance — GAS charges
-  // per API call, so one batch read is significantly faster than 20 named range lookups.
-  // Cell mapping: FIELD_CONFIG fallback cells in RunWaratah.js (SetupWaratah.js) are authoritative.
+  // --- BATCH READ 1: Financial data B3:F54 (52 rows × 5 cols) ---
+  // Reads columns B–F to capture the full new sheet layout in one API call.
+  // Col B: date (B3), mod (B4), fohStaff (B6), bohStaff (B7), revenue/production rows.
+  // Col C: cash recon (C18/C19/C22/C23/C24/C26/C29/C30/C31/C32).
+  // Col D–F: till refloat/count rows (D10:F17) — captured but not individually mapped.
+  // Single API call replaces ~25 individual getRange().getValue() calls.
   let finValues;
   try {
-    finValues = sheet.getRange("B3:C39").getValues(); // 37 rows × 2 cols → [[colB, colC], ...]
+    finValues = sheet.getRange("B3:F54").getValues(); // 52 rows × 5 cols → [[colB,colC,colD,colE,colF], ...]
   } catch (e) {
-    Logger.log('extractShiftData_: could not read B3:C39 — ' + e.message);
+    Logger.log('extractShiftData_: could not read B3:F54 — ' + e.message);
     return null;
   }
 
-  // Helper: extract B-column value by row number (1-indexed cell ref → 0-indexed array)
+  // Helper: extract column-B value by row number (1-indexed cell ref → 0-indexed array)
   const fin = (row) => finValues[row - 3] ? finValues[row - 3][0] : null;
   const finNum = (row) => parseFloat(fin(row)) || 0;
-  // Helper: extract C-column value by row number
+  // Helper: extract column-C value by row number
   const finC = (row) => finValues[row - 3] ? finValues[row - 3][1] : null;
   const finC_Num = (row) => parseFloat(finC(row)) || 0;
 
-  // Also need display values for text fields (MOD, staff)
+  // Also need display values for text fields (date, MOD, staff)
   let finDisplay;
   try {
-    finDisplay = sheet.getRange("B3:B5").getDisplayValues();
+    finDisplay = sheet.getRange("B3:B7").getDisplayValues(); // rows 3-7: date, mod, (blank), fohStaff, bohStaff
   } catch (e) {
-    Logger.log('extractShiftData_: could not read B3:B5 display — ' + e.message);
-    finDisplay = [[""], [""], [""]];
+    Logger.log('extractShiftData_: could not read B3:B7 display — ' + e.message);
+    finDisplay = [[""], [""], [""], [""], [""]];
   }
 
   const dateValue = fin(3);
@@ -253,39 +271,45 @@ function extractShiftData_(sheetName, config) {
   }
   const date = parseCellDate_(dateValue);
 
-  const mod = (finDisplay[1][0] || "").trim();   // B4 display
+  const mod = (finDisplay[1][0] || "").trim();      // B4 display
   if (!mod) {
     Logger.log('extractShiftData_: B4 (MOD) is empty');
     // Don't return null — MOD can be empty for partial data
   }
-  const staff = (finDisplay[2][0] || "").trim();  // B5 display
+  const fohStaff = (finDisplay[3][0] || "").trim(); // B6 display
+  const bohStaff = (finDisplay[4][0] || "").trim(); // B7 display
+  // Concatenated staff string for warehouse col E (schema-compat with existing E=Staff header)
+  const staffCombined = (fohStaff || bohStaff)
+    ? ('FOH: ' + (fohStaff || '') + ' | BOH: ' + (bohStaff || ''))
+    : '';
 
-  // --- BATCH READ 2: Narrative + incident cells (A43:A65, odd rows) ---
-  // Single API call replaces 7 individual getDisplayValue() calls.
-  // Narrative fields are merged A:F — value lives in col A only (see FIELD_CONFIG in RunWaratah.js).
+  // --- BATCH READ 2: Narrative + incident cells (A59:A90) ---
+  // Single API call replaces 8 individual getDisplayValue() calls.
+  // Narrative fields: A59 (generalShiftComments), A61 (guestsOfNote), A63 (theGood),
+  //                   A65 (theBad), A67 (kitchenNotes)
+  // Incident fields:  A86 (wastageComps), A88 (maintenanceIssues), A90 (rsaIncidents)
   let narrativeValues;
   try {
-    narrativeValues = sheet.getRange("A43:A65").getDisplayValues(); // 23 rows
+    narrativeValues = sheet.getRange("A59:A90").getDisplayValues(); // 32 rows
   } catch (e) {
-    Logger.log('extractShiftData_: could not read A43:A65 — ' + e.message);
+    Logger.log('extractShiftData_: could not read A59:A90 — ' + e.message);
     narrativeValues = [];
   }
-  // Helper: extract by row number (A43 = index 0, A45 = index 2, etc.)
+  // Helper: extract by row number (A59 = index 0, A61 = index 2, etc.)
   const narr = (row) => {
-    const idx = row - 43;
+    const idx = row - 59;
     return (narrativeValues[idx] && narrativeValues[idx][0]) ? narrativeValues[idx][0].trim() : "";
   };
 
-  // --- BATCH READ 3: TO-DOs A53:F61 (9 rows) ---
-  // Combined A:F read — intentional. Accesses task description (col A, merged A:E)
-  // and assignee (col F) in one call. FIELD_CONFIG splits these into todoTasks/todoAssignees
-  // but this single batch read is more efficient for extraction.
+  // --- BATCH READ 3: TO-DOs A69:D84 (16 rows × 4 cols) ---
+  // New layout: task description in col A, assignee in col D (was col F).
+  // 16 rows (was 9). Single batch read captures both in one API call.
   let todoRange = [];
-  try { todoRange = sheet.getRange("A53:F61").getValues(); } catch(e) { Logger.log("extractShiftData_: could not read A53:F61 — " + e.message); }
+  try { todoRange = sheet.getRange("A69:D84").getValues(); } catch(e) { Logger.log("extractShiftData_: could not read A69:D84 — " + e.message); }
   const todos = [];
   todoRange.forEach(row => {
-    const description = row[0]; // Column A (merged A-E, value in A)
-    const assignee = row[5];    // Column F
+    const description = row[0]; // Column A (task description)
+    const assignee = row[3];    // Column D (assignee — was col F)
     if (description && description.toString().trim() !== "") {
       todos.push({
         description: description.toString().trim(),
@@ -305,51 +329,59 @@ function extractShiftData_(sheetName, config) {
     dayOfWeek: Utilities.formatDate(date, INTEGRATION_CONFIG.timezone, "EEEE"),
     weekEnding: weekEnding,
     mod: mod,
-    staff: staff,
+
+    // Staff (split fields — new layout)
+    fohStaff: fohStaff,
+    bohStaff: bohStaff,
+    // Combined staff string for display and warehouse (kept as 'staff' for M1/M5 AI prompt compat)
+    staff: staffCombined,
 
     // Revenue & production
-    netRevenue: finNum(34),         // B34
-    productionAmount: finNum(8),    // B8
+    netRevenue: finNum(54),             // B54 (formula)
+    productionAmount: finNum(37),       // B37
 
-    // Cash flow
-    cashTakings: finC_Num(19),      // C19 (formula — new sheet: cash take = counted minus refloats)
-    grossSalesIncCash: finNum(16),  // B16 (formula)
+    // Cash reconciliation (C-column)
+    cashTake: finC_Num(19),             // C19 (formula — cash take = counted minus refloats)
+    cashCounted: finC_Num(18),          // C18 (formula — physical count)
+    cashReturns: finC_Num(22),          // C22
+    cdDiscount: finC_Num(23),           // C23
+    totalCashRecorded: finC_Num(24),    // C24 (formula)
+    cashVariance: finC_Num(26),         // C26 (formula)
 
-    // Deductions (merged cell pairs — value in first cell of pair)
-    cashReturns: finNum(17),        // B17 (merged B17:B18)
-    cdDiscount: finNum(19),         // B19 (merged B19:B20)
-    refunds: finNum(21),            // B21 (merged B21:B22)
-    cdRedeem: finNum(23),           // B23 (merged B23:B24)
-    totalDiscount: finNum(25),      // B25 (input)
-    discountsCompsExcCD: finNum(26), // B26 (formula)
+    // Tips (C-column)
+    cashTips: finC_Num(29),             // C29
+    cardTips: finC_Num(30),             // C30
+    surchargeTips: finC_Num(31),        // C31
+    totalTips: finC_Num(32),            // C32 (formula)
+    // Legacy alias used by M4 analytics (shiftData.tipsTotal)
+    tipsTotal: finC_Num(32),            // C32 (formula) — same as totalTips
 
-    // Tax
-    grossTaxableSales: finNum(27),  // B27 (formula)
-    taxes: finNum(28),              // B28 (formula)
-    netSalesWTips: finNum(29),      // B29 (formula)
+    // Financial calculations (B-column formulas)
+    grossSales: finNum(48),                  // B48 (formula — was grossSalesIncCash B16)
+    totalAdjustmentsDiscounts: finNum(50),   // B50 (was totalDiscount B25)
+    discountsExcCashDiscount: finNum(51),    // B51 (formula — was discountsCompsExcCD B26)
+    grossSalesLessDiscounts: finNum(52),     // B52 (formula — was grossTaxableSales B27)
+    taxes: finNum(53),                       // B53 (formula — was B28)
 
-    // Tips
-    cardTips: finNum(32),           // B32
-    cashTips: finNum(33),           // B33
-    tipsTotal: finNum(36),          // B36 (formula)
-
-    // Cash reconciliation (new sheet only — C18/C24/C26; NULL on old-sheet rows)
-    cashCounted: finC_Num(18),        // C18: cash physically counted (sum public + terrace tills)
-    expectedCash: finC_Num(24),       // C24: POS-expected cash (manager input)
-    cashVariance: finC_Num(26),       // C26: variance = counted minus expected (formula)
+    // Removed fields — kept as null for warehouse schema compatibility
+    refunds: null,        // No longer on new sheet (warehouse col L = NULL)
+    cdRedeem: null,       // No longer on new sheet (warehouse col M = NULL)
+    netSalesWTips: null,  // No longer on new sheet (warehouse col R = NULL)
 
     // Operational events
     todos: todos,
 
-    // Qualitative / narrative fields (merged A:F, value in col A)
-    shiftSummary: narr(43),         // A43
-    guestsOfNote: narr(45),         // A45
-    theGood: narr(47),              // A47
-    theBad: narr(49),               // A49
-    kitchenNotes: narr(51),         // A51
-    wastageComps: narr(63),         // A63
-    maintenance: "",
-    rsaIncidents: narr(65),         // A65
+    // Qualitative / narrative fields
+    generalShiftComments: narr(59),   // A59 (was shiftReport/shiftSummary at A43)
+    guestsOfNote: narr(61),           // A61 (was A45)
+    theGood: narr(63),                // A63 (was A47)
+    theBad: narr(65),                 // A65 (was A49)
+    kitchenNotes: narr(67),           // A67 (was A51)
+
+    // Incidents & wastage (narr() offset is row - 59; A59:A90 = 32 rows)
+    wastageComps: narr(86),        // A86 (index 27 within A59:A90)
+    maintenanceIssues: narr(88),   // A88 (index 29)
+    rsaIncidents: narr(90),        // A90 (index 31)
 
     // Metadata
     sheetName: sheetName
@@ -451,8 +483,8 @@ function logToDataWarehouse_(shiftData, config, skipLock) {
   } else {
     // Header assertion: enforce 25-column schema before writing.
     // Guards against half-deployed state where header row hasn't been migrated yet.
-    // Manual step (Phase 2, Wed May 20): add CashCounted, ExpectedCash, CashVariance headers
-    // to NIGHTLY_FINANCIAL row 1 columns W, X, Y before clasp push.
+    // New schema (new-sheet cutover): V=CashCounted, W=ExpectedCash, X=CashVariance, Y=LoggedAt
+    // (LoggedAt moved from V to Y vs the old-sheet schema).
     const headerRow = financialSheet.getLastRow() >= 1
       ? financialSheet.getRange(1, 1, 1, financialSheet.getLastColumn()).getValues()[0]
       : [];
@@ -466,31 +498,31 @@ function logToDataWarehouse_(shiftData, config, skipLock) {
     }
 
     financialSheet.appendRow([
-      toDateOnly_(shiftData.date),       // A: Date (midnight, no time component)
-      shiftData.dayOfWeek,               // B: Day
-      toDateOnly_(shiftData.weekEnding), // C: Week Ending (midnight, no time component)
-      shiftData.mod,                     // D: MOD
-      shiftData.staff,                   // E: Staff
-      shiftData.netRevenue,              // F: Net Revenue
-      shiftData.productionAmount,        // G: Production Amount
-      shiftData.cashTakings,             // H: Cash Takings (C19 on new sheet — cash take)
-      shiftData.grossSalesIncCash,       // I: Gross Sales Inc Cash (B16)
-      shiftData.cashReturns,             // J: Cash Returns (B17)
-      shiftData.cdDiscount,              // K: CD Discount (B19)
-      shiftData.refunds,                 // L: Refunds (B21)
-      shiftData.cdRedeem,                // M: CD Redeem (B23)
-      shiftData.totalDiscount,           // N: Total Discount (B25)
-      shiftData.discountsCompsExcCD,     // O: Discounts Comps Exc CD (B26)
-      shiftData.grossTaxableSales,       // P: Gross Taxable Sales (B27)
-      shiftData.taxes,                   // Q: Taxes (B28)
-      shiftData.netSalesWTips,           // R: Net Sales w Tips (B29)
-      shiftData.cardTips,                // S: Card Tips (B32)
-      shiftData.cashTips,                // T: Cash Tips (B33)
-      shiftData.tipsTotal,               // U: Total Tips (B36)
-      new Date(),                        // V: Logged At
-      shiftData.cashCounted  || null,    // W: Cash Counted (C18 — new sheet only; NULL for old-sheet rows)
-      shiftData.expectedCash || null,    // X: Expected Cash (C24 — new sheet only)
-      shiftData.cashVariance || null     // Y: Cash Variance (C26 — new sheet only)
+      toDateOnly_(shiftData.date),                // A: Date (midnight, no time component)
+      shiftData.dayOfWeek,                        // B: Day
+      toDateOnly_(shiftData.weekEnding),          // C: Week Ending (midnight, no time component)
+      shiftData.mod,                              // D: MOD
+      shiftData.staff,                            // E: Staff (concat "FOH: … | BOH: …")
+      shiftData.netRevenue,                       // F: Net Revenue (B54, formula)
+      shiftData.productionAmount,                 // G: Production Amount (B37)
+      shiftData.cashTake,                         // H: CashTakings — schema header kept; sources C19
+      shiftData.grossSales,                       // I: GrossSalesIncCash — schema header kept; sources B48
+      shiftData.cashReturns,                      // J: Cash Returns (C22)
+      shiftData.cdDiscount,                       // K: CD Discount (C23)
+      null,                                       // L: Refunds — field removed from new sheet; preserve col
+      null,                                       // M: CDRedeem — field removed from new sheet; preserve col
+      shiftData.totalAdjustmentsDiscounts,        // N: TotalDiscount — schema header kept; sources B50
+      shiftData.discountsExcCashDiscount,         // O: DiscountsCompsExcCD — schema header kept; sources B51
+      shiftData.grossSalesLessDiscounts,          // P: GrossTaxableSales — schema header kept; sources B52
+      shiftData.taxes,                            // Q: Taxes (B53, formula)
+      null,                                       // R: NetSalesWTips — no direct equivalent; preserve col
+      shiftData.cardTips,                         // S: Card Tips (C30)
+      shiftData.cashTips,                         // T: Cash Tips (C29)
+      shiftData.totalTips,                        // U: Total Tips (C32, formula)
+      shiftData.cashCounted  || null,             // V: CashCounted (C18, formula)
+      shiftData.totalCashRecorded || null,        // W: ExpectedCash — schema header kept; sources C24
+      shiftData.cashVariance || null,             // X: CashVariance (C26, formula)
+      new Date()                                  // Y: LoggedAt (moved from V to Y)
     ]);
     Logger.log(`  → Logged financial data to warehouse (25 cols)`);
     logResult.financialLogged = true;
@@ -579,7 +611,7 @@ function logToDataWarehouse_(shiftData, config, skipLock) {
         toDateOnly_(shiftData.date),           // A: Date
         shiftData.dayOfWeek,      // B: Day
         shiftData.mod,            // C: MOD
-        shiftData.shiftSummary,   // D: Shift Summary
+        shiftData.generalShiftComments,   // D: Shift Summary (field renamed in new sheet layout)
         shiftData.guestsOfNote,   // E: Guests of Note
         shiftData.theGood,        // F: The Good
         shiftData.theBad,         // G: The Bad
@@ -651,7 +683,7 @@ function validateShiftData_(shiftData) {
     validation.errors.push("MOD name is required (cell B4)");
   }
   if (shiftData.netRevenue <= 0) {
-    validation.warnings.push("Net revenue is $0 or negative (cell B34) — verify before exporting. Continuing.");
+    validation.warnings.push("Net revenue is $0 or negative (cell B54) — verify before exporting. Continuing.");
   }
 
   // 2. Financial logic checks

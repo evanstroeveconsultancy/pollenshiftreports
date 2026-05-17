@@ -84,7 +84,7 @@ function getRolloverPreview() {
     }
 
     var mod = (daySheet.getRange('B4').getValue() || '').toString().trim();
-    var revenue = daySheet.getRange('B34').getValue();
+    var revenue = daySheet.getRange('B54').getValue();  // new sheet: B54 (was B34)
     var revenueStr = revenue ? '$' + Number(revenue).toLocaleString() : '';
     var complete = mod !== '' && revenue > 0;
 
@@ -154,7 +154,7 @@ function getExportStatus() {
   var sheetName = sheet.getName();
 
   var mod = (sheet.getRange('B4').getValue() || '').toString().trim();
-  var revenue = sheet.getRange('B34').getValue();
+  var revenue = sheet.getRange('B54').getValue();  // new sheet: B54 (was B34)
   var revenueStr = revenue ? '$' + Number(revenue).toLocaleString() : '';
 
   var errors = [];
@@ -164,8 +164,8 @@ function getExportStatus() {
   if (!revenue || revenue <= 0) errors.push('Net revenue is missing or zero');
 
   // Quick pre-checks (full validation runs in IntegrationHub.gs during export)
-  var cashTotal = Number(sheet.getRange('B15').getValue()) || 0;
-  var tipsTotal = Number(sheet.getRange('B36').getValue()) || 0;
+  var cashTotal = Number(sheet.getRange('C19').getValue()) || 0;  // new sheet: C19 cash take (was B15)
+  var tipsTotal = Number(sheet.getRange('C32').getValue()) || 0;  // new sheet: C32 total tips (was B36)
   if (revenue > 0 && cashTotal === 0 && tipsTotal === 0) {
     warnings.push('Cash and tips are both zero — double-check before exporting');
   }
@@ -234,7 +234,7 @@ function getAnalyticsData() {
 
     var revenue = 0;
     if (daySheet) {
-      revenue = Number(daySheet.getRange('B34').getValue()) || 0;
+      revenue = Number(daySheet.getRange('B54').getValue()) || 0;  // new sheet: B54 (was B34)
     }
 
     dailyRevenue.push({ day: dayName, revenue: Math.round(revenue) });
@@ -297,9 +297,9 @@ function closeDialog() {
  *   - Net revenue is 0 or empty (B34, formula cell — read only)
  *
  * WARNINGS (can override with note):
- *   - No narrative text in Shift Notes (A43)
- *   - No narrative text in What Went Well (A47)
- *   - TODO items exist with no assignee in the staff column (F53:F61)
+ *   - No narrative text in Shift Notes (A59 — generalShiftComments, new sheet)
+ *   - No narrative text in What Went Well (A63 — theGood, new sheet)
+ *   - TODO items exist with no assignee in col D (D69:D84, new sheet)
  *
  * @param {Sheet} sheet - The active shift report sheet
  * @returns {{ errors: string[], warnings: string[] }}
@@ -314,26 +314,27 @@ function validateShiftBeforeExport_(sheet) {
     errors.push('MOD field is empty');
   }
 
-  var netRevenue = Number(sheet.getRange('B34').getValue()) || 0;
+  var netRevenue = Number(sheet.getRange('B54').getValue()) || 0;  // B54 on new sheet (was B34)
   if (netRevenue <= 0) {
     errors.push('Net revenue is 0 or empty');
   }
 
   // --- WARNINGS ---
-  var shiftSummary = sheet.getRange('A43').getDisplayValue().trim();
+  var shiftSummary = sheet.getRange('A59').getDisplayValue().trim();  // generalShiftComments (was A43)
   if (!shiftSummary) {
     warnings.push('Shift Notes is empty');
   }
 
-  var theGood = sheet.getRange('A47').getDisplayValue().trim();
+  var theGood = sheet.getRange('A63').getDisplayValue().trim();  // theGood (was A47)
   if (!theGood) {
     warnings.push('What Went Well is empty');
   }
 
-  // Count TODOs with no assignee: tasks in A53:E61 (value in col A), assignees in F53:F61
+  // Count TODOs with no assignee: tasks in A69:A84 (col A), assignees in D69:D84 (col D)
+  // New sheet layout: 16 rows (was 9), assignee in col D (was col F).
   try {
-    var todoTaskValues = sheet.getRange('A53:E61').getValues();   // 9 x 5; task text in col 0
-    var todoAssignValues = sheet.getRange('F53:F61').getValues(); // 9 x 1
+    var todoTaskValues   = sheet.getRange('A69:A84').getValues(); // 16 x 1; task text in col 0
+    var todoAssignValues = sheet.getRange('D69:D84').getValues(); // 16 x 1
     var unassignedCount = 0;
     for (var i = 0; i < todoTaskValues.length; i++) {
       var taskText = (todoTaskValues[i][0] || '').toString().trim();

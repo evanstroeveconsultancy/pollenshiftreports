@@ -10,17 +10,17 @@
  * 3. Run verifyDataExtraction() from Apps Script editor
  * 4. Check the log output for any mismatches
  *
- * NIGHTLY_FINANCIAL schema (22-col, A-V, Mar 2026):
- *   A=Date, B=Day, C=WeekEnding, D=MOD, E=Staff,
- *   F=NetRevenue, G=ProductionAmount, H=CashTakings,
- *   I=GrossSalesIncCash, J=CashReturns, K=CDDiscount,
- *   L=Refunds, M=CDRedeem, N=TotalDiscount,
- *   O=DiscountsCompsExcCD, P=GrossTaxableSales,
- *   Q=Taxes, R=NetSalesWTips, S=CardTips, T=CashTips,
- *   U=TotalTips, V=LoggedAt
+ * NIGHTLY_FINANCIAL schema (25-col, A-Y, May 2026 — new sheet layout):
+ *   A=Date, B=Day, C=WeekEnding, D=MOD, E=Staff(combined),
+ *   F=NetRevenue, G=ProductionAmount, H=CashTake,
+ *   I=GrossSales, J=CashReturns, K=CDDiscount,
+ *   L=null(Refunds retired), M=null(CDRedeem retired), N=TotalAdjustmentsDiscounts,
+ *   O=DiscountsExcCashDiscount, P=GrossSalesLessDiscounts,
+ *   Q=Taxes, R=null(NetSalesWTips retired), S=CardTips, T=CashTips,
+ *   U=TotalTips, V=CashCounted, W=TotalCashRecorded, X=CashVariance, Y=LoggedAt
  *
- * @version 2.0.0
- * @updated 2026-03-06
+ * @version 3.0.0
+ * @updated 2026-05-17
  */
 
 
@@ -61,24 +61,22 @@ function verifyDataExtraction() {
     Logger.log('');
     Logger.log(`Net Revenue:       $${shiftData.netRevenue.toFixed(2)} (field: netRevenue → ${FIELD_CONFIG['netRevenue'].fallback})`);
     Logger.log(`Production Amount: $${shiftData.productionAmount.toFixed(2)} (field: productionAmount → ${FIELD_CONFIG['productionAmount'].fallback})`);
-    Logger.log(`Cash Takings:      $${shiftData.cashTakings.toFixed(2)} (field: cashTakings → ${FIELD_CONFIG['cashTakings'].fallback})`);
+    Logger.log(`Cash Take:         $${shiftData.cashTake.toFixed(2)} (field: cashTake → ${FIELD_CONFIG['cashTake'].fallback})`);
     Logger.log(`Card Tips:         $${shiftData.cardTips.toFixed(2)} (field: cardTips → ${FIELD_CONFIG['cardTips'].fallback})`);
     Logger.log(`Cash Tips:         $${shiftData.cashTips.toFixed(2)} (field: cashTips → ${FIELD_CONFIG['cashTips'].fallback})`);
+    Logger.log(`Surcharge Tips:    $${(shiftData.surchargeTips || 0).toFixed(2)} (field: surchargeTips → ${FIELD_CONFIG['surchargeTips'].fallback})`);
     Logger.log(`Total Tips:        $${shiftData.tipsTotal.toFixed(2)} (field: totalTips → ${FIELD_CONFIG['totalTips'].fallback})`);
     Logger.log('');
     Logger.log('───────────────────────────────────────────────────────');
-    Logger.log('EXTRACTED DATA — Financial breakdown (B16-B29):');
+    Logger.log('EXTRACTED DATA — Financial breakdown (new layout B47-B54):');
     Logger.log('───────────────────────────────────────────────────────');
-    Logger.log(`Gross Sales Inc Cash: $${shiftData.grossSalesIncCash.toFixed(2)} (field: grossSalesIncCash → ${FIELD_CONFIG['grossSalesIncCash'].fallback})`);
-    Logger.log(`Cash Returns:         $${shiftData.cashReturns.toFixed(2)} (field: cashReturns → ${FIELD_CONFIG['cashReturns'].fallback})`);
-    Logger.log(`CD Discount:          $${shiftData.cdDiscount.toFixed(2)} (field: cdDiscount → ${FIELD_CONFIG['cdDiscount'].fallback})`);
-    Logger.log(`Refunds:              $${shiftData.refunds.toFixed(2)} (field: refunds → ${FIELD_CONFIG['refunds'].fallback})`);
-    Logger.log(`CD Redeem:            $${shiftData.cdRedeem.toFixed(2)} (field: cdRedeem → ${FIELD_CONFIG['cdRedeem'].fallback})`);
-    Logger.log(`Total Discount:       $${shiftData.totalDiscount.toFixed(2)} (field: totalDiscount → ${FIELD_CONFIG['totalDiscount'].fallback})`);
-    Logger.log(`Discounts Exc CD:     $${shiftData.discountsCompsExcCD.toFixed(2)} (field: discountsCompsExcCD → ${FIELD_CONFIG['discountsCompsExcCD'].fallback})`);
-    Logger.log(`Gross Taxable Sales:  $${shiftData.grossTaxableSales.toFixed(2)} (field: grossTaxableSales → ${FIELD_CONFIG['grossTaxableSales'].fallback})`);
-    Logger.log(`Taxes:                $${shiftData.taxes.toFixed(2)} (field: taxes → ${FIELD_CONFIG['taxes'].fallback})`);
-    Logger.log(`Net Sales w Tips:     $${shiftData.netSalesWTips.toFixed(2)} (field: netSalesWTips → ${FIELD_CONFIG['netSalesWTips'].fallback})`);
+    Logger.log(`Gross Sales:                  $${shiftData.grossSales.toFixed(2)} (field: grossSales → ${FIELD_CONFIG['grossSales'].fallback})`);
+    Logger.log(`Cash Returns:                 $${shiftData.cashReturns.toFixed(2)} (field: cashReturns → ${FIELD_CONFIG['cashReturns'].fallback})`);
+    Logger.log(`CD Discount:                  $${shiftData.cdDiscount.toFixed(2)} (field: cdDiscount → ${FIELD_CONFIG['cdDiscount'].fallback})`);
+    Logger.log(`Total Adjustments/Discounts:  $${shiftData.totalAdjustmentsDiscounts.toFixed(2)} (field: totalAdjustmentsDiscounts → ${FIELD_CONFIG['totalAdjustmentsDiscounts'].fallback})`);
+    Logger.log(`Discounts Exc Cash Discount:  $${shiftData.discountsExcCashDiscount.toFixed(2)} (field: discountsExcCashDiscount → ${FIELD_CONFIG['discountsExcCashDiscount'].fallback})`);
+    Logger.log(`Gross Sales Less Discounts:   $${shiftData.grossSalesLessDiscounts.toFixed(2)} (field: grossSalesLessDiscounts → ${FIELD_CONFIG['grossSalesLessDiscounts'].fallback})`);
+    Logger.log(`Taxes:                        $${shiftData.taxes.toFixed(2)} (field: taxes → ${FIELD_CONFIG['taxes'].fallback})`);
     Logger.log('');
 
     // Validation checks
@@ -129,16 +127,17 @@ function verifyDataExtraction() {
     // Direct cell reads are intentional here — this cross-checks that the batch reader
     // in extractShiftData_() resolves to the same values as direct cell reads.
     // FIELD_CONFIG fallback cells are the authoritative addresses (RunWaratah.js).
+    // New sheet layout (May 2026 cutover):
     const manualReads = {
-      netRevenue:       { cell: FIELD_CONFIG['netRevenue'].fallback,        expected: parseFloat(sheet.getRange('B34').getValue()) || 0, actual: shiftData.netRevenue },
-      productionAmount: { cell: FIELD_CONFIG['productionAmount'].fallback,  expected: parseFloat(sheet.getRange('B8').getValue()) || 0,  actual: shiftData.productionAmount },
-      cashTakings:      { cell: FIELD_CONFIG['cashTakings'].fallback,       expected: parseFloat(sheet.getRange('B15').getValue()) || 0, actual: shiftData.cashTakings },
-      cardTips:         { cell: FIELD_CONFIG['cardTips'].fallback,          expected: parseFloat(sheet.getRange('B32').getValue()) || 0, actual: shiftData.cardTips },
-      cashTips:         { cell: FIELD_CONFIG['cashTips'].fallback,          expected: parseFloat(sheet.getRange('B33').getValue()) || 0, actual: shiftData.cashTips },
-      tipsTotal:        { cell: FIELD_CONFIG['totalTips'].fallback,         expected: parseFloat(sheet.getRange('B36').getValue()) || 0, actual: shiftData.tipsTotal },
-      grossSalesIncCash:{ cell: FIELD_CONFIG['grossSalesIncCash'].fallback, expected: parseFloat(sheet.getRange('B16').getValue()) || 0, actual: shiftData.grossSalesIncCash },
-      totalDiscount:    { cell: FIELD_CONFIG['totalDiscount'].fallback,     expected: parseFloat(sheet.getRange('B25').getValue()) || 0, actual: shiftData.totalDiscount },
-      taxes:            { cell: FIELD_CONFIG['taxes'].fallback,             expected: parseFloat(sheet.getRange('B28').getValue()) || 0, actual: shiftData.taxes },
+      netRevenue:                 { cell: FIELD_CONFIG['netRevenue'].fallback,                 expected: parseFloat(sheet.getRange('B54').getValue()) || 0, actual: shiftData.netRevenue },
+      productionAmount:           { cell: FIELD_CONFIG['productionAmount'].fallback,           expected: parseFloat(sheet.getRange('B37').getValue()) || 0, actual: shiftData.productionAmount },
+      cashTake:                   { cell: FIELD_CONFIG['cashTake'].fallback,                   expected: parseFloat(sheet.getRange('C19').getValue()) || 0, actual: shiftData.cashTake },
+      cardTips:                   { cell: FIELD_CONFIG['cardTips'].fallback,                   expected: parseFloat(sheet.getRange('C30').getValue()) || 0, actual: shiftData.cardTips },
+      cashTips:                   { cell: FIELD_CONFIG['cashTips'].fallback,                   expected: parseFloat(sheet.getRange('C29').getValue()) || 0, actual: shiftData.cashTips },
+      tipsTotal:                  { cell: FIELD_CONFIG['totalTips'].fallback,                  expected: parseFloat(sheet.getRange('C32').getValue()) || 0, actual: shiftData.tipsTotal },
+      grossSales:                 { cell: FIELD_CONFIG['grossSales'].fallback,                 expected: parseFloat(sheet.getRange('B48').getValue()) || 0, actual: shiftData.grossSales },
+      totalAdjustmentsDiscounts:  { cell: FIELD_CONFIG['totalAdjustmentsDiscounts'].fallback,  expected: parseFloat(sheet.getRange('B50').getValue()) || 0, actual: shiftData.totalAdjustmentsDiscounts },
+      taxes:                      { cell: FIELD_CONFIG['taxes'].fallback,                      expected: parseFloat(sheet.getRange('B53').getValue()) || 0, actual: shiftData.taxes },
     };
 
     let cellReadErrors = 0;
@@ -168,11 +167,12 @@ function verifyDataExtraction() {
     Logger.log('───────────────────────────────────────────────────────');
 
     const narratives = [
-      { name: 'Shift Summary', value: shiftData.shiftSummary },
-      { name: 'Guests of Note', value: shiftData.guestsOfNote },
-      { name: 'The Good', value: shiftData.theGood },
-      { name: 'The Bad', value: shiftData.theBad },
-      { name: 'Kitchen Notes', value: shiftData.kitchenNotes },
+      { name: 'General Shift Comments (A59)', value: shiftData.generalShiftComments },
+      { name: 'Guests of Note (A61)',          value: shiftData.guestsOfNote },
+      { name: 'The Good (A63)',                value: shiftData.theGood },
+      { name: 'The Bad (A65)',                 value: shiftData.theBad },
+      { name: 'Kitchen Notes (A67)',           value: shiftData.kitchenNotes },
+      { name: 'Maintenance Issues (A88)',      value: shiftData.maintenanceIssues },
     ];
 
     narratives.forEach(n => {

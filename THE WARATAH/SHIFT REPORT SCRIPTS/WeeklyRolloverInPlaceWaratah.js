@@ -358,7 +358,7 @@ function _warGenerateWeekSummary_(spreadsheet) {
     } catch (e) { /* non-blocking */ }
 
     try {
-      var rawRev = sheet.getRange('B34').getValue();
+      var rawRev = sheet.getRange('B54').getValue();  // new sheet: B54 (was B34)
       revenueVal = parseFloat(rawRev) || 0;
       if (revenueVal > 0) shiftsReported++;
       totalRevenue += revenueVal;
@@ -367,7 +367,7 @@ function _warGenerateWeekSummary_(spreadsheet) {
     }
 
     try {
-      var rawTips = sheet.getRange('B36').getValue();
+      var rawTips = sheet.getRange('C32').getValue();  // new sheet: C32 (was B36)
       totalTips += parseFloat(rawTips) || 0;
     } catch (e) { /* non-blocking */ }
 
@@ -562,9 +562,9 @@ function _warGetArchivePath_(weekEndDateStr) {
  * Mon/Tue are NOT cleared — they only get renamed.
  *
  * Uses getClearableFieldKeys_() from RunWaratah.js (auto-excludes isFormula:true).
- * Additional exclusion: cashCounted (C18) and cashVariance (C26) are formula cells
- * and protected by isFormula:true so they are already excluded automatically.
- * expectedCash (C24) IS clearable (manager input).
+ * Formula cells auto-excluded: cashTake (C19), totalCashRecorded (C24), cashVariance (C26),
+ * cashTakeDisplay (B47), runningTotals (D37:D54), netRevenue (B54), totalTips (C32), taxes (B53).
+ * Clearable fields include manager inputs: fohStaff, bohStaff, mod, deposit, cashCounted, etc.
  *
  * @param {Spreadsheet} spreadsheet
  */
@@ -709,7 +709,7 @@ function _warDryRun_() {
   var clearableKeys = getClearableFieldKeys_();
   report += '  ' + clearableKeys.length + ' fields × 5 days = ' + (clearableKeys.length * 5) + ' ranges\n';
   report += '  Keys: ' + clearableKeys.join(', ') + '\n';
-  report += '  Formula cells excluded: cashCounted (C18), cashTakings (C19), cashVariance (C26), netRevenue (B34), etc.\n';
+  report += '  Formula cells excluded: cashTake (C19), totalCashRecorded (C24), cashVariance (C26), netRevenue (B54), totalTips (C32), taxes (B53), cashTakeDisplay (B47), runningTotals (D37:D54), etc.\n';
 
   report += '\nDRY RUN COMPLETE — No changes made.\n';
   report += 'Run "Run Rollover Now" to execute.';
