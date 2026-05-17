@@ -1,6 +1,6 @@
 **Last updated:** May 17, 2026 (Phase 1.3 — setup script known issue documented)
 **Audience:** Managers who want to understand the complete system, or anyone receiving a technical handover
-**Prerequisite:** Read 01-BASIC and 02-INTERMEDIATE first — this guide assumes you understand the daily workflow and system components
+**Prerequisite:** Read the Daily User Walkthrough ([`/docs/waratah/for-daily-users/shift-report-walkthrough.md`](../for-daily-users/shift-report-walkthrough.md)) and 02-INTERMEDIATE first. This guide assumes you understand the daily workflow and system components. The former `01-BASIC-Daily-Shift-Report-Guide.md` was archived on 2026-05-17 and superseded by the canonical walkthrough.
 
 ---
 

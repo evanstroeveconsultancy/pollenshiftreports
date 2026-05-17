@@ -68,7 +68,7 @@ It's a public Mermaid rendering service. The alternative is installing `puppetee
 ## Examples Evan has already run
 
 - `Waratah_Backend_Reference.pdf` (17 pages, 2 diagrams on landscape pages) — from `docs/waratah/explainers/03-ADVANCED-Complete-Backend-Reference.md`
-- `Waratah_Daily_Shift_Report_Guide.pdf` (6 pages, no diagrams) — from `docs/waratah/explainers/01-BASIC-Daily-Shift-Report-Guide.md`
+- `Waratah_Daily_Shift_Report_Guide.pdf` (6 pages, no diagrams) — from `docs/waratah/for-daily-users/shift-report-walkthrough.md` (Phase 1 canonical; previously sourced from `docs/waratah/explainers/01-BASIC-Daily-Shift-Report-Guide.md`, now archived)
 
 ---
 

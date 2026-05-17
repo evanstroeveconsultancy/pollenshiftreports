@@ -1,6 +1,6 @@
 **Last updated:** May 17, 2026 (Phase 1.3 — 197 named ranges, no triggers yet)
 **Audience:** Managers who want to understand what happens behind the scenes
-**Prerequisite:** Read 01-BASIC first — this guide builds on it
+**Prerequisite:** Read the Daily User Walkthrough first ([`/docs/waratah/for-daily-users/shift-report-walkthrough.md`](../for-daily-users/shift-report-walkthrough.md)). This guide builds on it. The former `01-BASIC-Daily-Shift-Report-Guide.md` was archived on 2026-05-17 and superseded by the canonical walkthrough.
 
 # How the Shift Report System Works
 

@@ -472,7 +472,7 @@ runValidationReport()    // Full system validation
 - 📙 [INTEGRATION_FLOWS.md](docs/waratah/INTEGRATION_FLOWS.md) - Data warehouse, Slack, email, task integrations
 
 **Manager Explainers (Google Docs-ready .txt, non-technical audience):**
-- 📖 [01-BASIC-Daily-Shift-Report-Guide.txt](docs/waratah/explainers/01-BASIC-Daily-Shift-Report-Guide.txt) - How to fill out and send shift reports
+- 📖 [Daily User Walkthrough — shift-report-walkthrough.md](docs/waratah/for-daily-users/shift-report-walkthrough.md) - How to fill out and send shift reports (Phase 1 canonical, supersedes 01-BASIC archived 2026-05-17)
 - 📖 [02-INTERMEDIATE-How-The-System-Works.txt](docs/waratah/explainers/02-INTERMEDIATE-How-The-System-Works.txt) - What happens behind the scenes
 - 📖 [03-ADVANCED-Complete-Backend-Reference.txt](docs/waratah/explainers/03-ADVANCED-Complete-Backend-Reference.txt) - Full backend reference for power users
 - 📖 [04-BASIC-Task-Management-Guide.txt](docs/waratah/explainers/04-BASIC-Task-Management-Guide.txt) - How to use task management day-to-day

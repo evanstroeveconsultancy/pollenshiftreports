@@ -1,3 +1,5 @@
+<!-- ARCHIVED 2026-05-17. Superseded by /docs/waratah/for-daily-users/shift-report-walkthrough.md. This file is preserved for historical reference during the documentation consolidation. Do not edit. Updates belong in the canonical replacement. -->
+
 **Last updated:** May 17, 2026 (Phase 1.3: 197 named ranges, no triggers yet)
 **Audience:** All venue managers — no technical knowledge required
 **When to read:** Your first shift as MOD, or anytime you need a refresher

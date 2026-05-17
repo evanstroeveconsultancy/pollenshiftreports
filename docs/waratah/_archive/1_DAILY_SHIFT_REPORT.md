@@ -1,3 +1,5 @@
+<!-- ARCHIVED 2026-05-17. Superseded by /docs/waratah/for-daily-users/shift-report-walkthrough.md. This file is preserved for historical reference during the documentation consolidation. Do not edit. Updates belong in the canonical replacement. -->
+
 # Daily Shift Report — The Waratah
 
 **Last Updated:** May 17, 2026 (Phase 1.3: cell map corrected — Net Revenue B54, 16-row todos, full formula-cell list)
