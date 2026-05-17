@@ -1,7 +1,7 @@
 # THE WARATAH - Weekly Rollover Workflow
 
-**Last Updated:** February 15, 2026
-**Status:** ✅ DEPLOYED & AUTOMATED
+**Last Updated:** May 17, 2026 (Rollover code deployed; trigger pending creation)
+**Status:** ✅ Code deployed; ⏳ Trigger pending setup on NEW project
 **Type:** Detailed Workflow Documentation
 
 ---
@@ -22,28 +22,30 @@ The Weekly Rollover (In-Place) system archives the previous week's data and prep
 
 ## Automation
 
-**Trigger:** Monday 10:00am (Australia/Sydney)
+**Trigger Schedule:** Monday 9:00pm (Australia/Sydney) — ⏳ **NOT YET CREATED (pending May 18 setup)**
 
-**Setup:**
-```javascript
-// Create automation
-createWeeklyRolloverTrigger()
+> The rollover code is deployed and tested, but the time-based trigger has not been created on the NEW project yet. Until created, rollover must be run manually.
 
-// Remove automation
-removeWeeklyRolloverTrigger()
-
-// View active triggers
-// Apps Script Editor → Triggers (clock icon)
-```
-
-**Menu Access:**
+**Manual Trigger (until automated):**
 ```
 Waratah Tools → Weekly Reports → Weekly Rollover (In-Place)
-    ├── Run Rollover Now
+    ├── Run Rollover Now                   ← Use this until trigger is set up
     ├── Preview Rollover (Dry Run)
     ├── ────────────────
-    ├── Create Rollover Trigger
+    ├── Create Rollover Trigger            ← Run this to install the automation
     └── Remove Rollover Trigger
+```
+
+**To Create the Automated Trigger:**
+```javascript
+// Option 1: Via Menu (password: chocolateteapot)
+Waratah Tools → Weekly Reports → Weekly Rollover (In-Place) → Create Rollover Trigger
+
+// Option 2: Via Apps Script Editor
+// Run: createRolloverTrigger_Waratah()
+
+// Option 3: View active triggers
+// Apps Script Editor → Triggers (clock icon)
 ```
 
 ---

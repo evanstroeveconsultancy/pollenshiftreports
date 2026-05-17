@@ -1,7 +1,7 @@
 # THE WARATAH - Deep Dive Architecture
 
-**Last Updated:** March 6, 2026
-**Type:** Detailed Technical Documentation
+**Last Updated:** March 6, 2026 (NOTE: Architecture now uses NEW Sakura-aligned sheet as of May 17, 2026 — see CLAUDE_WARATAH.md for current sheet IDs and configuration)
+**Type:** Detailed Technical Documentation (partially stale — use CLAUDE_WARATAH.md for script ID, sheet ID, and trigger status)
 **Load:** On-demand only (reference material)
 
 ---
@@ -53,33 +53,15 @@ THE WARATAH/
 
 **File:** [`VenueConfig.js`](../../THE%20WARATAH/SHIFT%20REPORT%20SCRIPTS/VenueConfig.js)
 
-**Key Difference from Sakura:** Uses **hardcoded cell references** (not named ranges)
+**Updated May 17, 2026 (Phase 1):** Now uses **named range system** (same pattern as Sakura). Routes through `RunWaratah.js` `FIELD_CONFIG`.
 
 ```javascript
 const WARATAH_CONFIG = {
   name: 'THE WARATAH',
   days: ['WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'],
   dayCount: 5,  // Open 5 days (Wed-Sun)
-  sheetNames: {
-    master: 'THE WARATAH - Current Week',
-    audit: 'AUDIT LOG',
-    archive: 'ARCHIVE'
-  },
-  ranges: {
-    usesNamedRanges: false,  // ⚠️ Uses hardcoded cells
-    date: 'B3:F3',
-    netRevenue: 'B34',
-    cashTips: 'B33',
-    cardTips: 'B32',
-    staff: 'B5',
-    productionAmount: 'B8',
-    cashTakings: 'B15',
-    // ... 12 financial breakdown ranges (B16-B29) added Mar 6
-    // ... Covers (B36), LaborHours (B38), LaborCost (B39) REMOVED Mar 6
-    todoTask: 'A53:E61',     // 9 rows, merged A:E
-    todoStaff: 'F53:F61',
-  },
   timezone: 'Australia/Sydney',
+  usesNamedRanges: true,  // ✅ NOW USES NAMED RANGES (May 17, 2026)
   features: {
     taskManagement: true,
     nightlyExport: true,
@@ -89,18 +71,24 @@ const WARATAH_CONFIG = {
 }
 ```
 
-**Critical Pattern:**
+**Field Mapping via RunWaratah.js FIELD_CONFIG (32 fields):**
+- Named ranges: `WEDNESDAY_SR_NetRevenue`, `THURSDAY_SR_NetRevenue`, etc.
+- Fallback cells: defined in FIELD_CONFIG (e.g., netRevenue → `B34`)
+- Cash reconciliation (NEW): `cashCounted` → C18, `expectedCash` → C24, `cashVariance` → C26
+
+**Critical Pattern (May 17, 2026):**
 ```javascript
-// Waratah uses direct cell references
-const value = sheet.getRange('B34').getValue();  // Net Revenue
-setFieldValue(sheet, 'netRevenue', 1234.56);     // Abstraction still works
+// Waratah now uses named ranges (same as Sakura)
+const value = getFieldValue(sheet, 'netRevenue');        // Named range + fallback
+const displayVal = getFieldDisplayValue(sheet, 'mod');   // Display format
+const rangeObj = getFieldRange(sheet, 'netRevenue');     // Range object
 ```
 
 ---
 
-## Script Properties Configuration
+## Script Properties Configuration (Updated May 17, 2026)
 
-**Required Properties:**
+**Current Properties (NEW Project):**
 
 ```javascript
 // Venue
@@ -111,34 +99,36 @@ MENU_PASSWORD: "chocolateteapot"
 WARATAH_SLACK_WEBHOOK_LIVE: "https://hooks.slack.com/services/..."
 WARATAH_SLACK_WEBHOOK_TEST: "https://hooks.slack.com/services/..."
 
-// Email (JSON object: email → name)
-WARATAH_EMAIL_RECIPIENTS: '{"evan@...": "Evan", "cynthia@...": "Cynthia", ...}'
+// Email
+WARATAH_EMAIL_RECIPIENTS: '["email1@...", "email2@..."]'  // JSON array format
 
-// Spreadsheet IDs
-WARATAH_SHIFT_REPORT_CURRENT_ID: "[current_week_spreadsheet_id]"
-WARATAH_WORKING_FILE_ID: "[current_week_spreadsheet_id]"  // Same as above
+// Spreadsheet IDs (Updated May 17, 2026)
+WARATAH_SHEET_ID: "1rcfHTtey_HXC291FAmjpquYkRjWNGbFtClz2szKXfkA"  // ✅ NEW sheet
+WARATAH_SHIFT_REPORT_CURRENT_ID: "1rcfHTtey_HXC291FAmjpquYkRjWNGbFtClz2szKXfkA"  // Same as above
+WARATAH_WORKING_FILE_ID: "1rcfHTtey_HXC291FAmjpquYkRjWNGbFtClz2szKXfkA"  // Same as above
 WARATAH_DATA_WAREHOUSE_ID: "[warehouse_spreadsheet_id]"
 WARATAH_TASK_MANAGEMENT_ID: "[task_spreadsheet_id]"
 
-// Weekly Rollover (In-Place System)
+// Rollover & Alerts
 ARCHIVE_ROOT_FOLDER_ID: "[archive_folder_id]"
 SLACK_MANAGERS_CHANNEL_WEBHOOK: "https://hooks.slack.com/services/..."
-
-// Task Management
 ESCALATION_EMAIL: "manager@thewaratah.com"
 ESCALATION_SLACK_WEBHOOK: "https://hooks.slack.com/services/..."
-
-// Integration Hub Alerts
 INTEGRATION_ALERT_EMAIL_PRIMARY: "tech@thewaratah.com"
 INTEGRATION_ALERT_EMAIL_SECONDARY: "manager@thewaratah.com"
+
+// AI Insights (optional)
+ANTHROPIC_API_KEY: "sk-ant-..."
+AI_INSIGHTS_MODE: "evan_only"
+AI_INSIGHTS_EVAN_EMAIL: "evan@pollenhospitality.com"
 ```
 
 **Setup Function:**
 ```javascript
-// Run once in Apps Script Editor to configure all 13 properties
+// Run once in Apps Script Editor to configure all properties
 setupScriptProperties()
 
-// Verify setup
+// Verify all properties are set correctly
 verifyScriptProperties()
 
 // Reset if needed (CAUTION: deletes all properties)

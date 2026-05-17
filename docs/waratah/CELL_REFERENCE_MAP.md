@@ -1,8 +1,9 @@
 # THE WARATAH - Cell Reference Map
 
-**Last Updated:** May 17, 2026 (Phase 1: cash recon section added; FIELD_CONFIG updated; 25-col schema; named range hardening note)
-**Type:** Authoritative Reference
-**Purpose:** Complete mapping of cell references for all Waratah day sheets
+**Last Updated:** May 17, 2026 — LIVE CUTOVER (new Sakura-aligned sheet active, 177 named ranges created, 25-col warehouse live)
+**Type:** Authoritative Reference — NEW SHEET (May 17, 2026)
+**Purpose:** Complete mapping of cell references for all Waratah day sheets (new Sakura-aligned layout)
+**Sheet:** `1rcfHTtey_HXC291FAmjpquYkRjWNGbFtClz2szKXfkA`
 
 ---
 
@@ -12,11 +13,16 @@ The Waratah uses a **named range system** mirroring Sakura House. Cell positions
 
 **Named range convention:** `{DAY}_SR_{Suffix}` — e.g. `WEDNESDAY_SR_NetRevenue`
 
-**Phase 1 change:** `getFieldRange()` now THROWS if a named range is missing (no silent fallback). Named ranges must be set up on the new sheet before use. To create/update named ranges: `Waratah Tools → Admin Tools → Named Ranges → Setup All Named Ranges (New Sheet)` (uses `setupWaratahNamedRanges_()` in `SetupWaratah.js`).
+**Active as of May 17, 2026:** ✅ All 177 named ranges created on the new sheet via `setupWaratahNamedRanges_()`. `getFieldRange()` THROWS if a range is missing (no silent fallback). Ranges are verified with `verifyWaratahNamedRanges_()` — output: OK=177, MISSING=0, WRONG=0.
 
-To verify: `Named Ranges → Verify Named Ranges` (uses `verifyWaratahNamedRanges_()`).
-
-**Sheet Names:** WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY
+**Sheet Names (all 7 exist, but only Wed-Sun active for shift reporting):** 
+- `MONDAY <date>` — unused, renamed by rollover
+- `TUESDAY <date>` — unused, renamed by rollover
+- `WEDNESDAY <date>` — ✅ active
+- `THURSDAY <date>` — ✅ active
+- `FRIDAY <date>` — ✅ active
+- `SATURDAY <date>` — ✅ active
+- `SUNDAY <date>` — ✅ active
 
 **Layout Pattern:** Narrative section uses **odd rows for data**, even rows for labels.
 - Row 42 = "SHIFT REPORT" label, Row 43 = shift report data
@@ -35,16 +41,17 @@ MOD:            B4:F4     (merged)
 Staff:          B5:F5     (merged)
 ```
 
-### Financial Metrics (Column B, rows 8-39) — OLD SHEET
+### Financial Metrics — PRE-MIGRATION REFERENCE (May 16, 2026 and earlier)
 
-> **Note:** The new Sakura-aligned sheet (active from Phase 2, Wed May 20) restructures the cash reconciliation section. See [New Sheet: Cash Reconciliation](#new-sheet-cash-reconciliation) below.
+> **Historical reference only.** The original Waratah sheet used hardcoded cell references (column B). The new Sakura-aligned sheet (LIVE May 17, 2026) uses named ranges with fallback to new cell addresses. This section preserved for historical context. **Do not use for active code** — all production code reads via named ranges or NEW sheet cells.
 
 ```
+[PRE-MAY-17 REFERENCE — DO NOT USE FOR ACTIVE CODE]
 Production Amount:     B8
 Function/Deposit:      B9:B10
 Airbnb:                B11
 Cancellation Fees:     B13:B14
-Cash Takings:          B15      (formula)
+Cash Takings:          B15      (formula — **now C19 on new sheet**)
 Gross Sales Inc Cash:  B16      (formula)
 Cash Returns:          B17:B18  (merged)
 CD Discounts:          B19:B20  (merged)
@@ -64,7 +71,6 @@ Total Tips:            B36      (formula)
 Covers:                B37      (NOT warehoused)
 Labor Hours:           B38      (formula, NOT warehoused)
 Labor Cost:            B39      (formula, NOT warehoused)
-B36, B38:B39 = FORMULA CELLS — DO NOT CLEAR during rollover
 ```
 
 ### New Sheet: Cash Reconciliation
