@@ -484,18 +484,24 @@ For Managers (venue managers, daily oversight):
 - 📖 [04-staff-and-recipients.md](docs/waratah/for-managers/04-staff-and-recipients.md) - Staff roster, email and Slack recipients
 - 📖 [05-troubleshooting.md](docs/waratah/for-managers/05-troubleshooting.md) - Manager-fixable problems
 
-For Admins (Phase 3, pending): `/docs/waratah/for-admins/` - Script Properties, recipients, deployment, recovery
+For Admins (admin operators with Script Properties and clasp access):
+- 📖 [Admin Directory](docs/waratah/for-admins/README.md) - Admin entry point and access policy
+- 📖 [01-configuration-reference.md](docs/waratah/for-admins/01-configuration-reference.md) - Canonical Script Properties reference (22 properties)
+- 📖 [02-staff-and-access-management.md](docs/waratah/for-admins/02-staff-and-access-management.md) - Adding/removing staff, recipients, webhooks, password
+- 📖 [03-advanced-troubleshooting.md](docs/waratah/for-admins/03-advanced-troubleshooting.md) - Log inspection, rollover recovery, trigger destruction recovery
+- 📖 [04-deployment-and-clasp.md](docs/waratah/for-admins/04-deployment-and-clasp.md) - Pre/post-deploy checklist, trigger reinstall procedure
+
 For Developers (Phase 4, pending): `/docs/waratah/for-developers/` - Architecture, cell maps, integration, schemas, triggers
 
-Legacy explainers (still authoritative for admin and developer content until Phases 3 and 4):
-- 📖 [02-INTERMEDIATE-How-The-System-Works.md](docs/waratah/explainers/02-INTERMEDIATE-How-The-System-Works.md) - Partially superseded; admin and dev content only
+Legacy explainers (still authoritative for developer content until Phase 4):
+- 📖 [02-INTERMEDIATE-How-The-System-Works.md](docs/waratah/explainers/02-INTERMEDIATE-How-The-System-Works.md) - Partially superseded (Phases 2 and 3); developer overflow only
 - 📖 [03-ADVANCED-Complete-Backend-Reference.md](docs/waratah/explainers/03-ADVANCED-Complete-Backend-Reference.md) - Full backend reference (Phase 4 target)
 
-Legacy FILE EXPLAINERS (still authoritative for admin and developer content until Phases 3 and 4):
-- 📖 [2_TASK_MANAGEMENT.md](THE%20WARATAH/FILE%20EXPLAINERS/2_TASK_MANAGEMENT.md) - Partially superseded
-- 📖 [3_WEEKLY_AUTOMATED_EVENTS.md](THE%20WARATAH/FILE%20EXPLAINERS/3_WEEKLY_AUTOMATED_EVENTS.md) - Partially superseded
-- 📖 [4_TROUBLESHOOTING.md](THE%20WARATAH/FILE%20EXPLAINERS/4_TROUBLESHOOTING.md) - Partially superseded
-- 📖 [5_CONFIGURATION_REFERENCE.md](THE%20WARATAH/FILE%20EXPLAINERS/5_CONFIGURATION_REFERENCE.md) - Phase 3 target (still authoritative)
+Legacy FILE EXPLAINERS (only developer content remains until Phase 4):
+- 📖 [2_TASK_MANAGEMENT.md](THE%20WARATAH/FILE%20EXPLAINERS/2_TASK_MANAGEMENT.md) - Partially superseded (Phases 2 and 3); developer audit trail internals only
+- 📖 [3_WEEKLY_AUTOMATED_EVENTS.md](THE%20WARATAH/FILE%20EXPLAINERS/3_WEEKLY_AUTOMATED_EVENTS.md) - Partially superseded (Phases 2 and 3); developer trigger internals only
+- 📖 [4_TROUBLESHOOTING.md](THE%20WARATAH/FILE%20EXPLAINERS/4_TROUBLESHOOTING.md) - Partially superseded (Phases 2 and 3); developer named-range debugging only
+- 5_CONFIGURATION_REFERENCE.md - **ARCHIVED 2026-05-17 (Phase 3)**. Superseded by `for-admins/01-configuration-reference.md` and `02-staff-and-access-management.md`.
 
 ---
 

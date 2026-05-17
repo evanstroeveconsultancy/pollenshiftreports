@@ -1,4 +1,6 @@
-# Configuration Reference — The Waratah
+<!-- ARCHIVED 2026-05-17 (Phase 3 of Waratah docs consolidation). Superseded by /docs/waratah/for-admins/01-configuration-reference.md and /docs/waratah/for-admins/02-staff-and-access-management.md. This file is preserved for historical reference. Do not edit. Updates belong in the canonical replacement files. -->
+
+# Configuration Reference, The Waratah
 
 **Last Updated:** May 17, 2026 (Phase 1: WARATAH_SHEET_ID added; WARATAH_WORKING_FILE_ID is now fallback)
 **Type:** Handover guide for managers
