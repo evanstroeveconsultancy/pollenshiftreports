@@ -1,6 +1,24 @@
-**Last updated:** March 6, 2026
+**Last updated:** May 17, 2026 (Major update: New spreadsheet system, 177 named ranges, new Apps Script project)
 **Audience:** Managers who want to understand the complete system, or anyone receiving a technical handover
 **Prerequisite:** Read 01-BASIC and 02-INTERMEDIATE first — this guide assumes you understand the daily workflow and system components
+
+---
+
+## IMPORTANT: May 17, 2026 System Cutover
+
+> The Waratah shift report system was migrated to a new spreadsheet and new Apps Script project on May 17, 2026. This section documents the new system. The old system is dormant but archived for reference.
+
+**Old system (dormant):**
+- Spreadsheet: `1kxvEXU...` (archived — do not edit)
+- Apps Script: `1hVHqRKw...` (archived — triggers deleted)
+
+**New system (LIVE):**
+- Spreadsheet: `1rcfHTtey_HXC291FAmjpquYkRjWNGbFtClz2szKXfkA`
+- Apps Script: `1YATiIFCp6zOM4xGscZOodacGhfxyPr3nvepnJ0SrJ7e5P73HrBFbqnqH`
+
+**Triggers status (May 17–May 18):** Triggers are manually created on May 18 at 9am. Until then, all nightly exports must be manually triggered by an admin.
+
+---
 
 # Complete Backend Reference
 
@@ -205,14 +223,46 @@ Every function that the system exposes (callable from menus, triggers, or HTML d
 
 ---
 
-## Cell Reference Map
+## Named Range System (May 17, 2026)
 
-Every cell the system reads from or writes to on a shift report sheet.
+> The new system uses 177 named ranges to manage cell access. This replaces hardcoded cell addresses and provides a flexible, self-documenting reference layer. Named ranges follow the convention: `DAY_SR_FieldName` (e.g., `WEDNESDAY_SR_NetRevenue`, `FRIDAY_SR_CashVariance`).
+
+This means:
+- Code never references a cell directly (e.g., never `sheet.getRange('B34')`)
+- Every field is defined in a configuration table with its named range
+- If the layout changes, only the named range definition updates — code stays the same
+- The system auto-verifies named ranges exist on every deployment
+
+The full list of 177 named ranges is maintained in `docs/waratah/CELL_REFERENCE_MAP.md`. Examples:
+- `WEDNESDAY_SR_Date` — the date cell for Wednesday's shift report
+- `THURSDAY_SR_NetRevenue` — Thursday's net revenue cell
+- `FRIDAY_SR_CashCounted` — Friday's total cash counted (new)
+
+**For technical staff:** Use `getFieldValue(sheet, 'fieldName')` helper functions. Never use raw `getRangeByName()` calls.
+
+---
+
+## Cell Layout (Updated for Cash Reconciliation — May 17, 2026)
+
+Every shift report tab has the same layout. Cells are accessed via named ranges; hardcoded cell addresses are listed here for reference only.
+
+### Till Reconciliation Cells (NEW — May 17)
+
+| Cells | Field | Type | Warehouse Column |
+|-------|-------|------|-----------------|
+| C10:C17 | Public Till Count | Manual entry | Part of CashCounted |
+| D10:D17 | Public Till Refloat | Manual entry | Not warehoused |
+| E10:E17 | Terrace Till Count | Manual entry | Part of CashCounted |
+| F10:F17 | Terrace Till Refloat | Manual entry | Not warehoused |
+| C18 | Cash Counted | **Formula** | V: CashCounted |
+| C19 | Cash Take | **Formula** | Not warehoused |
+| C24 | Expected Cash | Manual/pulled | W: ExpectedCash |
+| C26 | Cash Variance | **Formula** (DO NOT CLEAR) | X: CashVariance |
 
 ### Financial Cells
 
-| Cell | Field | Type | Warehouse Column |
-|------|-------|------|-----------------|
+| Cells | Field | Type | Warehouse Column |
+|-------|-------|------|-----------------|
 | B3:F3 | Date | Merged, pre-filled by rollover | A: Date |
 | B4:F4 | MOD | Merged, manual entry | D: MOD |
 | B5:F5 | Staff | Merged, manual entry | E: Staff |
@@ -400,7 +450,7 @@ Some functions can run both from a menu click (interactive) and from an automati
 
 ## Warehouse Schema Detail
 
-### NIGHTLY_FINANCIAL (22 columns, A through V)
+### NIGHTLY_FINANCIAL (25 columns, A through Y — expanded May 17, 2026)
 
 | Column | Header | Source |
 |--------|--------|--------|
@@ -425,7 +475,10 @@ Some functions can run both from a menu click (interactive) and from an automati
 | S | CardTips | B32 |
 | T | CashTips | B33 |
 | U | TotalTips | B36 |
-| V | LoggedAt | Timestamp |
+| V | CashCounted | C18 (NEW — May 17) |
+| W | ExpectedCash | C24 (NEW — May 17) |
+| X | CashVariance | C26 (NEW — May 17) |
+| Y | LoggedAt | Timestamp |
 
 ### OPERATIONAL_EVENTS (8 columns)
 

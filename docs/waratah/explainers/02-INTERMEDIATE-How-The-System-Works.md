@@ -1,4 +1,4 @@
-**Last updated:** March 6, 2026
+**Last updated:** May 17, 2026
 **Audience:** Managers who want to understand what happens behind the scenes
 **Prerequisite:** Read 01-BASIC first — this guide builds on it
 
@@ -189,9 +189,11 @@ This is a safety net. If the nightly export failed for a particular day (network
 
 The data warehouse is a separate Google Spreadsheet that stores historical data from every shift report. It has four main sheets:
 
-### NIGHTLY_FINANCIAL (22 columns)
+### NIGHTLY_FINANCIAL (25 columns — expanded May 17, 2026)
 
-This is where the money goes. Every night's financial figures are logged as a single row:
+> The warehouse now tracks cash reconciliation data alongside financial figures. This gives management visibility into till accuracy and cash flow without needing a separate system.
+
+Every night's financial figures are logged as a single row:
 
 | Column | Data |
 |--------|------|
@@ -200,14 +202,17 @@ This is where the money goes. Every night's financial figures are logged as a si
 | Week Ending | The Sunday of this week |
 | MOD | Manager on Duty |
 | Staff | Staff on shift |
-| Net Revenue | From cell B34 |
-| Production Amount | From cell B8 |
-| Cash Takings | From cell B15 |
-| Gross Sales | From cell B16 |
-| Cash Returns, CD Discount, Refunds, CD Redeem | From cells B17-B24 |
-| Total Discount | From cell B25 |
-| Discounts/Comps exc CD, Gross Taxable, Taxes, Net Sales w/ Tips | From cells B26-B29 |
-| Card Tips, Cash Tips, Total Tips | From cells B32, B33, B36 |
+| Net Revenue | From the financial section |
+| Production Amount | From the financial section |
+| Cash Takings | Calculated from till counts |
+| Gross Sales | From POS end-of-day |
+| Cash Returns, CD Discount, Refunds, CD Redeem | From POS breakdown |
+| Total Discount | From POS breakdown |
+| Discounts/Comps exc CD, Gross Taxable, Taxes, Net Sales w/ Tips | From POS breakdown |
+| Card Tips, Cash Tips, Total Tips | From the financial section |
+| **Cash Counted** | Sum of both till counts (NEW) |
+| **Expected Cash** | What the POS said should be there (NEW) |
+| **Cash Variance** | Did the tills balance? (NEW) |
 | Logged At | Timestamp when this row was written |
 
 ### OPERATIONAL_EVENTS (8 columns)

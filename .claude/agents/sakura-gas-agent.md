@@ -82,7 +82,7 @@ The rollover system is in-place (no template copying). Before touching rollover 
 - Read `docs/_archive/CODE_REVIEW_REPORTS_2026-02-16/ROLLOVER_TESTING_GUIDE.md`
 - **Test on a copy of the spreadsheet first** — never test destructive rollover on production
 
-## Handover Documentation (FILE EXPLAINERS)
+## Handover Documentation (FILE EXPLAINERS & MANAGER EXPLAINERS)
 
 After any code change that affects user-facing behavior, update the relevant handover doc in `SAKURA HOUSE/FILE EXPLAINERS/`. These are manager-facing docs — keep tone non-technical (no function names, no code, no line counts).
 
@@ -95,6 +95,8 @@ After any code change that affects user-facing behavior, update the relevant han
 | `TASK_MANAGEMENT.md` | EnhancedTaskManagement_Sakura, TaskDashboard_Sakura, SlackActionablesPoster_Sakura, Menu_Updated_Sakura |
 | `TROUBLESHOOTING.md` | Any error handling changes, diagnostic tools |
 | `CONFIGURATION_REFERENCE.md` | _SETUP_ScriptProperties, VenueConfigSakura, MenuSakura, RunSakura |
+
+**IMPORTANT — Completion Report Flagging (Added 2026-05-17):** When your code change affects manager-facing behavior (cell layouts, sheet structure, Slack formats, menu items, warehouse schema), explicitly flag this in your completion report so `documentation-agent` knows to update `SAKURA HOUSE/FILE EXPLAINERS/`. Format: `**Manager-facing behavior change:** [brief description] → requires update to [DAILY_SHIFT_REPORT / WEEKLY_AUTOMATED_EVENTS / TASK_MANAGEMENT / TROUBLESHOOTING / CONFIGURATION_REFERENCE]`.
 
 ## Output Format
 Return:
