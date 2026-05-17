@@ -8,14 +8,14 @@
  * then the formulas auto-update as new data arrives.
  *
  * Source: NIGHTLY_FINANCIAL sheet
- * Columns (22-col schema as of Mar 2026):
+ * Columns (25-col schema as of May 2026):
  *   A=Date, B=Day, C=WeekEnding, D=MOD, E=Staff,
  *   F=NetRevenue, G=ProductionAmount, H=CashTakings,
  *   I=GrossSalesIncCash, J=CashReturns, K=CDDiscount,
  *   L=Refunds, M=CDRedeem, N=TotalDiscount,
  *   O=DiscountsCompsExcCD, P=GrossTaxableSales,
  *   Q=Taxes, R=NetSalesWTips, S=CardTips, T=CashTips,
- *   U=TotalTips, V=LoggedAt
+ *   U=TotalTips, V=LoggedAt, W=CashCounted, X=ExpectedCash, Y=CashVariance
  *
  * @version 3.0.0
  ****************************************************/
@@ -514,8 +514,8 @@ function _sectionHeader_(sheet, row, title) {
  *   - Day-of-week revenue heatmap (green=best, red=worst)
  *   - Year-to-Date summary (total revenue, shifts, avg per shift)
  *
- * Waratah NIGHTLY_FINANCIAL columns (22-col schema):
- *   A=Date, B=Day, F=NetRevenue, U=TotalTips
+ * Waratah NIGHTLY_FINANCIAL columns (25-col schema):
+ *   A=Date, B=Day, F=NetRevenue, U=TotalTips, W=CashCounted, X=ExpectedCash, Y=CashVariance
  *
  * @param {Sheet} sheet  - The ANALYTICS sheet object.
  * @param {string} src   - Source sheet name ("NIGHTLY_FINANCIAL").

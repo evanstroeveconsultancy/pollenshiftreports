@@ -55,7 +55,10 @@ function getVenueConfig_() {
         cashTips: 'B33',
         totalTips: 'B36',
         productionAmount: 'B8',
-        cashTakings: 'B15',
+        cashTakings: 'C19',       // New sheet: C19 = cash take formula (old sheet was B15)
+        cashCounted: 'C18',       // C18 = cash physically counted (formula — do not clear)
+        expectedCash: 'C24',      // C24 = POS-expected cash (manager input — clearable)
+        cashVariance: 'C26',      // C26 = variance = counted minus expected (formula — do not clear)
         grossSalesIncCash: 'B16',
         cashReturns: 'B17',
         cdDiscount: 'B19',

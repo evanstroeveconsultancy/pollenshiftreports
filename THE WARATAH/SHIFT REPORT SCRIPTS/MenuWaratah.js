@@ -69,6 +69,16 @@ function pw_namedRangeHealthCheck_Waratah()     { if (requirePassword_()) namedR
 function pw_setupAllSheetsProtection()  { if (requirePassword_()) setupAllSheetsProtection(); }
 function pw_removeAllSheetsProtection() { if (requirePassword_()) removeAllSheetsProtection(); }
 
+// === PASSWORD-GATED WRAPPERS: Named Range Setup (Phase 1 Migration) ===
+function pw_setupWaratahNamedRanges_()        { if (requirePassword_()) setupWaratahNamedRanges_(); }
+function pw_verifyWaratahNamedRanges_()       { if (requirePassword_()) verifyWaratahNamedRanges_(); }
+
+// === PASSWORD-GATED WRAPPERS: Rollover (new handler names) ===
+function pw_runWaratahWeeklyRollover()        { if (requirePassword_()) runWaratahWeeklyRollover(); }
+function pw_runWaratahWeeklyRolloverDryRun()  { if (requirePassword_()) runWaratahWeeklyRollover({ dryRun: true }); }
+function pw_createRolloverTrigger_Waratah()   { if (requirePassword_()) createRolloverTrigger_Waratah(); }
+function pw_removeRolloverTrigger_Waratah()   { if (requirePassword_()) removeRolloverTrigger_Waratah(); }
+
 // === PASSWORD-GATED WRAPPERS: Trigger Setup ===
 function pw_setupAllTriggers_Waratah() { if (requirePassword_()) setupAllTriggers_Waratah(); }
 
@@ -88,7 +98,8 @@ function onOpen() {
       const triggers = ScriptApp.getProjectTriggers();
       const handlerNames = triggers.map(function(t) { return t.getHandlerFunction(); });
       const hasDigest = handlerNames.indexOf('sendWeeklyRevenueDigest_Waratah') !== -1;
-      const hasRollover = handlerNames.indexOf('performWeeklyRollover') !== -1;
+      const hasRollover = handlerNames.indexOf('runWaratahWeeklyRollover') !== -1 ||
+                           handlerNames.indexOf('performWeeklyRollover') !== -1;
       if (!hasDigest || !hasRollover) {
         adminMenuLabel = '⚠ Admin Tools';
         Logger.log('onOpen trigger check: missing triggers — digest=' + hasDigest + ', rollover=' + hasRollover);
@@ -117,11 +128,11 @@ function onOpen() {
           .addItem('Weekly To-Do Summary (TEST to me)', 'pw_sendWeeklyTodoSummary_WARATAH_TestToSelf')
           .addSeparator()
           .addSubMenu(ui.createMenu('Weekly Rollover (In-Place)')
-            .addItem('Run Rollover Now', 'pw_performWeeklyRollover')
-            .addItem('Preview Rollover (Dry Run)', 'pw_previewRollover')
+            .addItem('Run Rollover Now', 'pw_runWaratahWeeklyRollover')
+            .addItem('Dry-Run Rollover (no changes)', 'pw_runWaratahWeeklyRolloverDryRun')
             .addSeparator()
-            .addItem('Create Rollover Trigger', 'pw_createWeeklyRolloverTrigger')
-            .addItem('Remove Rollover Trigger', 'pw_removeWeeklyRolloverTrigger')))
+            .addItem('Create Rollover Trigger (Mon 9pm)', 'pw_createRolloverTrigger_Waratah')
+            .addItem('Remove Rollover Trigger', 'pw_removeRolloverTrigger_Waratah')))
 
         .addSubMenu(ui.createMenu('Weekly Digest')
           .addItem('Send Revenue Digest (LIVE)', 'pw_sendWeeklyRevenueDigest_Waratah')
@@ -155,6 +166,9 @@ function onOpen() {
           .addItem('Backfill TO-DOs (All Days)', 'pw_backfillAllDaysTodos')
           .addSeparator()
           .addSubMenu(ui.createMenu('Named Ranges')
+            .addItem('Setup All Named Ranges (New Sheet)', 'pw_setupWaratahNamedRanges_')
+            .addItem('Verify Named Ranges', 'pw_verifyWaratahNamedRanges_')
+            .addSeparator()
             .addItem('Named Range Health Check', 'pw_namedRangeHealthCheck_Waratah')
             .addSeparator()
             .addItem('Diagnose Active Sheet', 'pw_diagnoseNamedRanges')
@@ -203,7 +217,8 @@ function onOpen() {
  */
 function setupAllTriggers_Waratah() {
   const handlers = [
-    'performWeeklyRollover',
+    'runWaratahWeeklyRollover',
+    'performWeeklyRollover',  // legacy name — also cleaned up
     'runWeeklyBackfill_',
     'sendWeeklyRevenueDigest_Waratah'
   ];
@@ -216,11 +231,11 @@ function setupAllTriggers_Waratah() {
     }
   });
 
-  // Weekly Rollover: Monday 10:00am
-  ScriptApp.newTrigger('performWeeklyRollover')
+  // Weekly Rollover: Monday 9:00pm (after Sunday shift and Monday Revenue Digest at 4pm)
+  ScriptApp.newTrigger('runWaratahWeeklyRollover')
     .timeBased()
     .onWeekDay(ScriptApp.WeekDay.MONDAY)
-    .atHour(10)
+    .atHour(21)
     .nearMinute(0)
     .create();
 
@@ -246,7 +261,7 @@ function setupAllTriggers_Waratah() {
     SpreadsheetApp.getUi().alert(
       'SR Triggers Installed',
       '3 triggers installed successfully:\n\n' +
-      '• Weekly Rollover — Monday 10:00am\n' +
+      '• Weekly Rollover — Monday 9:00pm\n' +
       '• Weekly Backfill — Monday 8:00am\n' +
       '• Weekly Digest   — Wednesday 8:00am\n\n' +
       'Verify in Apps Script Editor → Triggers (clock icon).',

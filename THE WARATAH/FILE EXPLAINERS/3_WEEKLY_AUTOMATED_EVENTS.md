@@ -1,6 +1,6 @@
 # Weekly Automated Events — The Waratah
 
-**Last Updated:** April 2, 2026 (Cell reference correction: Total Tips B36, Covers B37)
+**Last Updated:** May 17, 2026 (Phase 1: rollover now runs Monday 9pm; all 7 tabs renamed; Mon/Tue not active for shift reports)
 **Type:** Handover guide for managers
 
 > This document explains everything that happens automatically in The Waratah system each week. You don't need to be technical to understand it — just know that these are all handled by scheduled triggers and rarely need your attention.
@@ -16,7 +16,7 @@
 | **Monday 2:00 AM** | Weekly backfill to Data Warehouse | Runs silently — no notification |
 | **Monday 6:00 AM** | Weekly task archive | Task Management spreadsheet auto-updated |
 | **Monday 10:00 AM** | Weekly task summary | Slack: individual staff DMs |
-| **Monday 10:00 AM** | Weekly rollover (archive + reset) | Email to management + Slack notification |
+| **Monday 9:00 PM** | Weekly rollover (archive + reset) | Email to management + Slack notification |
 | **Wednesday 8:00 AM** | Revenue digest (this week vs last) | Slack: #managers channel |
 | **Every 2 hours** | Task cleanup & auto-sort | Task Management spreadsheet auto-updated |
 | **Daily 6:00 AM** | Staff workload refresh | Task Management spreadsheet auto-updated |
@@ -25,7 +25,7 @@ All of these run on their own. You don't need to do anything unless something go
 
 ---
 
-## The Weekly Rollover — Monday 10am
+## The Weekly Rollover — Monday 9pm
 
 > This is the most important automated event. Every Monday at 10am, the system archives last week's data and resets the spreadsheet for a new week. It takes about 1-2 minutes to run.
 
@@ -36,14 +36,16 @@ All of these run on their own. You don't need to do anything unless something go
 3. **Creates a PDF archive** — Exports all 5 days (Wed–Sun) as a single multi-page document
 4. **Creates a spreadsheet backup** — Saves a complete copy of the working file to Google Drive
 5. **Clears all data fields** — Removes shift data from every day tab (only what you typed in — not formulas)
-6. **Updates all dates** — Stamps next week's dates on each tab and renames them (e.g., "WEDNESDAY 26/03/2026")
+6. **Updates all dates** — Stamps next week's dates on all 7 tabs (Monday through Sunday) and renames them (e.g., "WEDNESDAY 26/03/2026"). Monday and Tuesday tabs are updated but are not active for shift reporting.
 7. **Sends notifications** — Emails a summary to management and posts confirmation to Slack
 
 ### Important: Formula Cells Are Never Cleared
 
 > The system is smart about what it clears. It only removes data you typed in — never formulas.
 
-Cells like **Net Revenue** (B34), **Total Tips** (B36), and **Labor Hours/Cost** (B38–B39) contain calculation formulas and are preserved. They'll automatically recalculate when you enter new shift data.
+Cells like **Net Revenue** (B34), **Total Tips** (B36), **Labor Hours/Cost** (B38–B39), and the **cash reconciliation formulas** (C18 Cash Counted, C19 Cash Take, C26 Cash Variance) contain calculation formulas and are preserved. They'll automatically recalculate when you enter new shift data.
+
+**Manager input field:** The **Expected Cash** field (C24) is manager-entered and IS cleared during rollover — you'll enter a fresh expected cash amount each week.
 
 **Example:** If Net Revenue on Wednesday shows $4,200 after rollover, that's correct — it's a formula that will recalculate when you enter sales data.
 
@@ -256,9 +258,9 @@ You'll need the admin password. Open each menu item and select "Create [X] Trigg
 
 #### On the **Waratah - Current Week** Spreadsheet (Shift Reports):
 
-1. **Rollover Trigger (Mon 10am)**
+1. **Rollover Trigger (Mon 9pm)**
    - Menu: **Waratah Tools > Admin Tools > Weekly Reports > Weekly Rollover (In-Place) > Create Rollover Trigger**
-   - Confirm the time is 10:00 AM
+   - Confirm the time is 9:00 PM
 
 2. **Revenue Digest Trigger (Wed 8am)**
    - Menu: **Waratah Tools > Admin Tools > Weekly Digest > Setup Wednesday Digest Trigger**
@@ -316,6 +318,7 @@ You'll need the admin password. Open each menu item and select "Create [X] Trigg
 - Net Revenue B34 (a formula that calculates from other inputs)
 - Total Tips B36 (a formula)
 - Labor Hours B38, Labor Cost B39 (formulas)
+- Cash Counted C18, Cash Take C19, Cash Variance C26 (cash reconciliation formulas)
 
 Data fields like revenue, cash, and notes should be empty. Formula fields will show a number — that's correct.
 
@@ -388,8 +391,8 @@ Data fields like revenue, cash, and notes should be empty. Formula fields will s
 
 ---
 
-**Document Version:** 1.0
-**Last Updated:** April 2, 2026 (Cell reference correction: Total Tips B36, Covers B37)
+**Document Version:** 1.1
+**Last Updated:** May 17, 2026 (Phase 1: rollover timing Mon 9pm; all 7 tabs; cash recon formula cells)
 **For:** Waratah Managers
 **Technical Review:** gas-code-review-agent
 **Peer Review:** documentation-agent

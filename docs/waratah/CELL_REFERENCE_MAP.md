@@ -1,6 +1,6 @@
 # THE WARATAH - Cell Reference Map
 
-**Last Updated:** April 2, 2026 (Cell reference correction: Total Tips B36, Covers B37)
+**Last Updated:** May 17, 2026 (Phase 1: cash recon section added; FIELD_CONFIG updated; 25-col schema; named range hardening note)
 **Type:** Authoritative Reference
 **Purpose:** Complete mapping of cell references for all Waratah day sheets
 
@@ -12,7 +12,9 @@ The Waratah uses a **named range system** mirroring Sakura House. Cell positions
 
 **Named range convention:** `{DAY}_SR_{Suffix}` — e.g. `WEDNESDAY_SR_NetRevenue`
 
-All helpers fall back to hardcoded cells automatically when named ranges haven't been created in the spreadsheet yet (graceful degradation). To create named ranges: `Waratah Tools → Admin Tools → Setup & Utilities → Named Ranges → Create on ALL Sheets`.
+**Phase 1 change:** `getFieldRange()` now THROWS if a named range is missing (no silent fallback). Named ranges must be set up on the new sheet before use. To create/update named ranges: `Waratah Tools → Admin Tools → Named Ranges → Setup All Named Ranges (New Sheet)` (uses `setupWaratahNamedRanges_()` in `SetupWaratah.js`).
+
+To verify: `Named Ranges → Verify Named Ranges` (uses `verifyWaratahNamedRanges_()`).
 
 **Sheet Names:** WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY
 
@@ -33,7 +35,10 @@ MOD:            B4:F4     (merged)
 Staff:          B5:F5     (merged)
 ```
 
-### Financial Metrics (Column B, rows 8-39)
+### Financial Metrics (Column B, rows 8-39) — OLD SHEET
+
+> **Note:** The new Sakura-aligned sheet (active from Phase 2, Wed May 20) restructures the cash reconciliation section. See [New Sheet: Cash Reconciliation](#new-sheet-cash-reconciliation) below.
+
 ```
 Production Amount:     B8
 Function/Deposit:      B9:B10
@@ -60,6 +65,56 @@ Covers:                B37      (NOT warehoused)
 Labor Hours:           B38      (formula, NOT warehoused)
 Labor Cost:            B39      (formula, NOT warehoused)
 B36, B38:B39 = FORMULA CELLS — DO NOT CLEAR during rollover
+```
+
+### New Sheet: Cash Reconciliation
+
+The new Sakura-aligned sheet adds a 2-till cash reconciliation block. These cells are in columns C-F.
+
+**Public Till (column C):**
+```
+C10  Public Till Opening Count    (input)
+C11  Public Till Drop 1           (input)
+C12  Public Till Drop 2           (input)
+C13  Public Till Drop 3           (input)
+C14  Public Till Closing Count    (input)
+C15  Public Refloat               (input)
+C16  Public Till Total Drops      (formula)
+C17  Public Till Net              (formula)
+```
+
+**Terrace Till (column D):**
+```
+D10  Terrace Till Opening Count   (input)
+D11  Terrace Till Drop 1          (input)
+D12  Terrace Till Drop 2          (input)
+D13  Terrace Till Drop 3          (input)
+D14  Terrace Till Closing Count   (input)
+D15  Terrace Refloat              (input)
+D16  Terrace Till Total Drops     (formula)
+D17  Terrace Till Net             (formula)
+```
+
+**Cash Reconciliation Summary (column C, rows 18-26):**
+```
+C18  Cash Counted    (formula = Public Net + Terrace Net) — DO NOT CLEAR
+C19  Cash Take       (formula = Cash Counted − Refloats)  — DO NOT CLEAR
+C24  Expected Cash   (POS-expected amount, manager input)  — clearable
+C26  Cash Variance   (formula = Cash Counted − Expected)  — DO NOT CLEAR
+```
+
+**FIELD_CONFIG mapping (Phase 1 additions):**
+```
+cashTakings  → suffix SR_CashTakings, fallback C19, isFormula: true
+cashCounted  → suffix SR_CashCounted, fallback C18, isFormula: true
+expectedCash → suffix SR_ExpectedCash, fallback C24, isFormula: false  ← clearable
+cashVariance → suffix SR_CashVariance, fallback C26, isFormula: true
+```
+
+**Named ranges (all 5 active days):**
+```
+WEDNESDAY_SR_CashCounted, WEDNESDAY_SR_ExpectedCash, WEDNESDAY_SR_CashVariance
+... (repeated for THURSDAY, FRIDAY, SATURDAY, SUNDAY)
 ```
 
 ### Narrative Fields (merged A:F, odd rows = data)
@@ -110,7 +165,10 @@ This is the single source of truth. All consumer files call `getFieldValue()`, `
 | `deposit` | `SR_Deposit` | `B9:B10` | false | `WEDNESDAY_SR_Deposit` |
 | `airbnbCovers` | `SR_AirbnbCovers` | `B11` | false | `WEDNESDAY_SR_AirbnbCovers` |
 | `cancellations` | `SR_Cancellations` | `B13:B14` | false | `WEDNESDAY_SR_Cancellations` |
-| `cashTakings` | `SR_CashTakings` | `B15` | **true** | `WEDNESDAY_SR_CashTakings` |
+| `cashTakings` | `SR_CashTakings` | `C19` (was B15) | **true** | `WEDNESDAY_SR_CashTakings` |
+| `cashCounted` | `SR_CashCounted` | `C18` | **true** | `WEDNESDAY_SR_CashCounted` |
+| `expectedCash` | `SR_ExpectedCash` | `C24` | false | `WEDNESDAY_SR_ExpectedCash` |
+| `cashVariance` | `SR_CashVariance` | `C26` | **true** | `WEDNESDAY_SR_CashVariance` |
 | `grossSalesIncCash` | `SR_GrossSalesIncCash` | `B16` | **true** | `WEDNESDAY_SR_GrossSalesIncCash` |
 | `cashReturns` | `SR_CashReturns` | `B17:B18` | false | `WEDNESDAY_SR_CashReturns` |
 | `cdDiscount` | `SR_CDDiscount` | `B19:B20` | false | `WEDNESDAY_SR_CDDiscount` |
@@ -136,9 +194,9 @@ This is the single source of truth. All consumer files call `getFieldValue()`, `
 | `wastageComps` | `SR_WastageComps` | `A63:F63` | false | `WEDNESDAY_SR_WastageComps` |
 | `rsaIncidents` | `SR_RSAIncidents` | `A65:F65` | false | `WEDNESDAY_SR_RSAIncidents` |
 
-**Clearable fields (isFormula: false):** date, mod, staff, productionAmount, deposit, airbnbCovers, cancellations, cashReturns, cdDiscount, refunds, cdRedeem, totalDiscount, pettyCash, cardTips, cashTips, shiftSummary, guestsOfNote, theGood, theBad, kitchenNotes, todoTasks, todoAssignees, wastageComps, rsaIncidents (24 fields)
+**Clearable fields (isFormula: false):** date, mod, staff, productionAmount, deposit, airbnbCovers, cancellations, cashReturns, cdDiscount, refunds, cdRedeem, totalDiscount, **expectedCash**, pettyCash, cardTips, cashTips, shiftSummary, guestsOfNote, theGood, theBad, kitchenNotes, todoTasks, todoAssignees, wastageComps, rsaIncidents (25 fields — expectedCash added Phase 1)
 
-**Formula cells — never clear:** cashTakings(B15), grossSalesIncCash(B16), discountsCompsExcCD(B26), grossTaxableSales(B27), taxes(B28), netSalesWTips(B29), netRevenue(B34), totalTips(B36) (8 fields)
+**Formula cells — never clear:** cashTakings(C19), **cashCounted(C18)**, **cashVariance(C26)**, grossSalesIncCash(B16), discountsCompsExcCD(B26), grossTaxableSales(B27), taxes(B28), netSalesWTips(B29), netRevenue(B34), totalTips(B36) (10 fields after Phase 1 — 3 added)
 
 ## VenueConfig.js (Legacy)
 
@@ -155,9 +213,9 @@ This is the single source of truth. All consumer files call `getFieldValue()`, `
 The `extractShiftData_()` function uses **batch reads** (3 GAS API calls) for performance, then maps values against FIELD_CONFIG fallback positions. The batch-read approach was intentionally preserved — individual `getFieldValue()` calls per field would be ~20× more API calls.
 
 ```javascript
-// BATCH READ 1: Financial data B3:B39
+// BATCH READ 1: Financial data B3:C39 (widened to column C for Phase 1 cash recon)
 // Maps to FIELD_CONFIG fallback cells (RunWaratah.js is authoritative)
-const financialValues = sheet.getRange("B3:B39").getValues();
+const financialValues = sheet.getRange("B3:C39").getValues();
 
 // BATCH READ 2: Narrative fields A43:A65
 const narrativeValues = sheet.getRange("A43:A65").getValues();
@@ -203,7 +261,7 @@ This also applies to TODO tasks which are merged A:E per row.
 
 ---
 
-## Data Warehouse Schema (NIGHTLY_FINANCIAL, 22 cols A-V)
+## Data Warehouse Schema (NIGHTLY_FINANCIAL, 25 cols A-Y as of Phase 1)
 
 ```
 A=Date, B=Day, C=WeekEnding, D=MOD, E=Staff,
@@ -212,8 +270,12 @@ I=GrossSalesIncCash, J=CashReturns, K=CDDiscount,
 L=Refunds, M=CDRedeem, N=TotalDiscount,
 O=DiscountsCompsExcCD, P=GrossTaxableSales,
 Q=Taxes, R=NetSalesWTips, S=CardTips, T=CashTips,
-U=TotalTips, V=LoggedAt
+U=TotalTips, V=LoggedAt,
+W=CashCounted, X=ExpectedCash, Y=CashVariance
 ```
+
+**Header migration (Phase 2, Wed May 20):** Manually add W/X/Y column headers to the NIGHTLY_FINANCIAL sheet. The header assertion in `logToDataWarehouse_()` will throw if column count ≠ 25 after the header row exists.
+**Backfill:** Columns W/X/Y will be null for all rows before Phase 2 activation — no backfill required.
 
 ---
 
@@ -263,7 +325,7 @@ Protects structural cells (headers, labels, formula cells) while keeping all inp
 
 **Mode:** `setWarningOnly(true)` — staff see a warning if they accidentally edit protected cells but are not hard-blocked. GAS scripts (rollover, exports) always have full write access.
 
-**Editable ranges:** All `FIELD_CONFIG` entries where `isFormula: false` (24 fields). The 8 formula cells are protected: cashTakings(B15), grossSalesIncCash(B16), discountsCompsExcCD(B26), grossTaxableSales(B27), taxes(B28), netSalesWTips(B29), netRevenue(B34), totalTips(B36).
+**Editable ranges:** All `FIELD_CONFIG` entries where `isFormula: false` (25 fields after Phase 1). The 10 formula cells are protected: cashTakings(C19), cashCounted(C18), cashVariance(C26), grossSalesIncCash(B16), discountsCompsExcCD(B26), grossTaxableSales(B27), taxes(B28), netSalesWTips(B29), netRevenue(B34), totalTips(B36).
 
 **Menu:** `Waratah Tools → Admin Tools → Setup & Utilities → Sheet Protection`
 - `Apply Protection (All Sheets)` — calls `setupAllSheetsProtection()`
@@ -292,5 +354,6 @@ getClearableFieldKeys_()         // returns non-formula field keys (used by both
 
 ---
 
-**Last Updated:** March 18, 2026
+**Last Updated:** May 17, 2026 (Phase 1)
 **Key Insight:** All narrative cells are merged A:F — always clear from column A, never B:F
+**Cash recon key rule:** C18/C19/C26 are formula cells (never clear). C24 is manager input (clearable).
