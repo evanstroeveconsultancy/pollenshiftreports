@@ -616,7 +616,7 @@ function logToDataWarehouse_(shiftData, config, skipLock) {
         shiftData.theGood,        // F: The Good
         shiftData.theBad,         // G: The Bad
         shiftData.kitchenNotes,   // H: Kitchen Notes
-        shiftData.maintenance,    // I: Maintenance
+        shiftData.maintenanceIssues, // I: Maintenance Issues
         shiftData.rsaIncidents,   // J: RSA/Incidents
         new Date()                // K: Logged At
       ]);

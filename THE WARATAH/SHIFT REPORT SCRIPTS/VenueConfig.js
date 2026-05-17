@@ -63,8 +63,8 @@ function getVenueConfig_() {
         totalCashRecorded: 'C24', // was expectedCash (formula — do not clear)
         cashVariance: 'C26',      // variance = counted minus expected (formula — do not clear)
         grossSales: 'B48',        // was grossSalesIncCash B16
-        cashReturns: 'B49',       // was B17
-        cdDiscount: 'B47',        // was B19 (now above grossSales section)
+        cashReturns: 'C22',       // was B17 — now in POS cash recorded section
+        cdDiscount: 'C23',        // was B19 — now in POS cash recorded section
         totalAdjustmentsDiscounts: 'B50',  // was totalDiscount B25
         discountsExcCashDiscount: 'B51',   // was discountsCompsExcCD B26
         grossSalesLessDiscounts: 'B52',    // was grossTaxableSales B27
