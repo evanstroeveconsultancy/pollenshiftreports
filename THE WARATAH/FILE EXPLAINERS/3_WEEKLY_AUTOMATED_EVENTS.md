@@ -1,6 +1,6 @@
 # Weekly Automated Events — The Waratah
 
-**Last Updated:** May 17, 2026 (Phase 1: rollover now runs Monday 9pm; all 7 tabs renamed; Mon/Tue not active for shift reports)
+**Last Updated:** May 17, 2026 (Phase 1.3: digest moved to Mon 4pm, rollover Mon 9pm; formula cell list updated to new cell map)
 **Type:** Handover guide for managers
 
 > This document explains everything that happens automatically in The Waratah system each week. You don't need to be technical to understand it — just know that these are all handled by scheduled triggers and rarely need your attention.
@@ -16,8 +16,8 @@
 | **Monday 2:00 AM** | Weekly backfill to Data Warehouse | Runs silently — no notification |
 | **Monday 6:00 AM** | Weekly task archive | Task Management spreadsheet auto-updated |
 | **Monday 10:00 AM** | Weekly task summary | Slack: individual staff DMs |
-| **Monday 9:00 PM** | Weekly rollover (archive + reset) | Email to management + Slack notification |
-| **Wednesday 8:00 AM** | Revenue digest (this week vs last) | Slack: #managers channel |
+| **Monday 4:00 PM** | Weekly revenue digest (this week vs last) | Slack: #managers channel |
+| **Monday 9:00 PM** | Weekly rollover (archive + reset) — runs AFTER the digest so digest reads pre-rollover data | Email to management + Slack notification |
 | **Every 2 hours** | Task cleanup & auto-sort | Task Management spreadsheet auto-updated |
 | **Daily 6:00 AM** | Staff workload refresh | Task Management spreadsheet auto-updated |
 
@@ -27,7 +27,7 @@ All of these run on their own. You don't need to do anything unless something go
 
 ## The Weekly Rollover — Monday 9pm
 
-> This is the most important automated event. Every Monday at 10am, the system archives last week's data and resets the spreadsheet for a new week. It takes about 1-2 minutes to run.
+> This is the most important automated event. Every Monday at 9pm, the system archives last week's data and resets the spreadsheet for a new week. It takes about 1-2 minutes to run. The 9pm timing is deliberate — it runs AFTER the Monday 4pm Weekly Revenue Digest, so the digest reads pre-rollover data.
 
 ### What Happens (In Order)
 
@@ -43,7 +43,7 @@ All of these run on their own. You don't need to do anything unless something go
 
 > The system is smart about what it clears. It only removes data you typed in — never formulas.
 
-Cells like **Net Revenue** (B34), **Total Tips** (B36), **Labor Hours/Cost** (B38–B39), and the **cash reconciliation formulas** (C18 Cash Counted, C19 Cash Take, C26 Cash Variance) contain calculation formulas and are preserved. They'll automatically recalculate when you enter new shift data.
+Cells like **Net Revenue** (B54), **Total Tips** (C32), the **financial formula chain** (B48 Gross Sales, B51 Discounts exc Cash, B52 Gross Sales less Discounts, B53 Taxes), the **running totals column** (D37:D54), and the **cash reconciliation formulas** (C18 Cash Counted, C19 Cash Take, C24 Total Cash Recorded, C26 Cash Variance) contain calculation formulas and are preserved. They'll automatically recalculate when you enter new shift data.
 
 **Manager input field:** The **Expected Cash** field (C24) is manager-entered and IS cleared during rollover — you'll enter a fresh expected cash amount each week.
 
@@ -100,9 +100,9 @@ Both are saved automatically. You never need to do anything — just browse Goog
 
 ---
 
-## The Revenue Digest — Wednesday 8am
+## The Revenue Digest — Monday 4pm
 
-> A quick snapshot that posts to Slack showing how this week's revenue compares to last week. It's designed to take 30 seconds to read. Note: The Waratah's week runs Wednesday–Sunday, so the digest posts on Wednesday morning to show the week ahead.
+> A quick snapshot that posts to Slack showing how this week's revenue compares to last week. It's designed to take 30 seconds to read. Note: The Waratah's week runs Wednesday–Sunday. The digest posts Monday afternoon — after the operating week has ended and before the 9pm rollover clears the data.
 
 ### What You'll See in Slack
 
@@ -262,9 +262,9 @@ You'll need the admin password. Open each menu item and select "Create [X] Trigg
    - Menu: **Waratah Tools > Admin Tools > Weekly Reports > Weekly Rollover (In-Place) > Create Rollover Trigger**
    - Confirm the time is 9:00 PM
 
-2. **Revenue Digest Trigger (Wed 8am)**
-   - Menu: **Waratah Tools > Admin Tools > Weekly Digest > Setup Wednesday Digest Trigger**
-   - Confirm the time is 8:00 AM
+2. **Revenue Digest Trigger (Mon 4pm)**
+   - Menu: **Waratah Tools > Admin Tools > Weekly Digest > Setup Monday Digest Trigger**
+   - Confirm the time is 4:00 PM
 
 3. **Weekly Backfill Trigger (Mon 2am)**
    - Menu: **Waratah Tools > Admin Tools > Data Warehouse > Setup Weekly Backfill Trigger**
@@ -315,10 +315,11 @@ You'll need the admin password. Open each menu item and select "Create [X] Trigg
 **This is not a bug.** Some cells contain formulas and are designed to keep showing values.
 
 **Examples:**
-- Net Revenue B34 (a formula that calculates from other inputs)
-- Total Tips B36 (a formula)
-- Labor Hours B38, Labor Cost B39 (formulas)
-- Cash Counted C18, Cash Take C19, Cash Variance C26 (cash reconciliation formulas)
+- Net Revenue B54 (formula — calculates from other inputs)
+- Total Tips C32 (formula — sum of cash/card/surcharge tips)
+- Gross Sales B48, Discounts exc Cash B51, Gross Sales less Discounts B52, Taxes B53 (formula chain)
+- Cash Counted C18, Cash Take C19, Total Cash Recorded C24, Cash Variance C26 (cash reconciliation formulas)
+- Running Totals column D37:D54 (formula range)
 
 Data fields like revenue, cash, and notes should be empty. Formula fields will show a number — that's correct.
 

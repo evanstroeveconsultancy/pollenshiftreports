@@ -36,7 +36,7 @@
 ### Phase 2 Manual Steps (COMPLETED May 17, 2026)
 ✅ 1. Ran `setupWaratahNamedRanges_()` — created 197 named ranges on new sheet (36 fields × 5 days, including multi-row ranges for till entries, card expenses, and TODO tasks)
 ✅ 2. Flipped `WARATAH_SHEET_ID` Script Property to `1rcfHTtey_HXC291FAmjpquYkRjWNGbFtClz2szKXfkA`
-✅ 3. Extended NIGHTLY_FINANCIAL header row from 22 → 22 columns (22 warehoused fields per Phase 1.2 update)
+✅ 3. Extended NIGHTLY_FINANCIAL header row from 22 → 25 columns (added W=CashCounted, X=ExpectedCash, Y=CashVariance for the new 2-till cash reconciliation)
 ✅ 4. Deployed all Phase 1 code via `clasp push` to NEW project
 ✅ 5. Verified with `verifyWaratahNamedRanges_()` — OK=197, MISSING=0, WRONG=0
 

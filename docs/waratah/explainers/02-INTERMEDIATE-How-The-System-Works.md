@@ -214,36 +214,39 @@ This is a safety net. If the nightly export failed for a particular day (network
 
 The data warehouse is a separate Google Spreadsheet that stores historical data from every shift report. It has four main sheets:
 
-### NIGHTLY_FINANCIAL (22 columns A–V — Phase 1.3 schema)
+### NIGHTLY_FINANCIAL (25 columns A–Y — extended May 17, 2026)
 
-> The warehouse tracks cash reconciliation alongside financial figures. Two shifts can have the same MOD name; duplicates are prevented by matching on (date + MOD). The schema evolved from 25 columns to 22 columns as formulas and intermediates were separated out (see CELL_REFERENCE_MAP.md for the full schema).
+> The warehouse tracks cash reconciliation alongside financial figures. Two shifts can have the same MOD name; duplicates are prevented by matching on (date + MOD). The schema was extended from 22 to 25 columns on May 17, 2026 when cash reconciliation moved onto the shift report (cols W/X/Y added). Three legacy columns (L, M, R) are populated with NULL going forward because the source cells were removed during the cutover — they're preserved for historical row continuity.
 
 Every night's financial figures are logged as a single row:
 
-| Column | Data |
-|--------|------|
-| A | Date | Tonight's date |
-| B | Day | Day of the week |
-| C | Week Ending | The Sunday of this week |
-| D | MOD | Manager on Duty |
-| E | FOH Staff | Front-of-house staff names |
-| F | BOH Staff | Back-of-house staff names |
-| G | Cash Counted | Sum of both till counts |
-| H | Cash Takings | Net cash after refloats |
-| I | Cash Variance | Counted − Expected (till balance check) |
-| J | Cash Tips | From financial section |
-| K | Card Tips | From financial section |
-| L | Surcharge Tips | From financial section |
-| M | Total Tips | Sum of all tips |
-| N | Production Amount | From financial section |
-| O | Function Deposit | Event deposits |
-| P | Total Adjustments | Manual adjustments/discounts |
-| Q | Net Revenue | Final result after all adjustments |
-| R | Taxes | Calculated taxes |
-| S | Cash Returns | Customer refunds (cash) |
-| T | CD Discount | Card discount amount |
-| U | Wastage Notes | From incident section |
-| V | Logged At | Timestamp when this row was written |
+| Column | Field | Source (post-cutover) |
+|--------|-------|----------------------|
+| A | Date | B3 (parsed) |
+| B | Day | calculated (day name) |
+| C | Week Ending | calculated (next Sunday) |
+| D | MOD | B4 |
+| E | Staff | `"FOH: " + B6 + " \| BOH: " + B7` (combined) |
+| F | Net Revenue | B54 (formula) |
+| G | Production Amount | B37 |
+| H | Cash Takings | C19 (Cash Take formula, was B15) |
+| I | Gross Sales Inc Cash | B48 (formula, was B16) |
+| J | Cash Returns | C22 (was B17) |
+| K | CD Discount | C23 (was B19) |
+| **L** | **Refunds** | **NULL** — source removed |
+| **M** | **CD Redeem** | **NULL** — source removed |
+| N | Total Discount | B50 (Total Adjustments/Discounts, was B25) |
+| O | Discounts/Comps exc CD | B51 (formula) |
+| P | Gross Taxable Sales | B52 (formula, was B27) |
+| Q | Taxes | B53 (formula, was B28) |
+| **R** | **Net Sales w/ Tips** | **NULL** — no direct equivalent on new sheet |
+| S | Card Tips | C30 (was B32) |
+| T | Cash Tips | C29 (was B33) |
+| U | Total Tips | C32 (formula, was B36) |
+| V | Logged At | timestamp |
+| **W** | **Cash Counted** | **C18 (formula, NEW May 17)** |
+| **X** | **Expected Cash** | **C24 (Total Cash Recorded formula, NEW May 17)** |
+| **Y** | **Cash Variance** | **C26 (formula, NEW May 17)** |
 
 ### OPERATIONAL_EVENTS (8 columns)
 

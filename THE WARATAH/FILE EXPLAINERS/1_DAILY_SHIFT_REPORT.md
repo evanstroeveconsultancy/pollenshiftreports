@@ -1,6 +1,6 @@
 # Daily Shift Report — The Waratah
 
-**Last Updated:** May 17, 2026 (Phase 1: cash reconciliation section added; Monday/Tuesday not active shift days)
+**Last Updated:** May 17, 2026 (Phase 1.3: cell map corrected — Net Revenue B54, 16-row todos, full formula-cell list)
 **Type:** Handover guide for managers
 **Audience:** Restaurant managers, non-developers
 
@@ -35,15 +35,16 @@
 - Kitchen notes — chef's feedback or kitchen-specific comments
 
 **Optional (Special Incidents):**
-- TO-DO items — up to 9 tasks with assignees (these sync automatically to the task management sheet)
+- TO-DO items — up to 16 tasks with assignees in A69:A84 (task) and D69:D84 (assignee); these sync automatically to the task management sheet
 - Wastage / comps — items removed from revenue
 - Maintenance issues — things that need fixing
 - RSA incidents — intoxication refusals or safety incidents
 
 **Important Notes:**
-- Net Revenue is a formula cell — it calculates automatically based on your other entries. Don't try to type a number into that cell; it won't work. The spreadsheet does the math for you.
-- Covers is also a formula cell — same rule applies.
-- **Cash recon formula cells (new sheet):** Cash Counted (C18), Cash Take (C19), and Cash Variance (C26) are also formula cells — they calculate automatically from your till entries. Only fill in the **Expected Cash** field (C24) — that is your POS-expected cash amount.
+- **Net Revenue (B54) is a formula cell** — it calculates automatically based on your other entries. Don't try to type a number into that cell; it won't work. The spreadsheet does the math for you.
+- **Other formula cells** (also do not edit): Total Tips C32, the financial chain B48/B51/B52/B53, the cash recon C18/C19/C24/C26, the cash take display B47, and the running totals column D37:D54.
+- **Manager-entered fields you DO fill in:** B4 (MOD), B6/B7 (FOH/BOH Staff), C10:F17 (till counts/refloats), C22/C23 (POS cash returns/CD discount), C29/C30/C31 (cash/card/surcharge tips), B37 (Production Amount), B38 (Function/Event Deposit), B40:B45 (Card Expenses), B50 (Total Adjustments/Discounts), A59/A61/A63/A65/A67 (narrative), A69:A84 + D69:D84 (todos), A86/A88/A90 (wastage/maintenance/RSA).
+- "Covers" field has been removed in the new sheet layout (was previously a separate field, no longer tracked).
 
 ---
 
