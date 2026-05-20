@@ -249,14 +249,14 @@ function buildFinancialDashboard() {
   const trendCol = 10; // Column J
 
   row = 4;
-  sheet.getRange(row, trendCol).setValue("WEEKLY TREND");
-  sheet.getRange(row, trendCol).setFontSize(11).setFontWeight("bold").setFontColor("#1a73e8");
+  applyHeroCard_(sheet, 'J4', null, null, 'J4:O5', 'WEEKLY TREND');
   sheet.getRange(row, trendCol, 1, 6).merge();
+  applyRowHeight_(sheet, row, 'section');
 
   row = 5;
   const trendHeaders = ["Week Ending", "Revenue", "Cash Takings", "Tips", "Discounts", "Taxes"];
   trendHeaders.forEach((h, i) => sheet.getRange(row, trendCol + i).setValue(h));
-  sheet.getRange(row, trendCol, 1, trendHeaders.length).setFontWeight("bold").setBackground("#f3f3f3");
+  applyTableHeader_(sheet, 'J5:O5');
 
   row = 6;
   sheet.getRange(row, trendCol).setFormula(
@@ -267,6 +267,7 @@ function buildFinancialDashboard() {
     `ORDER BY C DESC ` +
     `LABEL C 'Week Ending', SUM(F) 'Revenue', SUM(H) 'Cash Takings', SUM(U) 'Tips', SUM(N) 'Discounts', SUM(Q) 'Taxes'"),"")`
   );
+  applyTableBody_(sheet, 'J6:O56');
   // Format the Week Ending column as a date (QUERY returns serial numbers otherwise)
   sheet.getRange(7, trendCol, 50, 1).setNumberFormat("dd/MM/yyyy");
 
