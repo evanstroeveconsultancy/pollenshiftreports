@@ -233,8 +233,27 @@ main                          ← stable, merged code only
 
 ---
 
-**Last Updated:** May 17, 2026 (Waratah staff: Joffy + Jaiden DM webhooks; April 2 dashboard cleanup, analytics consolidation, date handling, task management, F4-F11 refactoring)
+**Last Updated:** May 21, 2026 (Task management: weekly summary restored to managers channel; analytics dashboard: extensions block, DoW metrics enhancements)
 **Status:** Both venues fully operational and production-ready ✅
+
+**Deployment (May 21, 2026) — Task Management: Weekly Summary Restored to Managers Channel:**
+- Both venues: `_sendWeeklyActiveTasksSummaryCore()` re-enabled managers channel post via `bk_post(webhookUrl, weeklyBlocks, ...)`; commented out `_sendWeeklyActiveTasksDMs_(...)` call
+- Both venues: Audit log message updated from "Posted X to Slack" to "Posted X to managers channel"
+- Both venues: DM helper functions (`_sendWeeklyActiveTasksDMs_`) left in place as dead code with revert-friendly comment
+- Both venues: `getSlackDmWebhooks_()` remains active — still used for overdue task DMs (Waratah only) and test paths (both venues)
+- Both venues: Test variants (`sendWeeklyActiveTasksSummary_Test()`) continue to post to Evan's DM only (intentional test isolation)
+- Documentation: Updated trigger reference tables in `FILE EXPLAINERS/5_CONFIGURATION_REFERENCE.md` (Sakura) and equivalent Waratah docs; refreshed `Last Updated` descriptors in `FILE EXPLAINERS/2_TASK_MANAGEMENT.md` (both venues); fixed stale inline comments in task management .gs files
+
+**Deployment (May 21, 2026) — Both Venues: Analytics Dashboard Extensions:**
+- Both venues: ANALYTICS tab — new AVERAGE WEEKLY (ALL WEEKS) section with per-week-average metrics
+- Both venues: DAY-OF-WEEK AVERAGES enhanced — added Std Dev column (`STDEV(FILTER(...))`) and 13W Trend sparkline column (`SPARKLINE(FILTER(...), {"charttype","line"...})`)
+- Both venues: WEEKLY TREND column shifted right (Sakura: H→I, Waratah: I→J) to accommodate sparkline
+- Both venues: Extended Trends and YTD rows shifted +2 rows to avoid overlap
+- Both venues: New `buildAnalyticsExtensions_*()` functions add 6 sections (4-week moving average, consistency metrics, top/bottom 5 shifts, outliers, recent DoW pattern)
+- Sakura: EXECUTIVE_DASHBOARD — TOP MOD PERFORMANCE removed, INSIGHTS block added (4-week trend slope, forecast, best/worst shift, reports filed); THIS WEEK vs 13W BASELINE section added
+- Waratah: EXECUTIVE_DASHBOARD — TOP MOD PERFORMANCE removed, INSIGHTS block added; THIS WEEK vs 13W BASELINE section added; REVENUE BY DAY enhanced with Share column (`REPT("▓",...)` bar)
+- Files changed: `AnalyticsDashboardSakura.gs`, `AnalyticsDashboardWaratah.js`
+- Documentation: Updated `CLAUDE_SAKURA.md` and `CLAUDE_WARATAH.md` with dashboard layout specifics (row positions, column shifts)
 
 **Deployment (May 17, 2026) — Waratah Joffy + Jaiden Slack DM Webhooks:**
 - Waratah: Added `"Joffy"` to `STAFF_LIST` in `EnhancedTaskManagementWaratah.gs` — appears in task assignment dropdowns

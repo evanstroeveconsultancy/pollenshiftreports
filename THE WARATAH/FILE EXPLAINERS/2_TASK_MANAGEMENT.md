@@ -1,6 +1,6 @@
 # Task Management — The Waratah
 
-**Last Updated:** April 2, 2026
+**Last Updated:** May 21, 2026 (Weekly summary restored to managers channel, individual DMs removed)
 **Type:** Handover guide for managers
 **Audience:** Tech-savvy restaurant managers, non-developers
 

@@ -285,7 +285,7 @@ If the staff member should appear as assignees for shift TO-DOs, update the drop
 |--------------|-------------|--------------|-------------------|
 | **Daily Maintenance** | Processes daily task updates and notifications | Daily 7:00 AM | Task Management > Admin Tools > Setup Triggers > Create Daily Trigger (7am) |
 | **Auto-sort** | Automatically sorts and formats tasks | On every edit | Task Management > Admin Tools > Setup Triggers > Create Edit Trigger (Auto-sort) |
-| **Weekly Summary** | Sends weekly task summary to individual Slack DMs | Monday 6:00 AM | Task Management > Admin Tools > Setup Triggers > Create Weekly Summary Trigger (Mon 6am) |
+| **Weekly Summary** | Sends weekly task summary to managers channel | Monday 6:00 AM | Task Management > Admin Tools > Setup Triggers > Create Weekly Summary Trigger (Mon 6am) |
 
 ### After Code Deployment
 

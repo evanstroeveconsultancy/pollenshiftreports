@@ -1,0 +1,75 @@
+{
+  "target": "docs/waratah/ (20 markdown files across 4 audience tiers)",
+  "status": "audit_complete_remediation_complete_deploy_blocked",
+  "review_type": "documentation-accuracy-audit",
+  "flags": {
+    "strict_mode": true,
+    "citation_required": true,
+    "skip_code_phases": true
+  },
+  "current_step": "phase-d-complete-deploy-blocked",
+  "current_phase": "deploy",
+  "completed_steps": [
+    "phase-0-scope",
+    "phase-3-tier-1-audit",
+    "phase-3-tier-2-audit",
+    "phase-3-tier-3-audit",
+    "phase-3-tier-4a-audit",
+    "phase-3-tier-4b-audit",
+    "phase-4-style-sweep",
+    "phase-5-consolidated-report",
+    "remediation-phase-a-code-fixes",
+    "remediation-phase-a5-side-discoveries",
+    "remediation-phase-b-user-facing-doc-fixes",
+    "remediation-phase-c-developer-doc-fixes",
+    "remediation-phase-d-memory-hygiene"
+  ],
+  "files_created": [
+    ".full-review/00-scope.md",
+    ".full-review/01-tier-1-readme-daily.md",
+    ".full-review/02-tier-2-managers.md",
+    ".full-review/03-tier-3-admins.md",
+    ".full-review/04-tier-4a-developers-pt1.md",
+    ".full-review/05-tier-4b-developers-pt2.md",
+    ".full-review/06-style-sweep.md",
+    ".full-review/07-final-report.md",
+    ".full-review/08-phase-a-completion.md",
+    ".full-review/09-phase-b-daily-edits.md",
+    ".full-review/10-phase-b-managers-edits.md",
+    ".full-review/11-phase-b-admins-edits.md",
+    ".full-review/12-phase-b-completion.md",
+    ".full-review/13-phase-c-tier-4a-edits.md",
+    ".full-review/14-phase-c-tier-4b-edits.md",
+    ".full-review/15-phase-c-completion.md",
+    ".full-review/16-phase-d-completion.md"
+  ],
+  "remediation_progress": {
+    "phase_a_status": "complete",
+    "phase_a5_status": "complete",
+    "phase_b_status": "complete",
+    "phase_c_status": "complete",
+    "phase_d_status": "complete",
+    "deploy_status": "complete",
+    "deploy_completion_details": "Both projects pushed successfully. SR project (23 files) pushed to scriptId 1YATi...; TM project (8 files) pushed to scriptId 1uCT... clasp login refreshed during session (evan@pollenhospitality.com).",
+    "deploy_completed_at": "2026-05-21",
+    "post_deploy_actions_user_must_run": [
+      "In Waratah shift report sheet: Waratah Tools > Admin Tools > Setup & Utilities > Setup All SR Triggers   # installs Mon 9pm rollover, Mon 8am backfill, Mon 4pm digest",
+      "In Task Management spreadsheet Apps Script editor: install runDailyTaskMaintenance trigger (Daily 6am)   # not exposed in menu",
+      "Optional smoke test: send a TEST shift report via Waratah Tools > Daily Reports > Export & Email (TEST to me) to verify pipeline end-to-end on the new code"
+    ]
+  },
+  "memory_updates_2026-05-20": [
+    "MEMORY.md line 44: 8-status -> 9-status",
+    "MEMORY.md line 169 section: added SUPERSEDED 2026-05-17 note pointing to new layout",
+    "MEMORY.md line 180 section: schema heading updated to 'CURRENT: 25 cols A-Y, May 17, 2026' with column list",
+    "MEMORY.md line 200: clarified runWaratahWeeklyRollover canonical + performWeeklyRollover backward-compat alias",
+    ".remember/remember.md: seeded with 3624-byte handoff covering current state, trigger schedule, recent changes, pre-deploy actions, audit artefacts"
+  ],
+  "cumulative_files_modified": 28,
+  "started_at": "2026-05-17T14:25:00+10:00",
+  "phase_a_completed_at": "2026-05-19T23:59:00+10:00",
+  "phase_b_completed_at": "2026-05-20T01:00:00+10:00",
+  "phase_c_completed_at": "2026-05-20T01:30:00+10:00",
+  "phase_d_completed_at": "2026-05-20T02:50:00+10:00",
+  "last_updated": "2026-05-20T02:50:00+10:00"
+}
