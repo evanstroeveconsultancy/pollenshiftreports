@@ -563,6 +563,11 @@ function buildExecutiveDashboard() {
   });
   applyTableBody_(sheet, 'A38:E42');
 
+  // Force formula recalculation before reading values for delta colouring.
+  // Without flush(), getValue() after setFormula() in the same execution can
+  // return stale (pre-formula) results, leading to incorrect neutral colour.
+  SpreadsheetApp.flush();
+
   // Delta colours baked in at build time — reflect data at the moment of rebuild.
   // A dashboard rebuild refreshes them. applyDeltaCell_ reads current values.
   baselineDays.forEach((day, i) => {
