@@ -183,12 +183,13 @@ function buildFinancialDashboard() {
 
   // ─── SECTION 4: DAY-OF-WEEK AVERAGES ───────────────────────────────
   row = 21;
-  _sectionHeader_(sheet, row, "DAY-OF-WEEK AVERAGES (ALL TIME)");
+  applyHairlineSection_(sheet, 'A21', 'DAY-OF-WEEK AVERAGES (ALL TIME)');
+  applyRowHeight_(sheet, row, 'section');
 
   row = 22;
   const dowHeaders = ["Day", "Avg Revenue", "Avg Cash Takings", "Avg Tips", "Avg Discounts", "Avg Production", "Count", "Std Dev", "13W Trend"];
   dowHeaders.forEach((h, i) => sheet.getRange(row, i + 1).setValue(h));
-  sheet.getRange(row, 1, 1, dowHeaders.length).setFontWeight("bold").setBackground("#f3f3f3");
+  applyTableHeader_(sheet, `A22:I22`);
 
   const days = ["Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
   days.forEach((day, i) => {
@@ -205,10 +206,12 @@ function buildFinancialDashboard() {
       `=IFERROR(STDEV(FILTER(${src}!F:F,${src}!B:B="${day}",${src}!F:F>0)),0)`
     ).setNumberFormat("$#,##0");
     // 13-week Sparkline (col I): trend of last 91 days for this day
+    // Colour param replaced with STYLE.colour.good — only the colour changes, not chart type/linewidth/etc.
     sheet.getRange(r, 9).setFormula(
-      `=IFERROR(SPARKLINE(FILTER(${src}!F:F,${src}!B:B="${day}",${src}!A:A>=TODAY()-91),{"charttype","line";"color","#1a73e8";"linewidth",2}),"")`
+      `=IFERROR(SPARKLINE(FILTER(${src}!F:F,${src}!B:B="${day}",${src}!A:A>=TODAY()-91),{"charttype","line";"color","` + STYLE.colour.good + `";"linewidth",2}),"")`
     );
   });
+  applyTableBody_(sheet, 'A23:I27');
 
   // MOD PERFORMANCE section removed — user deleted rows 31+ from the sheet (Feb 2026).
   // Do not add code here that writes to rows 31 or beyond on the ANALYTICS tab.
