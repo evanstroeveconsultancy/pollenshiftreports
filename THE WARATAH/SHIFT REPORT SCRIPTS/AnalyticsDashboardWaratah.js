@@ -745,16 +745,6 @@ function buildExecutiveDashboard() {
 }
 
 
-/**
- * Helper: writes a section header row.
- */
-function _sectionHeader_(sheet, row, title) {
-  sheet.getRange(row, 1).setValue(title);
-  sheet.getRange(row, 1).setFontSize(11).setFontWeight("bold").setFontColor("#1a73e8");
-  sheet.getRange(row, 1, 1, 6).merge();
-}
-
-
 // ============================================================================
 // M7 — EXTENDED TREND WINDOWS (Waratah)
 // ============================================================================
