@@ -17,7 +17,11 @@ The Waratah shift report system has four moving parts that interlock through the
 | **Revenue Digest** | Monday 4pm (before rollover) | Posts a Slack summary of the week's revenue numbers |
 | **Weekly Backfill** | Monday 8am | Re-pushes any missed nightly data into the warehouse as a safety net |
 
-The shift report system lives in one Google Sheet. The Task Management system lives in a second, separate Google Sheet. They are linked by code but are independent files. Settings for each live in their own Apps Script project.
+The shift report system lives in one Google Sheet. The Task Management system lives in a second, separate Google Sheet. See the below link.
+
+https://docs.google.com/spreadsheets/d/1o5gYY4TTEUBkUIRJsJ1AgDVh8cwrPV1COphWzN6ASIU/edit?gid=0#gid=0
+
+They are linked by code but are independent files. Settings for each live in their own Apps Script project.
 
 ---
 

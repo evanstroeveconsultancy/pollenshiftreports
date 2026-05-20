@@ -10,11 +10,12 @@ The Task Management system is the operational backbone for everything that needs
 
 In one sentence: it is the single canonical list of every open task at the venue, with status, priority, assignee, and due date for each.
 
-Tasks arrive in three ways:
+https://docs.google.com/spreadsheets/d/1o5gYY4TTEUBkUIRJsJ1AgDVh8cwrPV1COphWzN6ASIU/edit?gid=0#gid=0
+
+Tasks arrive in two ways:
 
 1. **From shift reports.** The MOD types TO-DOs into the daily shift report; when they click Send, those tasks flow automatically into Task Management as new rows with Status = NEW and Source = "Shift Report".
-2. **From meetings.** When a task comes out of a manager meeting, you add it directly to the spreadsheet with Source = "Meeting".
-3. **Ad-hoc.** Anything else; an idea, a follow-up, a one-off; with Source = "Ad-hoc".
+2. **Ad-hoc.** Anything else; an idea, a follow-up, a one-off; with Source = "Ad-hoc".
 
 Once in the system, a task moves through a 9-Status Workflow (Section 4) until it is DONE or CANCELLED. Recurring tasks regenerate themselves on a fixed cadence.
 
@@ -22,7 +23,11 @@ Once in the system, a task moves through a 9-Status Workflow (Section 4) until i
 
 ## 2. A Separate Spreadsheet
 
-The Task Management spreadsheet is a different Google Sheet from the shift report spreadsheet. They are not the same file. Each lives in its own Apps Script project with its own Script Properties.
+The Task Management spreadsheet is a different Google Sheet from the shift report spreadsheet. They are not the same file. 
+
+https://docs.google.com/spreadsheets/d/1o5gYY4TTEUBkUIRJsJ1AgDVh8cwrPV1COphWzN6ASIU/edit?gid=0#gid=0
+
+Each lives in its own Apps Script project with its own Script Properties.
 
 | Aspect | Shift Report Spreadsheet | Task Management Spreadsheet |
 |---|---|---|
@@ -167,7 +172,7 @@ The Task Management system posts personal Slack DMs in two situations:
 
 | Situation | Where it posts | Who sees it |
 |---|---|---|
-| A task is BLOCKED for more than 14 days | Escalation alert via `ESCALATION_SLACK_WEBHOOK` plus escalation email | Evan (escalation recipient) |
+| A task is BLOCKED for more than 14 days | Escalation alert via `ESCALATION_SLACK_WEBHOOK` plus escalation email | Adam (escalation recipient) |
 | Monday 10am weekly summary | DM to each staff with personal webhook | Six recipients (see [`04-staff-and-recipients.md`](04-staff-and-recipients.md)) |
 
 The current recipient list lives in `WARATAH_EMAIL_RECIPIENTS` and `SLACK_DM_WEBHOOKS` Script Properties. See [`04-staff-and-recipients.md`](04-staff-and-recipients.md) for the canonical list.

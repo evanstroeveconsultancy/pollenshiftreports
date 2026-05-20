@@ -23,15 +23,15 @@ Before you start filling in fields, scan the day's tab. You will see four kinds 
 | Narrative text fields | Five large fields lower down on the sheet | **Yes**, type your notes here |
 | Header and label cells | Bold text, coloured backgrounds | **No**, these are layout only, and cannot be changed |
 
-**Quick rule for cells:** if you click a cell and see a formula in the formula bar (something starting with `=`), do not type into it. The system will recalculate it. If you click a cell and see either nothing or a plain number you typed previously, you can edit it.
+**Quick note for cells:** staff can only change specific cells. Formulas, ranges, titles, headers are all protected.
 
 ### Checklist before you send
 
 You must have filled in:
 
 1. The date and your name
-2. Cash till counts and refloats (both tills)
-3. Card expense breakdown (each line from receipts)
+2. Cash till counts and refloats (both tills), POS CD reads/returns
+3. Return Card expense breakdown
 4. Production amount and function deposits
 5. Card tips and cash tips
 6. The five narrative fields (Shift Report, VIPs, Good, Bad, Kitchen)
@@ -39,9 +39,9 @@ You must have filled in:
 You should have filled in (where applicable):
 
 7. Any tasks (TO-DOs)
-8. Any wastage, maintenance, or RSA incidents from tonight
+8. Any comps, maintenance, or RSA incidents from tonight
 
-If the cash variance shown by the sheet is more than fifty dollars in either direction, **stop and recount before sending**. A variance of plus or minus fifty almost always means a count mistake, not a real shortfall. This is an operational rule the venue follows; the system itself does not block the send.
+If the cash variance shown by the sheet is more than fifty dollars in either direction, **stop and recount before sending**. A variance of plus or minus fifty almost always means a count mistake, not necessarily a real shortfall. This is an operational rule the venue follows; the system itself does not block the send.
 
 ---
 
@@ -51,11 +51,7 @@ If the cash variance shown by the sheet is more than fifty dollars in either dir
 
 Look at the tab name at the bottom of the spreadsheet and confirm it matches today's date. The tabs cycle automatically each Monday evening, so if today is Wednesday, the active tab should read something like `WEDNESDAY 21/05/2026` (the day name in capitals followed by the date), and the date in cells B3:F3 should match today's date.
 
-Note: the spreadsheet also has Monday and Tuesday tabs for visual consistency, but the system blocks sending from them. Only the five service-day tabs (Wednesday through Sunday) accept a send.
-
-Type your name in the MOD (Manager on Duty) cell, and any other staff who worked the shift in the Staff cell underneath. Use first names only; full names are not required.
-
-If the tab name or date looks wrong, do not enter anything. Contact Evan before continuing. The system depends on the right tab being active.
+Select your name in the MOD (Manager on Duty) cell, and any other staff who worked the shift in the Staff cell underneath.
 
 ### 2.2 Count and reconcile the cash tills
 
@@ -70,34 +66,36 @@ For each till, you enter:
 The system computes:
 
 - **Cash Counted**: the total cash you counted across both tills
-- **Cash Take**: the cash you should have, based on POS expected cash
+- **Cash Take**: the cash you should have, based on POS expected cash.
 - **Cash Variance**: the difference between the two
 
-**The fifty-dollar rule.** If Cash Variance shows anything more than plus or minus fifty dollars, stop and recount. Variance over fifty almost always means a counting error or a refloat figure typed wrong. A genuine fifty-dollar shortfall is rare; a counting mistake of fifty dollars is common. This is an operational guideline you follow; the system shows the variance figure in the Slack post but does not enforce a threshold.
+**The fifty-dollar rule.** If Cash Variance shows anything more than plus or minus fifty dollars, stop and recount. Variance over fifty almost always means a counting error or a refloat figure typed wrong.
 
 If the recount comes out the same, send the report anyway. The variance figure will be visible to managers in the Slack post and they can follow up.
 
 ### 2.3 Enter the financial figures
 
-Below the cash section, there is a financial summary. You enter values in the white cells; the grey ones with formulas calculate themselves.
+Below the cash section, there is a financial summary. You enter values in the light green cells
 
 You will need to enter:
 
-- **Card Expenses**: six separate line items
+- **Refunds & Card Expenses**: six separate line items
 - **Production Amount**: from the POS Takings
 - **Function Deposit**: any deposits paid by function clients in advance, see Cynthia
-- **Cash Returns and CD (Credit Discount)**: our recorded cash takings, leave blank if zero
+- **Cash Returns and CD (Credit Discount)**: our recorded cash takings, leave blank if zero (actually entered above)
 - **Total Tips Card**: the card tips total from POS
 - **Total Tips Cash**: the cash tips total
+- **Total Tips Surcharge**: the surcharge tips total
 
-Cells that calculate automatically (do not touch):
+Cells that calculate automatically:
 
 - Net Revenue
 - Total Tips (sums card plus cash)
 - Total Adjustments
 - Gross Sales, Total Discounts, Net Taxable Sales
+- Anything else
 
-If a number you typed looks wrong on the formula side (for example, Net Revenue is negative), check the input cells above it. Most "wrong" auto-calculations are caused by a typo in one of the manager input cells, not by a system bug.
+If a number you typed looks wrong on the formula side (for example, Net Revenue is negative), check the input cells above it. Most "wrong" auto-calculations are caused by a typo in one of the manager input cells
 
 ### 2.4 Write your shift notes
 
@@ -107,9 +105,9 @@ Below the financial section are five large narrative fields. Each is one paragra
 |---|---|
 | Shift Report | A general summary of the shift: vibe, atmosphere, anything notable |
 | VIPs | Any high profile guests, returning regulars, or special bookings |
-| Good | What went well tonight (mention staff who performed well) |
+| Payroll | changes to start/finish times, sick leave, trial/rockstar notes |
 | Bad | What went wrong, even small things (problems, complaints, slow tickets) |
-| Kitchen | Notes from or about the kitchen: issues, comps, special requests |
+| Kitchen | Notes from or about the kitchen: issues, comps, staffing |
 
 These narratives are read by the management team the next morning. Be specific. "Table 7 complained about steak temperature, remade and comped" is useful. "Some complaints" is not.
 
@@ -121,16 +119,15 @@ There is a tasks section with sixteen rows. Each row has a task description colu
 
 | Task description | Assignee |
 |---|---|
-| Top up wine cellar stock | Adam |
-| Fix dripping tap in Public bar | Evan |
+| Increase linen order | Adam |
+| Contact builders about plumbing issues in Public bar | Cynthia |
 
 Rules for tasks:
 
 - Be specific. "Fix the leaky tap in the men's bathroom" beats "Fix plumbing".
-- Assign every task you create. If unsure who owns it, assign to Evan and explain in the description.
+- Assign every task you create. If unsure who owns it, assign to Adam and explain in the description.
 - Tasks roll into the Task Management spreadsheet automatically when you send the report. You do not need to copy them anywhere.
 - Skipping the assignee column is allowed but discouraged; unassigned tasks need someone to claim them later.
-- If a task is recurring (every Sunday, every month-end), you do not need to add it manually. Recurring tasks regenerate themselves.
 
 ### 2.6 Record wastage, maintenance, and RSA incidents
 
@@ -138,11 +135,11 @@ Below the tasks section are three narrative fields for incidents that need a rec
 
 | Field | Use for | Example |
 |---|---|---|
-| Wastage | Stock you threw out, returns, or comps with a dollar value | "Steak overcooked, comped, approx $45" |
-| Maintenance | Equipment failures or facility issues | "Espresso machine leaking from group head, needs service" |
+| Wastage/Co,ps | Stock you threw out, returns, or discounts/comps with a dollar value | "Steak overcooked, comped, approx $45" |
+| Maintenance | Equipment failures or facility issues | "Glass wash machine leaking, needs service" |
 | RSA Incidents | Any responsible service of alcohol incident, no matter how small | "Refused service to intoxicated guest at 9.45pm, no further issue" |
 
-Wastage and maintenance entries should always include the rough dollar value if known. RSA incidents must always be recorded even if nothing came of them. The legal record matters more than the size of the incident.
+Wastage and comp entries should always include the rough dollar value if known. RSA incidents must always be recorded even if nothing came of them. The legal record matters more than the size of the incident.
 
 If you have nothing to record, type "None" rather than leaving the field blank.
 
@@ -162,12 +159,6 @@ What happens:
 
 Total time from click to confirmation: about thirty seconds.
 
-You do not need a password to send the report. If the system asks for one, something is wrong and you should contact Evan before continuing.
-
-**Do not send from the Read Me, Task Management, or Analytics tabs.** The Send action only works correctly from one of the five day tabs (Wednesday through Sunday).
-
-If the send fails (red error message or no confirmation after thirty seconds), do not retry immediately. Wait two minutes and try once more. If it fails a second time, see Section 7, Common Mistakes and Quick Fixes.
-
 ---
 
 ## 3. TEST Mode, Optional Practice Run
@@ -177,7 +168,7 @@ You can run the system in TEST mode to practise sending the report without anyth
 In TEST mode:
 
 - A Slack message is posted to a **test channel only**, not to the manager channels
-- A single PDF email is sent to the configured test recipient (Evan by default); the management distribution list does not receive anything
+- A single PDF email is sent to the configured test recipient (Adam by default); the management distribution list does not receive anything
 - **No data is written to the warehouse**
 - **No tasks are pushed to the Task Management spreadsheet**
 
@@ -200,7 +191,7 @@ When you click Confirm & Send, four things happen in sequence over about ten sec
 
 If Slack is down or the email service is slow, the system does not crash. It records what failed and the other steps still complete. The data warehouse write is the most important step; if that succeeds, the report is considered safely captured even if Slack or email did not arrive.
 
-If a system failure does occur, there is a backfill procedure your manager can run to push tonight's data into the warehouse the next morning. You do not need to do this yourself; just flag to Evan that the send did not work.
+If a system failure does occur, there is a backfill procedure your manager can run to push tonight's data into the warehouse the next morning. You do not need to do this yourself; just flag to Adam that the send did not work.
 
 ---
 
@@ -219,7 +210,7 @@ The Slack message your management team receives is built from your report. It in
 **Conditional (only when present):**
 
 - VIPs notes
-- Good or Bad highlights
+- Payroll/Issues
 - Kitchen notes
 - Wastage and Maintenance items
 - RSA incidents
@@ -227,10 +218,6 @@ The Slack message your management team receives is built from your report. It in
 **Task section (if you added any):**
 
 - A summary of tonight's tasks and assignees
-
-**AI Insights section:**
-
-- A short paragraph generated by Claude that highlights anything notable about tonight's numbers in context, for example trend comparisons, discount impact, or recommended actions. If the AI service is unavailable, the AI block is simply omitted from the post.
 
 **Action buttons:**
 
@@ -261,12 +248,11 @@ If the recipient list needs to change (someone leaves, new manager joins), that 
 | Sent TEST when you meant LIVE | TEST report goes to test channel only, no group email | Click **Waratah Tools → Daily Reports → Export & Email PDF (LIVE)** and retry |
 | Cash Variance over $50 not investigated | Slack message shows the variance, a manager will ask | Recount, then add a note in Shift Report explaining the actual discrepancy |
 | Left MOD field blank | System warning before send, or unattributed report | Type your name in the MOD cell and retry |
-| Typed a number into a formula cell | The formula breaks, downstream calculations become wrong | Press Cmd+Z (undo) immediately. If too late, click the cell and look for a `=` sign; if missing, contact Evan |
-| Slack message did not appear | Slack outage, popup blocker, or expired webhook | Check the venue's Slack first. If others' messages are appearing, the issue is in the script; contact Evan |
-| Email did not arrive | Spam folder, or recipient filter | Search "Waratah shift report" in your spam folder; if not there, contact Evan |
-| Send dialog froze or never completed | Network issue or script timeout | Wait two minutes, refresh the spreadsheet, try once more. If still failing, contact Evan |
+| Slack message did not appear | Slack outage, popup blocker, or expired webhook | Check the venue's Slack first. If others' messages are appearing, the issue is in the script; contact Adam |
+| Email did not arrive | Spam folder, or recipient filter | Search "Waratah shift report" in your spam folder; if not there, contact Adam |
+| Send dialog froze or never completed | Network issue or script timeout | Wait two minutes, refresh the spreadsheet, try once more. If still failing, contact Adam |
 
-If your specific problem is not in this table, see the manager troubleshooting guide at [`for-managers/05-troubleshooting.md`](../for-managers/05-troubleshooting.md), or contact Evan directly.
+If your specific problem is not in this table, see the manager troubleshooting guide at [`for-managers/05-troubleshooting.md`](../for-managers/05-troubleshooting.md), or contact Adam directly.
 
 ---
 
@@ -281,13 +267,11 @@ What the rollover does:
 3. Renames each day tab to reflect the next week's dates.
 4. Clears the manager input cells so the sheet is ready for the new week's Wednesday service.
 
-The Read Me, Task Management, and Analytics tabs are **not** touched. They roll across weeks unchanged.
-
 If the rollover fails partway, the system posts a Slack notification with the error. If everything succeeds, no Slack message is sent (you simply find the tabs ready for the new week on Tuesday morning).
 
-If you log in on Tuesday morning and the tabs show last week's dates instead of this week's, the rollover did not run. This is rare but it happens occasionally if the script trigger fails. Contact Evan; the rollover can be run manually from the menu.
+If you log in on Tuesday morning and the tabs show last week's dates instead of this week's, the rollover did not run. This is rare but it happens occasionally if the script trigger fails. Contact Adam; the rollover can be run manually from the menu.
 
-If you start your Wednesday shift and find old data still in the input cells (numbers from last week), do not delete them yourself. Contact Evan. The rollover did not run cleanly and somebody needs to investigate before fresh data is entered.
+If you start your Wednesday shift and find old data still in the input cells (numbers from last week), do not delete them yourself. Contact Adam. The rollover did not run cleanly and somebody needs to investigate before fresh data is entered.
 
 ---
 
@@ -313,12 +297,12 @@ Print this section and stick it inside the cash drawer for first weeks.
 
 **Narrative (five fields):**
 
-- Shift Report, VIPs, Good, Bad, Kitchen
+- Shift Report, VIPs, etc
 - Type "Nothing notable" if a field is empty
 
 **Tasks and incidents:**
 
-- Add tomorrow's tasks with assignees
+- Add tasks with assignees
 - Record wastage, maintenance, RSA incidents
 
 **Send:**
@@ -332,7 +316,7 @@ Print this section and stick it inside the cash drawer for first weeks.
 **If something fails:**
 
 - Wait two minutes, try once more
-- If still failing, contact Evan
+- If still failing, contact Ad
 
 ---
 
@@ -349,10 +333,4 @@ For the canonical reference of all current settings (Script Properties, recipien
 
 - [`for-admins/01-configuration-reference.md`](../for-admins/01-configuration-reference.md)
 
-For the technical internals (named ranges, cell maps, code structure):
-
-- [`for-developers/`](../for-developers/)
-
-For any AI-assisted task on this project (Claude Code sessions):
-
-- [`/CLAUDE_WARATAH.md`](../../../CLAUDE_WARATAH.md), the master routing file
+For the technical internals (named ranges, cell maps, code structure)
