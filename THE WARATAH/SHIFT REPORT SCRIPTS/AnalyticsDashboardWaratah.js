@@ -992,12 +992,13 @@ function buildAnalyticsExtensions_Waratah(sheet, src) {
   // ── OUTLIERS THIS MONTH (vs DoW 13W Baseline) ──────────────────────────
   // Lists top 5 shifts by absolute % variance from DoW average (A23:B27).
   row = 68;
-  _sectionHeader_(sheet, row, "OUTLIERS THIS MONTH (vs DoW Baseline)");
+  applyHairlineSection_(sheet, 'A68', 'OUTLIERS THIS MONTH (vs DoW Baseline)');
+  applyRowHeight_(sheet, row, 'section');
 
   row = 69;
   const outlierHeaders = ["Date", "Day", "Revenue", "Variance %"];
   outlierHeaders.forEach((h, i) => sheet.getRange(row, i + 1).setValue(h));
-  sheet.getRange(row, 1, 1, outlierHeaders.length).setFontWeight("bold").setBackground("#f3f3f3");
+  applyTableHeader_(sheet, 'A69:D69');
 
   row = 70;
   const variance = `IFERROR((${src}!F2:F-VLOOKUP(${src}!B2:B,$A$23:$B$27,2,FALSE))/VLOOKUP(${src}!B2:B,$A$23:$B$27,2,FALSE),0)`;
@@ -1007,17 +1008,29 @@ function buildAnalyticsExtensions_Waratah(sheet, src) {
   sheet.getRange(row, 1, 5, 1).setNumberFormat("dd/MM/yyyy");
   sheet.getRange(row, 3, 5, 1).setNumberFormat("$#,##0");
   sheet.getRange(row, 4, 5, 1).setNumberFormat("+0.0%;[red]-0.0%");
-  // Hide the 5th column (|variance| sort key)
+  // Hide the 5th column (|variance| sort key) — white text on white background
   sheet.getRange(row, 5, 5, 1).setFontColor("#ffffff");
+  applyTableBody_(sheet, 'A70:D74');
+
+  // Force recalculation so variance values are available for delta colouring.
+  SpreadsheetApp.flush();
+
+  // Apply delta colours to Variance % column (D70:D74).
+  for (let i = 0; i < 5; i++) {
+    const r = 70 + i;
+    const v = sheet.getRange(`D${r}`).getValue();
+    applyDeltaCell_(sheet, `D${r}`, typeof v === 'number' ? v : null);
+  }
 
   // ── RECENT DOW PATTERN (build-time arrows) ─────────────────────────────
   row = 76;
-  _sectionHeader_(sheet, row, "RECENT DOW PATTERN (vs DoW Avg)");
+  applyHairlineSection_(sheet, 'A76', 'RECENT DOW PATTERN (vs DoW Avg)');
+  applyRowHeight_(sheet, row, 'section');
 
   row = 77;
   const recentDowHeaders = ["Day", "Last 4 Pattern", "Above Baseline"];
   recentDowHeaders.forEach((h, i) => sheet.getRange(row, i + 1).setValue(h));
-  sheet.getRange(row, 1, 1, recentDowHeaders.length).setFontWeight("bold").setBackground("#f3f3f3");
+  applyTableHeader_(sheet, 'A77:C77');
 
   try {
     const ss = sheet.getParent();
@@ -1052,18 +1065,23 @@ function buildAnalyticsExtensions_Waratah(sheet, src) {
         sheet.getRange(r, 2).setValue(arrows);
         sheet.getRange(r, 2).setFontSize(14);
         sheet.getRange(r, 3).setValue(`${aboveCount} of ${dayShifts.length}`);
+
+        // Arrow colour: majority above avg → good, majority below → bad, split → neutral
+        const arrowDelta = aboveCount > dayShifts.length / 2 ? 1
+                         : aboveCount < dayShifts.length / 2 ? -1
+                         : 0;
+        applyDeltaCell_(sheet, `B${r}`, arrowDelta);
       });
     }
   } catch (e) {
     Logger.log(`Recent DoW pattern build skipped: ${e.message}`);
   }
+  applyTableBody_(sheet, 'A78:C82');
 
-  // Bold labels for new sections
+  // Bold labels for new sections — label column
   sheet.getRange("A46:A46").setFontWeight("bold");
   sheet.getRange("C46:C46").setFontWeight("bold");
   sheet.getRange("E46:E46").setFontWeight("bold");
-  sheet.getRange("A49:A50").setFontWeight("bold");
-  sheet.getRange("A78:A82").setFontWeight("bold");
 
   Logger.log("M8 Analytics Extensions section built for Waratah.");
 }
