@@ -567,14 +567,19 @@ function buildExecutiveDashboard() {
   //   - REPORTS:    shift count this month
   const modCol = 8; // Column H — kept name for downstream code
 
-  // Section header
-  sheet.getRange(4, modCol).setValue("═══ INSIGHTS ═══");
-  sheet.getRange(4, modCol).setFontSize(11).setFontWeight("bold").setFontColor("#1a73e8");
-  sheet.getRange(4, modCol, 1, 4).merge();
+  // Section header — hairline style; then merge the row across H:K
+  applyHairlineSection_(sheet, 'H4', 'INSIGHTS');
+  sheet.getRange('H4:K4').merge();
+  applyRowHeight_(sheet, 4, 'section');
 
   // ── Trajectory subheader ────────────────────────────────────────────
   sheet.getRange(5, modCol).setValue("TRAJECTORY");
-  sheet.getRange(5, modCol).setFontSize(9).setFontStyle("italic").setFontColor("#666666");
+  sheet.getRange(5, modCol)
+       .setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.label)
+       .setFontWeight('bold')
+       .setFontStyle('normal')
+       .setFontColor(STYLE.colour.inkMuted);
   sheet.getRange(5, modCol, 1, 4).merge();
 
   // 4-Week Trend: SLOPE of last 4 weeks (B29=latest, E29=oldest of rolling 4)
@@ -597,10 +602,16 @@ function buildExecutiveDashboard() {
   sheet.getRange(8, modCol + 1).setFormula(
     `="Up "&(IF(B29>C29,1,0)+IF(C29>D29,1,0)+IF(D29>E29,1,0))&" of 3"`
   );
+  applyTableBody_(sheet, 'H6:K8');
 
   // ── Exceptions subheader ───────────────────────────────────────────
   sheet.getRange(9, modCol).setValue("EXCEPTIONS");
-  sheet.getRange(9, modCol).setFontSize(9).setFontStyle("italic").setFontColor("#666666");
+  sheet.getRange(9, modCol)
+       .setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.label)
+       .setFontWeight('bold')
+       .setFontStyle('normal')
+       .setFontColor(STYLE.colour.inkMuted);
   sheet.getRange(9, modCol, 1, 4).merge();
 
   // Best Shift This Month: MAXIFS + INDEX/MATCH for date
@@ -626,6 +637,7 @@ function buildExecutiveDashboard() {
   // Reports Filed: references E6 (Shifts) from CURRENT MONTH section
   sheet.getRange(12, modCol).setValue("Reports Filed");
   sheet.getRange(12, modCol + 1).setFormula(`=E6&" shifts logged"`);
+  applyTableBody_(sheet, 'H10:K12');
 
   // ─── SECTION 6: DAY-OF-WEEK REVENUE RANKING (right side) ──────────
   let dowRow = 16;
