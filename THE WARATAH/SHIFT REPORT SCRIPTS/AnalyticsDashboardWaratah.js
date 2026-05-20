@@ -316,20 +316,33 @@ function buildExecutiveDashboard() {
   sheet.clearFormats();
   sheet.clearConditionalFormatRules();
 
+  applyColumnWidths_(sheet);
+
   const src = config.sourceSheet;
-  const tz = config.timezone;
-  const now = Utilities.formatDate(new Date(), tz, "dd/MM/yyyy HH:mm");
 
   // ─── SECTION 1: HEADER ─────────────────────────────────────────────
   let row = 1;
-  sheet.getRange(row, 1).setValue("THE WARATAH — EXECUTIVE DASHBOARD");
-  sheet.getRange(row, 1).setFontSize(16).setFontWeight("bold");
-  sheet.getRange(row, 1, 1, 7).merge();
-
-  row = 2;
-  sheet.getRange(row, 1).setValue(`Dashboard built: ${now}  •  Data refreshes automatically`);
-  sheet.getRange(row, 1).setFontSize(9).setFontColor("#666666").setFontStyle("italic");
-  sheet.getRange(row, 1, 1, 7).merge();
+  // Row 1: page title + timestamp
+  sheet.getRange('A1').breakApart();
+  sheet.getRange('A1')
+       .setValue('WARATAH · EXECUTIVE DASHBOARD')
+       .setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.metric)
+       .setFontWeight('bold')
+       .setFontColor(STYLE.colour.ink)
+       .setHorizontalAlignment('left')
+       .setVerticalAlignment('middle');
+  sheet.getRange('I1')
+       .setValue('Last updated: ' + Utilities.formatDate(new Date(), 'Australia/Sydney', 'd MMM yyyy h:mm a'))
+       .setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.label)
+       .setFontColor(STYLE.colour.inkMuted)
+       .setHorizontalAlignment('right')
+       .setVerticalAlignment('middle');
+  applyRowHeight_(sheet, 1, 'section');
+  // Row 2: spacer (timestamp moved to I1)
+  sheet.getRange('A2:I2').breakApart().clearContent();
+  applyRowHeight_(sheet, 2, 'spacer');
 
   // ─── SECTION 2: CURRENT MONTH SNAPSHOT ──────────────────────────────
   row = 4;
