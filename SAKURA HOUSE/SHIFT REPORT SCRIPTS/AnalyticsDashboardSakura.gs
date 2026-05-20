@@ -359,76 +359,146 @@ function buildExecutiveDashboard() {
   sheet.clearFormats();
   sheet.clearConditionalFormatRules();
 
+  applyColumnWidths_(sheet);
+
   const src = ANALYTICS_CONFIG.sourceSheet;
   const tz = ANALYTICS_CONFIG.timezone;
-  const now = Utilities.formatDate(new Date(), tz, "dd/MM/yyyy HH:mm");
 
   // ─── SECTION 1: HEADER ─────────────────────────────────────────────
   let row = 1;
-  sheet.getRange(row, 1).setValue("SAKURA HOUSE — EXECUTIVE DASHBOARD");
-  sheet.getRange(row, 1).setFontSize(16).setFontWeight("bold");
-  sheet.getRange(row, 1, 1, 7).merge();
-
-  row = 2;
-  sheet.getRange(row, 1).setValue(`Dashboard built: ${now}  •  Data refreshes automatically`);
-  sheet.getRange(row, 1).setFontSize(9).setFontColor("#666666").setFontStyle("italic");
-  sheet.getRange(row, 1, 1, 7).merge();
+  sheet.getRange('A1').breakApart();
+  sheet.getRange('A1')
+       .setValue('SAKURA · EXECUTIVE DASHBOARD')
+       .setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.metric)
+       .setFontWeight('bold')
+       .setFontColor(STYLE.colour.ink)
+       .setHorizontalAlignment('left')
+       .setVerticalAlignment('middle');
+  sheet.getRange('I1')
+       .setValue('Last updated: ' + Utilities.formatDate(new Date(), tz, 'd MMM yyyy h:mm a'))
+       .setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.label)
+       .setFontColor(STYLE.colour.inkMuted)
+       .setHorizontalAlignment('right')
+       .setVerticalAlignment('middle');
+  applyRowHeight_(sheet, 1, 'section');
+  sheet.getRange('A2:I2').breakApart().clearContent();
+  applyRowHeight_(sheet, 2, 'spacer');
 
   // ─── SECTION 2: CURRENT MONTH SNAPSHOT ──────────────────────────────
-  row = 3;
-  _sectionHeader_(sheet, row, "CURRENT MONTH");
-
   row = 4;
-  sheet.getRange(row, 1).setValue("Month");
-  sheet.getRange(row, 2).setFormula('=TEXT(TODAY(),"MMMM YYYY")');
-  sheet.getRange(row, 2).setFontWeight("bold");
+  applyHeroCard_(sheet, 'A4', null, null, 'A4:E8', 'CURRENT MONTH');
+  sheet.getRange('A4:E4').merge();
+  applyRowHeight_(sheet, row, 'section');
 
   row = 5;
+  sheet.getRange(row, 1).setValue("Month");
+  sheet.getRange(row, 1).setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.body)
+       .setFontColor(STYLE.colour.inkMuted)
+       .setFontWeight('normal');
+  sheet.getRange(row, 2).setFormula('=TEXT(TODAY(),"MMMM YYYY")');
+  sheet.getRange(row, 2).setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.body)
+       .setFontColor(STYLE.colour.ink);
+
+  row = 6;
   sheet.getRange(row, 1).setValue("Total Revenue");
+  sheet.getRange(row, 1).setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.body)
+       .setFontColor(STYLE.colour.inkMuted)
+       .setFontWeight('normal');
   sheet.getRange(row, 2).setFormula(
-    `=IFERROR(SUMPRODUCT((MONTH(${src}!A2:A)=MONTH(TODAY()))*(YEAR(${src}!A2:A)=YEAR(TODAY()))*${src}!E2:E),0)`
+    `=IFERROR(SUMPRODUCT((MONTH(${src}!A2:A)=MONTH(TODAY()))*(YEAR(${src}!A2:A)=YEAR(TODAY()))*${src}!E2:E),0)` // E=NetRevenue
   );
-  sheet.getRange(row, 2).setNumberFormat("$#,##0");
+  sheet.getRange(row, 2).setNumberFormat("$#,##0")
+       .setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.hero)
+       .setFontWeight('bold')
+       .setFontColor(STYLE.colour.ink);
+  applyRowHeight_(sheet, row, 'hero');
 
   sheet.getRange(row, 4).setValue("Shifts");
+  sheet.getRange(row, 4).setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.body)
+       .setFontColor(STYLE.colour.inkMuted)
+       .setFontWeight('normal');
   sheet.getRange(row, 5).setFormula(
     `=IFERROR(SUMPRODUCT((MONTH(${src}!A2:A)=MONTH(TODAY()))*(YEAR(${src}!A2:A)=YEAR(TODAY()))*(${src}!A2:A<>"")*1),0)`
   );
-
-  row = 6;
-  sheet.getRange(row, 1).setValue("Avg Daily Revenue");
-  sheet.getRange(row, 2).setFormula("=IFERROR(B5/E5,0)");
-  sheet.getRange(row, 2).setNumberFormat("$#,##0");
-
-  sheet.getRange(row, 4).setValue("Total Tips");
-  sheet.getRange(row, 5).setFormula(
-    `=IFERROR(SUMPRODUCT((MONTH(${src}!A2:A)=MONTH(TODAY()))*(YEAR(${src}!A2:A)=YEAR(TODAY()))*${src}!H2:H),0)`
-  );
-  sheet.getRange(row, 5).setNumberFormat("$#,##0");
+  sheet.getRange(row, 5).setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.metric)
+       .setFontWeight('bold')
+       .setFontColor(STYLE.colour.ink);
 
   row = 7;
-  sheet.getRange(row, 1).setValue("Total Production");
-  sheet.getRange(row, 2).setFormula(
-    `=IFERROR(SUMPRODUCT((MONTH(${src}!A2:A)=MONTH(TODAY()))*(YEAR(${src}!A2:A)=YEAR(TODAY()))*${src}!J2:J),0)`
-  );
-  sheet.getRange(row, 2).setNumberFormat("$#,##0");
+  sheet.getRange(row, 1).setValue("Avg Daily Revenue");
+  sheet.getRange(row, 1).setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.body)
+       .setFontColor(STYLE.colour.inkMuted)
+       .setFontWeight('normal');
+  sheet.getRange(row, 2).setFormula("=IFERROR(B6/E6,0)");
+  sheet.getRange(row, 2).setNumberFormat("$#,##0")
+       .setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.metric)
+       .setFontWeight('bold')
+       .setFontColor(STYLE.colour.ink);
 
-  sheet.getRange(row, 4).setValue("Total Discounts");
+  sheet.getRange(row, 4).setValue("Total Tips");
+  sheet.getRange(row, 4).setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.body)
+       .setFontColor(STYLE.colour.inkMuted)
+       .setFontWeight('normal');
   sheet.getRange(row, 5).setFormula(
-    `=IFERROR(SUMPRODUCT((MONTH(${src}!A2:A)=MONTH(TODAY()))*(YEAR(${src}!A2:A)=YEAR(TODAY()))*${src}!K2:K),0)`
+    `=IFERROR(SUMPRODUCT((MONTH(${src}!A2:A)=MONTH(TODAY()))*(YEAR(${src}!A2:A)=YEAR(TODAY()))*${src}!H2:H),0)` // H=TipsTotal
   );
-  sheet.getRange(row, 5).setNumberFormat("$#,##0");
+  sheet.getRange(row, 5).setNumberFormat("$#,##0")
+       .setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.metric)
+       .setFontWeight('bold')
+       .setFontColor(STYLE.colour.ink);
+
+  row = 8;
+  sheet.getRange(row, 1).setValue("Total Discounts");
+  sheet.getRange(row, 1).setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.body)
+       .setFontColor(STYLE.colour.inkMuted)
+       .setFontWeight('normal');
+  sheet.getRange(row, 2).setFormula(
+    `=IFERROR(SUMPRODUCT((MONTH(${src}!A2:A)=MONTH(TODAY()))*(YEAR(${src}!A2:A)=YEAR(TODAY()))*${src}!K2:K),0)` // K=Discounts
+  );
+  sheet.getRange(row, 2).setNumberFormat("$#,##0")
+       .setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.metric)
+       .setFontWeight('bold')
+       .setFontColor(STYLE.colour.ink);
+
+  sheet.getRange(row, 4).setValue("Total Production");
+  sheet.getRange(row, 4).setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.body)
+       .setFontColor(STYLE.colour.inkMuted)
+       .setFontWeight('normal');
+  sheet.getRange(row, 5).setFormula(
+    `=IFERROR(SUMPRODUCT((MONTH(${src}!A2:A)=MONTH(TODAY()))*(YEAR(${src}!A2:A)=YEAR(TODAY()))*${src}!J2:J),0)` // J=ProductionAmount
+  );
+  sheet.getRange(row, 5).setNumberFormat("$#,##0")
+       .setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.metric)
+       .setFontWeight('bold')
+       .setFontColor(STYLE.colour.ink);
 
   // ─── SECTION 3: MONTHLY TREND ──────────────────────────────────────
-  row = 9;
-  _sectionHeader_(sheet, row, "MONTHLY TREND");
-
   row = 10;
-  const monthHeaders = ["Month", "Revenue", "Tips", "Production", "Discounts", "Cash Takings", "Shifts"];
-  monthHeaders.forEach((h, i) => sheet.getRange(row, i + 1).setValue(h));
-  sheet.getRange(row, 1, 1, monthHeaders.length).setFontWeight("bold").setBackground("#f3f3f3");
+  applyHairlineSection_(sheet, 'A10', 'MONTHLY TREND');
+  applyRowHeight_(sheet, row, 'section');
 
   row = 11;
+  const monthHeaders = ["Month", "Revenue", "Tips", "Production", "Discounts", "Cash Takings", "Shifts"];
+  monthHeaders.forEach((h, i) => sheet.getRange(row, i + 1).setValue(h));
+  applyTableHeader_(sheet, 'A11:G11');
+
+  row = 12;
   // Monthly Trend QUERY: group by YEAR/MONTH using YEAR(A)*100+(MONTH(A)+1).
   // QUERY MONTH() is 0-indexed (Jan=0), so +1 corrects to human months.
   // SELECT must use the same expression as GROUP BY for reliable results.
@@ -442,21 +512,23 @@ function buildExecutiveDashboard() {
     `LABEL YEAR(A)*100+(MONTH(A)+1) 'Month', SUM(E) 'Revenue', SUM(H) 'Tips', ` +
     `SUM(J) 'Production', SUM(K) 'Discounts', SUM(F) 'Cash Takings', COUNT(A) 'Shifts'", 0),"")`
   );
+  applyTableBody_(sheet, 'A12:G24');
   // Format Month column as "0000/00" so 202604 renders as "2026/04"
-  sheet.getRange(11, 1, 50, 1).setNumberFormat('0000"/"00');
+  sheet.getRange('A12:A24').setNumberFormat('0000"/"00');
 
   // ─── SECTION 4: ROLLING 4-WEEK COMPARISON ──────────────────────────
-  // MONTHLY TREND QUERY starts at row 11 and can spill up to ~12 rows (rows 11-22).
-  // Row 24 gives a 1-row gap after the longest expected spill.
-  row = 24;
-  _sectionHeader_(sheet, row, "ROLLING 4-WEEK COMPARISON");
+  // MONTHLY TREND QUERY starts at row 12 and can spill up to ~12 rows (rows 12-23).
+  // Row 26 gives a 1-row gap after the longest expected spill.
+  row = 26;
+  applyHairlineSection_(sheet, 'A26', 'ROLLING 4-WEEK COMPARISON');
+  applyRowHeight_(sheet, row, 'section');
 
-  row = 25;
+  row = 27;
   const weekCompHeaders = ["", "Week 1 (Latest)", "Week 2", "Week 3", "Week 4"];
   weekCompHeaders.forEach((h, i) => sheet.getRange(row, i + 1).setValue(h));
-  sheet.getRange(row, 1, 1, weekCompHeaders.length).setFontWeight("bold").setBackground("#f3f3f3");
+  applyTableHeader_(sheet, 'A27:E27');
 
-  const weekEndingRow = 26;
+  const weekEndingRow = 28;
   row = weekEndingRow;
   sheet.getRange(row, 1).setValue("Week Ending");
   for (let w = 1; w <= 4; w++) {
@@ -464,98 +536,195 @@ function buildExecutiveDashboard() {
     sheet.getRange(row, w + 1).setNumberFormat("dd/MM/yyyy");
   }
 
-  row = 27;
+  row = 29;
   sheet.getRange(row, 1).setValue("Revenue");
   for (let w = 1; w <= 4; w++) {
     const weekCell = String.fromCharCode(65 + w) + weekEndingRow;
-    sheet.getRange(row, w + 1).setFormula(`=IFERROR(SUMIFS(${src}!E:E,${src}!C:C,${weekCell}),0)`);
-    sheet.getRange(row, w + 1).setNumberFormat("$#,##0");
-  }
-
-  row = 28;
-  sheet.getRange(row, 1).setValue("Tips");
-  for (let w = 1; w <= 4; w++) {
-    const weekCell = String.fromCharCode(65 + w) + weekEndingRow;
-    sheet.getRange(row, w + 1).setFormula(`=IFERROR(SUMIFS(${src}!H:H,${src}!C:C,${weekCell}),0)`);
-    sheet.getRange(row, w + 1).setNumberFormat("$#,##0");
-  }
-
-  row = 29;
-  sheet.getRange(row, 1).setValue("Production");
-  for (let w = 1; w <= 4; w++) {
-    const weekCell = String.fromCharCode(65 + w) + weekEndingRow;
-    sheet.getRange(row, w + 1).setFormula(`=IFERROR(SUMIFS(${src}!J:J,${src}!C:C,${weekCell}),0)`);
+    sheet.getRange(row, w + 1).setFormula(`=IFERROR(SUMIFS(${src}!E:E,${src}!C:C,${weekCell}),0)`); // E=NetRevenue
     sheet.getRange(row, w + 1).setNumberFormat("$#,##0");
   }
 
   row = 30;
-  sheet.getRange(row, 1).setValue("Discounts");
+  sheet.getRange(row, 1).setValue("Tips");
   for (let w = 1; w <= 4; w++) {
     const weekCell = String.fromCharCode(65 + w) + weekEndingRow;
-    sheet.getRange(row, w + 1).setFormula(`=IFERROR(SUMIFS(${src}!K:K,${src}!C:C,${weekCell}),0)`);
+    sheet.getRange(row, w + 1).setFormula(`=IFERROR(SUMIFS(${src}!H:H,${src}!C:C,${weekCell}),0)`); // H=TipsTotal
     sheet.getRange(row, w + 1).setNumberFormat("$#,##0");
   }
 
   row = 31;
+  sheet.getRange(row, 1).setValue("Production");
+  for (let w = 1; w <= 4; w++) {
+    const weekCell = String.fromCharCode(65 + w) + weekEndingRow;
+    sheet.getRange(row, w + 1).setFormula(`=IFERROR(SUMIFS(${src}!J:J,${src}!C:C,${weekCell}),0)`); // J=ProductionAmount
+    sheet.getRange(row, w + 1).setNumberFormat("$#,##0");
+  }
+
+  row = 32;
+  sheet.getRange(row, 1).setValue("Discounts");
+  for (let w = 1; w <= 4; w++) {
+    const weekCell = String.fromCharCode(65 + w) + weekEndingRow;
+    sheet.getRange(row, w + 1).setFormula(`=IFERROR(SUMIFS(${src}!K:K,${src}!C:C,${weekCell}),0)`); // K=Discounts
+    sheet.getRange(row, w + 1).setNumberFormat("$#,##0");
+  }
+
+  row = 33;
   sheet.getRange(row, 1).setValue("Shifts");
   for (let w = 1; w <= 4; w++) {
     const weekCell = String.fromCharCode(65 + w) + weekEndingRow;
     sheet.getRange(row, w + 1).setFormula(`=IFERROR(COUNTIF(${src}!C:C,${weekCell}),0)`);
   }
 
-  // WoW change rows — reference Revenue row (27) dynamically
-  const revenueRow = 27;
-  row = 32;
+  // WoW change rows — reference Revenue row (29) dynamically
+  const revenueRow = 29;
+  row = 34;
   sheet.getRange(row, 1).setValue("Revenue WoW $");
   sheet.getRange(row, 2).setFormula(`=IFERROR(B${revenueRow}-C${revenueRow},0)`).setNumberFormat("$#,##0");
   sheet.getRange(row, 3).setFormula(`=IFERROR(C${revenueRow}-D${revenueRow},0)`).setNumberFormat("$#,##0");
   sheet.getRange(row, 4).setFormula(`=IFERROR(D${revenueRow}-E${revenueRow},0)`).setNumberFormat("$#,##0");
   sheet.getRange(row, 5).setValue("—");
 
-  row = 33;
+  row = 35;
   sheet.getRange(row, 1).setValue("Revenue WoW %");
   sheet.getRange(row, 2).setFormula(`=IFERROR((B${revenueRow}-C${revenueRow})/C${revenueRow},0)`).setNumberFormat("+0.0%;-0.0%");
   sheet.getRange(row, 3).setFormula(`=IFERROR((C${revenueRow}-D${revenueRow})/D${revenueRow},0)`).setNumberFormat("+0.0%;-0.0%");
   sheet.getRange(row, 4).setFormula(`=IFERROR((D${revenueRow}-E${revenueRow})/E${revenueRow},0)`).setNumberFormat("+0.0%;-0.0%");
   sheet.getRange(row, 5).setValue("—");
 
+  applyTableBody_(sheet, 'A28:E35');
+
   // ─── SECTION 4b: THIS WEEK vs 13W BASELINE ─────────────────────────
   // Flags shifts performing above/below their day-of-week 13-week average.
   // Uses MAX(C:C) as "current week" and AVERAGEIFS with TODAY()-91 window.
-  row = 35;
-  _sectionHeader_(sheet, row, "THIS WEEK vs 13W BASELINE");
+  row = 37;
+  applyHairlineSection_(sheet, 'A37', 'THIS WEEK vs 13W BASELINE');
+  applyRowHeight_(sheet, row, 'section');
 
-  row = 36;
+  row = 38;
   const baseHeaders = ["Day", "This Week", "13W DoW Avg", "Diff $", "Diff %"];
   baseHeaders.forEach((h, i) => sheet.getRange(row, i + 1).setValue(h));
-  sheet.getRange(row, 1, 1, baseHeaders.length).setFontWeight("bold").setBackground("#f3f3f3");
+  applyTableHeader_(sheet, 'A38:E38');
 
   const baselineDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   baselineDays.forEach((day, i) => {
-    const r = 37 + i;
+    const r = 39 + i;
     sheet.getRange(r, 1).setValue(day);
+    // This Week: SUMIFS where Day=this day AND WeekEnding=latest week
     sheet.getRange(r, 2).setFormula(
-      `=IFERROR(SUMIFS(${src}!E:E,${src}!B:B,"${day}",${src}!C:C,MAX(${src}!C:C)),0)`
+      `=IFERROR(SUMIFS(${src}!E:E,${src}!B:B,"${day}",${src}!C:C,MAX(${src}!C:C)),0)` // E=NetRevenue
     ).setNumberFormat("$#,##0");
+    // 13W DoW Avg: AVERAGEIFS with 91-day window
     sheet.getRange(r, 3).setFormula(
-      `=IFERROR(AVERAGEIFS(${src}!E:E,${src}!B:B,"${day}",${src}!A:A,">="&TODAY()-91),0)`
+      `=IFERROR(AVERAGEIFS(${src}!E:E,${src}!B:B,"${day}",${src}!A:A,">="&TODAY()-91),0)` // E=NetRevenue
     ).setNumberFormat("$#,##0");
-    sheet.getRange(r, 4).setFormula(`=IFERROR(B${r}-C${r},0)`).setNumberFormat("$#,##0;[red]-$#,##0");
-    sheet.getRange(r, 5).setFormula(`=IFERROR(D${r}/C${r},0)`).setNumberFormat("+0.0%;[red]-0.0%");
+    // Delta $ and % — number formats without [red] prefix; delta colour applied below via applyDeltaCell_
+    sheet.getRange(r, 4).setFormula(`=IFERROR(B${r}-C${r},0)`).setNumberFormat("$#,##0;-$#,##0");
+    sheet.getRange(r, 5).setFormula(`=IFERROR(D${r}/C${r},0)`).setNumberFormat("+0.0%;-0.0%");
+  });
+  applyTableBody_(sheet, 'A39:E44');
+
+  // Force formula recalculation before reading values for delta colouring.
+  // Without flush(), getValue() after setFormula() in the same execution can
+  // return stale (pre-formula) results, leading to incorrect neutral colour.
+  SpreadsheetApp.flush();
+
+  // Delta colours baked in at build time — reflect data at the moment of rebuild.
+  baselineDays.forEach((day, i) => {
+    const r = 39 + i;
+    const diffDollar = sheet.getRange(r, 4).getValue();
+    const diffPct    = sheet.getRange(r, 5).getValue();
+    applyDeltaCell_(sheet, `D${r}`, typeof diffDollar === 'number' ? diffDollar : null);
+    applyDeltaCell_(sheet, `E${r}`, typeof diffPct    === 'number' ? diffPct    : null);
   });
 
-  // ─── SECTION 5: DAY-OF-WEEK REVENUE RANKING (right side) ───────────
+  // ─── SECTION 5: INSIGHTS (right side) ──────────────────────────────
+  // Three sub-sections: TRAJECTORY, EXCEPTIONS, REPORTS
   const rightCol = 8; // Column H
 
-  sheet.getRange(3, rightCol).setValue("REVENUE BY DAY (RANKED)");
-  sheet.getRange(3, rightCol).setFontSize(11).setFontWeight("bold").setFontColor("#1a73e8");
-  sheet.getRange(3, rightCol, 1, 5).merge();
+  applyHairlineSection_(sheet, 'H4', 'INSIGHTS');
+  sheet.getRange('H4:K4').merge();
+  applyRowHeight_(sheet, 4, 'section');
 
+  // Trajectory subheader
+  sheet.getRange(5, rightCol).setValue("TRAJECTORY");
+  sheet.getRange(5, rightCol)
+       .setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.label)
+       .setFontWeight('bold')
+       .setFontStyle('normal')
+       .setFontColor(STYLE.colour.inkMuted);
+  sheet.getRange(5, rightCol, 1, 4).merge();
+
+  // 4-Week Trend: SLOPE of Sakura ROLLING 4-WEEK Revenue row (B29:E29, B=latest)
+  sheet.getRange(6, rightCol).setValue("4-Week Trend");
+  sheet.getRange(6, rightCol + 1).setFormula(
+    `=IFERROR(TEXT(SLOPE(B29:E29,{4,3,2,1}),"$#,##0;-$#,##0")&" /wk","-")`
+  );
+
+  // Forecast Next Month: AVERAGE of last 3 months from MONTHLY TREND.
+  // QUERY at row 12 outputs labels at row 12, data starts at row 12 (headers=0).
+  sheet.getRange(7, rightCol).setValue("Forecast Next Month");
+  sheet.getRange(7, rightCol + 1).setFormula(
+    `=IFERROR(AVERAGE(B12:B14),0)`
+  ).setNumberFormat("$#,##0");
+
+  // Last 4 Weeks direction: count up-weeks among 3 transitions in B29:E29
+  sheet.getRange(8, rightCol).setValue("Last 4 Weeks");
+  sheet.getRange(8, rightCol + 1).setFormula(
+    `="Up "&(IF(B29>C29,1,0)+IF(C29>D29,1,0)+IF(D29>E29,1,0))&" of 3"`
+  );
+  applyTableBody_(sheet, 'H6:K8');
+
+  // Exceptions subheader
+  sheet.getRange(9, rightCol).setValue("EXCEPTIONS");
+  sheet.getRange(9, rightCol)
+       .setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.label)
+       .setFontWeight('bold')
+       .setFontStyle('normal')
+       .setFontColor(STYLE.colour.inkMuted);
+  sheet.getRange(9, rightCol, 1, 4).merge();
+
+  const monthStart = `EOMONTH(TODAY(),-1)+1`;
+  const monthEnd = `EOMONTH(TODAY(),0)`;
+
+  // Best Shift This Month (Sakura: E=NetRevenue)
+  sheet.getRange(10, rightCol).setValue("Best Shift");
+  sheet.getRange(10, rightCol + 1).setFormula(
+    `=IFERROR(MAXIFS(${src}!E:E,${src}!A:A,">="&${monthStart},${src}!A:A,"<="&${monthEnd}),0)`
+  ).setNumberFormat("$#,##0");
+  sheet.getRange(10, rightCol + 2).setFormula(
+    `=IFERROR(TEXT(INDEX(${src}!A:A,MATCH(I10,${src}!E:E,0)),"ddd d MMM"),"-")`
+  );
+
+  // Worst Shift This Month
+  sheet.getRange(11, rightCol).setValue("Worst Shift");
+  sheet.getRange(11, rightCol + 1).setFormula(
+    `=IFERROR(MINIFS(${src}!E:E,${src}!A:A,">="&${monthStart},${src}!A:A,"<="&${monthEnd},${src}!E:E,">0"),0)`
+  ).setNumberFormat("$#,##0");
+  sheet.getRange(11, rightCol + 2).setFormula(
+    `=IFERROR(TEXT(INDEX(${src}!A:A,MATCH(I11,${src}!E:E,0)),"ddd d MMM"),"-")`
+  );
+
+  // Reports Filed: references E6 (Shifts) from CURRENT MONTH section
+  sheet.getRange(12, rightCol).setValue("Reports Filed");
+  sheet.getRange(12, rightCol + 1).setFormula(`=E6&" shifts logged"`);
+  applyTableBody_(sheet, 'H10:K12');
+
+  // ─── SECTION 6: REVENUE BY DAY (right side) ────────────────────────
+  // Sakura: 6 days (Mon-Sat), data rows 19-24 from QUERY spill at row 18.
+  let dowRow = 16;
+  applyHeroCard_(sheet, 'H16', null, null, 'H16:L22', 'REVENUE BY DAY');
+  sheet.getRange('H16:L16').merge();
+  applyRowHeight_(sheet, dowRow, 'section');
+
+  dowRow = 17;
   const dowRankHeaders = ["Day", "Avg Revenue", "Total Revenue", "Shifts", "Share"];
-  dowRankHeaders.forEach((h, i) => sheet.getRange(4, rightCol + i).setValue(h));
-  sheet.getRange(4, rightCol, 1, dowRankHeaders.length).setFontWeight("bold").setBackground("#f3f3f3");
+  dowRankHeaders.forEach((h, i) => sheet.getRange(dowRow, rightCol + i).setValue(h));
+  applyTableHeader_(sheet, 'H17:L17');
 
-  sheet.getRange(5, rightCol).setFormula(
+  dowRow = 18;
+  sheet.getRange(dowRow, rightCol).setFormula(
     `=IFERROR(QUERY(${src}!A2:P,` +
     `"SELECT B, AVG(E), SUM(E), COUNT(A) ` +
     `WHERE B IS NOT NULL ` +
@@ -563,92 +732,29 @@ function buildExecutiveDashboard() {
     `ORDER BY AVG(E) DESC ` +
     `LABEL B 'Day', AVG(E) 'Avg Revenue', SUM(E) 'Total Revenue', COUNT(A) 'Shifts'"),"")`
   );
+  applyTableBody_(sheet, 'H18:L24');
 
-  // Share % column (col L, rows 6-11 = Sakura's 6 operating days).
-  // J6:J11 holds Total Revenue per day from QUERY above.
-  for (let r = 6; r <= 11; r++) {
+  // Share % column (col L, rows 19-24 = Sakura's 6 operating days Mon-Sat).
+  // J19:J24 holds Total Revenue per day from QUERY above. Bar uses REPT for visual.
+  for (let r = 19; r <= 24; r++) {
     sheet.getRange(r, rightCol + 4).setFormula(
-      `=IFERROR(IF(J${r}>0,REPT("▓",ROUND(J${r}/SUM($J$6:$J$11)*12,0))&" "&TEXT(J${r}/SUM($J$6:$J$11),"0%"),""),"")`
+      `=IFERROR(IF(J${r}>0,REPT("▓",ROUND(J${r}/SUM($J$19:$J$24)*12,0))&" "&TEXT(J${r}/SUM($J$19:$J$24),"0%"),""),"")`
     );
   }
 
-  // ─── SECTION 6: INSIGHTS (right side, below REVENUE BY DAY) ────────
-  // Three sub-sections:
-  //   - TRAJECTORY: 4-week slope, next-month forecast, recent direction
-  //   - EXCEPTIONS: highest/lowest single shift this month
-  //   - REPORTS:    shift count this month
-  sheet.getRange(13, rightCol).setValue("═══ INSIGHTS ═══");
-  sheet.getRange(13, rightCol).setFontSize(11).setFontWeight("bold").setFontColor("#1a73e8");
-  sheet.getRange(13, rightCol, 1, 5).merge();
-
-  sheet.getRange(14, rightCol).setValue("TRAJECTORY");
-  sheet.getRange(14, rightCol).setFontSize(9).setFontStyle("italic").setFontColor("#666666");
-  sheet.getRange(14, rightCol, 1, 5).merge();
-
-  // 4-Week Trend: SLOPE of Sakura ROLLING 4-WEEK Revenue row (B27:E27, B=latest)
-  sheet.getRange(15, rightCol).setValue("4-Week Trend");
-  sheet.getRange(15, rightCol + 1).setFormula(
-    `=IFERROR(TEXT(SLOPE(B27:E27,{4,3,2,1}),"$#,##0;-$#,##0")&" /wk","-")`
-  );
-
-  // Forecast Next Month: AVERAGE of last 3 months from MONTHLY TREND.
-  // QUERY at row 11 uses headers=0 → label row suppressed, row 11 = most recent month.
-  sheet.getRange(16, rightCol).setValue("Forecast Next Month");
-  sheet.getRange(16, rightCol + 1).setFormula(
-    `=IFERROR(AVERAGE(B11:B13),0)`
-  ).setNumberFormat("$#,##0");
-
-  // Last 4 Weeks direction: count up-weeks among 3 transitions
-  sheet.getRange(17, rightCol).setValue("Last 4 Weeks");
-  sheet.getRange(17, rightCol + 1).setFormula(
-    `="Up "&(IF(B27>C27,1,0)+IF(C27>D27,1,0)+IF(D27>E27,1,0))&" of 3"`
-  );
-
-  // Exceptions subheader
-  sheet.getRange(18, rightCol).setValue("EXCEPTIONS");
-  sheet.getRange(18, rightCol).setFontSize(9).setFontStyle("italic").setFontColor("#666666");
-  sheet.getRange(18, rightCol, 1, 5).merge();
-
-  const monthStart = `EOMONTH(TODAY(),-1)+1`;
-  const monthEnd = `EOMONTH(TODAY(),0)`;
-
-  // Best Shift This Month (Sakura: E=NetRevenue)
-  sheet.getRange(19, rightCol).setValue("Best Shift");
-  sheet.getRange(19, rightCol + 1).setFormula(
-    `=IFERROR(MAXIFS(${src}!E:E,${src}!A:A,">="&${monthStart},${src}!A:A,"<="&${monthEnd}),0)`
-  ).setNumberFormat("$#,##0");
-  sheet.getRange(19, rightCol + 2).setFormula(
-    `=IFERROR(TEXT(INDEX(${src}!A:A,MATCH(I19,${src}!E:E,0)),"ddd d MMM"),"-")`
-  );
-
-  // Worst Shift This Month
-  sheet.getRange(20, rightCol).setValue("Worst Shift");
-  sheet.getRange(20, rightCol + 1).setFormula(
-    `=IFERROR(MINIFS(${src}!E:E,${src}!A:A,">="&${monthStart},${src}!A:A,"<="&${monthEnd},${src}!E:E,">0"),0)`
-  ).setNumberFormat("$#,##0");
-  sheet.getRange(20, rightCol + 2).setFormula(
-    `=IFERROR(TEXT(INDEX(${src}!A:A,MATCH(I20,${src}!E:E,0)),"ddd d MMM"),"-")`
-  );
-
-  // Reports Filed: references E5 (Shifts) from CURRENT MONTH section
-  sheet.getRange(21, rightCol).setValue("Reports Filed");
-  sheet.getRange(21, rightCol + 1).setFormula(`=E5&" shifts logged"`);
-
   // ─── FORMATTING ─────────────────────────────────────────────────────
-  for (let c = 1; c <= 7; c++) sheet.setColumnWidth(c, c === 1 ? 160 : 130);
-  for (let c = rightCol; c <= rightCol + 3; c++) sheet.setColumnWidth(c, 130);
-  sheet.setColumnWidth(rightCol + 4, 170); // Share column wider for bar+%
+  // Column widths applied via applyColumnWidths_() at top of function.
 
-  // Bold labels — updated to compressed row positions
-  sheet.getRange("A5:A7").setFontWeight("bold");
-  sheet.getRange("D5:D7").setFontWeight("bold");
-  sheet.getRange("A26:A33").setFontWeight("bold");
-  sheet.getRange("A37:A42").setFontWeight("bold");
-  sheet.getRange("H15:H17").setFontWeight("bold");
-  sheet.getRange("H19:H21").setFontWeight("bold");
+  // Bold labels
+  sheet.getRange("A5:A8").setFontWeight("bold");
+  sheet.getRange("D6:D8").setFontWeight("bold");
+  sheet.getRange("A28:A35").setFontWeight("bold");
+  sheet.getRange("A39:A44").setFontWeight("bold");
+  sheet.getRange("H6:H8").setFontWeight("bold");
+  sheet.getRange("H10:H12").setFontWeight("bold");
 
   // Conditional formatting: WoW changes red/green
-  const wowChangeRange = sheet.getRange("B32:D33");
+  const wowChangeRange = sheet.getRange("B34:D35");
   sheet.setConditionalFormatRules([
     SpreadsheetApp.newConditionalFormatRule()
       .whenNumberLessThan(0)
