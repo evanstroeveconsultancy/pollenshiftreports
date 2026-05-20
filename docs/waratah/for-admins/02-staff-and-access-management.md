@@ -50,7 +50,6 @@ const STAFF_LIST = [
   "Joffy",
   "Bar Team",
   "Nick",
-  "Howie",
   "Kitchen Team",
   "All",
   "Contractor",

@@ -161,9 +161,10 @@ A few formats are easy to get wrong. Use these examples as templates.
 {
   "evan@pollenhospitality.com": "Evan",
   "cynthia@pollenhospitality.com": "Cynthia",
-  "nick@pollenhospitality.com": "Nick",
+  "nick@sakurahousesydney.com": "Nick",
+  "properties.litster@gmail.com": "Ian",
   "chef@pollenhospitality.com": "Chef",
-  "howie@pollenhospitality.com": "Howie",
+  "bar@thewaratahsydney.com": "Jaiden",
   "adam@pollenhospitality.com": "Adam"
 }
 ```

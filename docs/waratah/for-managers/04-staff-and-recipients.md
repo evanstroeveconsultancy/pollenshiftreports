@@ -13,12 +13,11 @@ The Waratah's active staff allocated in the system right now is 7 named individu
 | Name | Role |
 |---|---|
 | Evan | Owner, system admin |
-| Cynthia | Operations |
-| Adam | Hospitality Manager |
-| Jaiden | Floor Staff |
-| Joffy | Floor Staff (added May 2026) |
-| Nick | Floor Manager |
-| Howie | Bar Manager |
+| Cynthia | Owner |
+| Adam | Owner |
+| Jaiden | Bar Manager |
+| Joffy | Bar Supervisor Staff (added May 2026) |
+| Nick | Exec Chef |
 
 Plus role-based assignees for team-level tasks:
 
@@ -42,10 +41,10 @@ Six people receive the nightly shift report PDF by email after each LIVE send:
 |---|---|
 | Evan | Owner |
 | Cynthia | Operations |
-| Nick | Floor Manager |
-| Chef | Head Chef |
-| Howie | Bar Manager |
-| Adam | Hospitality Manager |
+| Nick | Exec Chef |
+| Chef | Sous Chef |
+| Jaiden | Bar Manager |
+| Adam | Owner |
 
 The list is stored in a Script Property called `WARATAH_EMAIL_RECIPIENTS`. As a manager you cannot edit this directly; if the list needs to change (a new manager joining, an old one departing), tell Evan and the change happens through the admin interface.
 
@@ -65,8 +64,6 @@ Personal Slack DM webhooks are used for task-related notifications (the Monday 1
 | Jaiden | Yes |
 | Joffy | Yes (added May 2026) |
 | Nick | Yes |
-| Howie | No (opted out, prefers managers channel only) |
-| Chef | No (kitchen monitors managers channel) |
 
 The DM webhooks are stored in a Script Property called `SLACK_DM_WEBHOOKS`. Each person's webhook is generated individually in Slack by the recipient (via Slack > Settings > Configure Apps > Incoming Webhooks > Add Configuration). Once the recipient generates the webhook, Evan adds it to Script Properties.
 
@@ -123,9 +120,9 @@ If running Reapply Dropdowns & Formatting does not fix the issue, the underlying
 
 For a printable quick reference, here is the summary:
 
-**7 active staff (May 2026):** Evan, Cynthia, Adam, Jaiden, Joffy, Nick, Howie.
+**6 active staff (May 2026):** Evan, Cynthia, Adam, Jaiden, Joffy, Nick.
 
-**6 email recipients:** Evan, Cynthia, Nick, Chef, Howie, Adam.
+**5 email recipients:** Evan, Cynthia, Nick, Chef, Adam.
 
 **6 Slack DM recipients:** Evan, Cynthia, Adam, Jaiden, Joffy, Nick.
 
