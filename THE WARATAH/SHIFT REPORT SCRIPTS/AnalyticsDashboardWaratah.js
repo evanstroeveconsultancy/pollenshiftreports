@@ -131,7 +131,8 @@ function buildFinancialDashboard() {
 
   // ─── SECTION 3: WEEK-OVER-WEEK COMPARISON ──────────────────────────
   row = 11;
-  _sectionHeader_(sheet, row, "WEEK-OVER-WEEK");
+  applyHairlineSection_(sheet, 'A11', 'WEEK-OVER-WEEK');
+  applyRowHeight_(sheet, row, 'section');
 
   row = 12;
   sheet.getRange(row, 1).setValue("Previous Week Ending");
@@ -147,7 +148,7 @@ function buildFinancialDashboard() {
   sheet.getRange(row, 3).setValue("Last Week");
   sheet.getRange(row, 4).setValue("Change");
   sheet.getRange(row, 5).setValue("% Change");
-  sheet.getRange(row, 1, 1, 5).setFontWeight("bold").setBackground("#f3f3f3");
+  applyTableHeader_(sheet, 'A13:E13');
 
   const wowMetrics = [
     { label: "Revenue",     col: "F", fmt: "$#,##0" },
@@ -166,6 +167,19 @@ function buildFinancialDashboard() {
     sheet.getRange(r, 4).setFormula(`=IFERROR(B${r}-C${r},0)`).setNumberFormat(m.fmt);
     sheet.getRange(r, 5).setFormula(`=IFERROR(D${r}/C${r},0)`).setNumberFormat("+0.0%;-0.0%");
   });
+  applyTableBody_(sheet, 'A14:E19');
+
+  // Force recalculation so getValue() returns current formula results, not stale values.
+  SpreadsheetApp.flush();
+
+  // Delta colours baked in at build time. D column = change $, E column = change %.
+  // Conditional formatting on D14:D19 (from existing CF rules) handles red/green for $;
+  // we apply applyDeltaCell_ to E14:E19 (% column) which has no CF rule.
+  for (let i = 0; i < wowMetrics.length; i++) {
+    const r = 14 + i;
+    const pctVal = sheet.getRange(`E${r}`).getValue();
+    applyDeltaCell_(sheet, `E${r}`, typeof pctVal === 'number' ? pctVal : null);
+  }
 
   // ─── SECTION 4: DAY-OF-WEEK AVERAGES ───────────────────────────────
   row = 21;
