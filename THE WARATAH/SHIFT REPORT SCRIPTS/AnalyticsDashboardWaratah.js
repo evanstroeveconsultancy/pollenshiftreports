@@ -220,7 +220,8 @@ function buildFinancialDashboard() {
   // Average of per-week totals (not per-shift). Uses AVERAGE(QUERY(...GROUP BY C))
   // so each week contributes one value regardless of how many shifts it contains.
   row = 28;
-  _sectionHeader_(sheet, row, "AVERAGE WEEKLY (ALL WEEKS)");
+  applyHairlineSection_(sheet, 'A28', 'AVERAGE WEEKLY (ALL WEEKS)');
+  applyRowHeight_(sheet, row, 'section');
 
   row = 29;
   sheet.getRange(row, 1).setValue("Avg Weekly Net Revenue");
@@ -243,6 +244,8 @@ function buildFinancialDashboard() {
   sheet.getRange(row, 5).setFormula(
     `=IFERROR(AVERAGE(QUERY(${src}!A2:V,"SELECT SUM(N) WHERE C IS NOT NULL GROUP BY C LABEL SUM(N) ''")),0)`
   ).setNumberFormat("$#,##0");
+
+  applyTableBody_(sheet, 'A29:E30');
 
   // ─── SECTION 6: WEEKLY TREND ────────────────────────────────────────
   // Moved to col J (was I) to make room for Sparkline column in DoW Averages.
@@ -776,13 +779,14 @@ function buildExtendedTrends_Waratah(sheet, src) {
   let row = 32;
 
   // ── Section header ───────────────────────────────────────────────────
-  _sectionHeader_(sheet, row, "EXTENDED TRENDS — DAY-OF-WEEK (13W / 26W)");
+  applyHairlineSection_(sheet, 'A32', 'EXTENDED TRENDS — DAY-OF-WEEK (13W / 26W)');
+  applyRowHeight_(sheet, row, 'section');
 
   // ── Column headers ───────────────────────────────────────────────────
   row = 33;
   const etHeaders = ["Day", "13-Week Avg Rev", "26-Week Avg Rev", "13-Week Avg Tips", "26-Week Avg Tips", "Heatmap Rank"];
   etHeaders.forEach((h, i) => sheet.getRange(row, i + 1).setValue(h));
-  sheet.getRange(row, 1, 1, etHeaders.length).setFontWeight("bold").setBackground("#f3f3f3");
+  applyTableHeader_(sheet, 'A33:F33');
 
   // ── Per-day rows (Wed-Sun = 5 days) ─────────────────────────────────
   const waratahDays = ["Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -815,9 +819,21 @@ function buildExtendedTrends_Waratah(sheet, src) {
     sheet.getRange(r, 6).setFormula(`=IFERROR(RANK(B${r},B34:B38,0),"")`);
   });
 
-  // ── Day-of-week heatmap: colour B34:B38 green→red by 13W avg revenue ──
-  const heatmapColors = ["#34a853", "#81c995", "#b7e1cd", "#f6aea9", "#ea4335"];
-  // 5 steps for 5 Waratah days (best→worst)
+  applyTableBody_(sheet, 'A34:F38');
+
+  // ── Day-of-week heatmap: colour B34:B38 best→worst using STYLE palette ──
+  // Rank 1 (best)  → STYLE.colour.good      (#2f5d3a)
+  // Rank 2         → STYLE.colour.cardFill   (#f5f5f2)  — light neutral
+  // Rank 3 (mid)   → STYLE.colour.neutral    (#8a8a7a)  — implied mid
+  // Rank 4         → STYLE.colour.sand       (#d6cfa8)  — warm low
+  // Rank 5 (worst) → STYLE.colour.bad        (#b5533c)
+  const heatmapColors = [
+    STYLE.colour.good,        // rank 1 — best
+    STYLE.colour.cardFill,    // rank 2
+    '#c8d4c8',                // rank 3 — mid (neutral green-grey, derived from palette)
+    STYLE.colour.sand,        // rank 4
+    STYLE.colour.bad          // rank 5 — worst
+  ];
 
   try {
     const revenueVals = sheet.getRange(34, 2, 5, 1).getValues().map(r => r[0]);
@@ -826,7 +842,7 @@ function buildExtendedTrends_Waratah(sheet, src) {
         .map((v, i) => ({ v, i }))
         .sort((a, b) => b.v - a.v);
       sorted.forEach(({ i }, rank) => {
-        sheet.getRange(34 + i, 2).setBackground(heatmapColors[rank] || "#ffffff");
+        sheet.getRange(34 + i, 2).setBackground(heatmapColors[rank] || STYLE.colour.cardFill);
       });
     }
   } catch (e) {
@@ -835,7 +851,8 @@ function buildExtendedTrends_Waratah(sheet, src) {
 
   // ── Year to Date ─────────────────────────────────────────────────────
   row = 41;
-  _sectionHeader_(sheet, row, "YEAR TO DATE");
+  applyHairlineSection_(sheet, 'A41', 'YEAR TO DATE');
+  applyRowHeight_(sheet, row, 'section');
 
   row = 42;
   sheet.getRange(row, 1).setValue("YTD Total Revenue");
@@ -857,8 +874,9 @@ function buildExtendedTrends_Waratah(sheet, src) {
     `=IFERROR(SUMPRODUCT((YEAR(${src}!A2:A)=YEAR(TODAY()))*${src}!U2:U),0)` // U=TotalTips
   ).setNumberFormat("$#,##0");
 
-  // Bold labels
-  sheet.getRange("A42:A43").setFontWeight("bold");
+  applyTableBody_(sheet, 'A42:E43');
+  // Sand accent on YTD label cells — reserved accent for benchmark/YTD context
+  sheet.getRange("A42:A43").setBackground(STYLE.colour.sand).setFontWeight("bold");
   sheet.getRange("D42:D43").setFontWeight("bold");
 
   Logger.log("M7 Extended Trends section built for Waratah.");
