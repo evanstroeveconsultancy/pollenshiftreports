@@ -13,8 +13,8 @@ This directory holds the manager-tier documentation in five files plus this one.
 | File | What it covers | When to read |
 |---|---|---|
 | [`01-shift-reports.md`](01-shift-reports.md) | Your role in the daily shift report system, what to watch for in nightly Slack posts, how to spot incomplete or incorrect reports, follow-up actions | First time you supervise reports, or to refresh on management oversight expectations |
-| [`02-task-management.md`](02-task-management.md) | The Task Management spreadsheet: the 8-status workflow, priority levels, assigning tasks, recurring tasks, the dashboard, Slack DM notifications, integration with shift reports | When tasks are not progressing, when you need to assign or reassign work, when setting up recurring maintenance |
-| [`03-weekly-automation.md`](03-weekly-automation.md) | What the system does automatically each week: Monday 9pm rollover, Monday 4pm revenue digest, daily staff workload refresh, weekly backfill | When automation does not seem to be running, or you want to understand the weekly rhythm |
+| [`02-task-management.md`](02-task-management.md) | The Task Management spreadsheet: the 9-Status Workflow, priority levels, assigning tasks, recurring tasks, the dashboard, Slack DM notifications, integration with shift reports | When tasks are not progressing, when you need to assign or reassign work, when setting up recurring maintenance |
+| [`03-weekly-automation.md`](03-weekly-automation.md) | What the system does automatically each week: Monday 9pm rollover, Monday 4pm revenue digest, daily staff workload refresh, Monday 8am backfill | When automation does not seem to be running, or you want to understand the weekly rhythm |
 | [`04-staff-and-recipients.md`](04-staff-and-recipients.md) | The current staff roster, who receives email reports, who receives Slack DMs, how to add or remove staff from the task assignee dropdown | When staff joins, leaves, or changes role |
 | [`05-troubleshooting.md`](05-troubleshooting.md) | Manager-fixable problems and their quick resolutions. Things you can handle yourself without admin or developer access | When something goes wrong tonight or this morning |
 
@@ -46,7 +46,6 @@ If a term in any of the manager docs is unfamiliar, check here first.
 | **MOD** | Manager on Duty. The person leading service that night. Filled in at the top of each day's tab. |
 | **Shift Report** | The completed end-of-night summary for one service day. Lives on one tab per service day in the Waratah shift report spreadsheet. |
 | **TEST mode** | A practice run that posts to a test Slack channel only. No email, no data warehouse write, no task sync. |
-| **Basic Report** | A simplified emergency-fallback send used when the main report fails. |
 | **Weekly Rollover** | Automated Monday 9pm process that archives the week's data and resets the sheet for the new week. |
 | **Revenue Digest** | A Monday 4pm Slack post summarising the week's revenue numbers. Posted before rollover. |
 | **Task Management spreadsheet** | A separate Google Sheet that holds all open and completed tasks across the venue. Different from the shift report spreadsheet. |
@@ -68,10 +67,10 @@ If a term in any of the manager docs is unfamiliar, check here first.
 
 This directory is part of a four-phase documentation consolidation of The Waratah's manager-facing content. Phase 2 (this tier) is built from four older legacy files that previously held a mix of manager, admin, and developer content:
 
-- `docs/waratah/explainers/02-INTERMEDIATE-How-The-System-Works.md`
-- `THE WARATAH/FILE EXPLAINERS/2_TASK_MANAGEMENT.md`
-- `THE WARATAH/FILE EXPLAINERS/3_WEEKLY_AUTOMATED_EVENTS.md`
-- `THE WARATAH/FILE EXPLAINERS/4_TROUBLESHOOTING.md`
+- `docs/waratah/_archive/02-INTERMEDIATE-How-The-System-Works.md`
+- `docs/waratah/_archive/2_TASK_MANAGEMENT.md`
+- `docs/waratah/_archive/3_WEEKLY_AUTOMATED_EVENTS.md`
+- `docs/waratah/_archive/4_TROUBLESHOOTING.md`
 
 Each of those files contained manager-tier content that has been moved here, plus admin-tier and developer-tier content that remains in the source files until Phase 3 and Phase 4 of the consolidation complete. Until then, the legacy files carry a "PARTIALLY SUPERSEDED" banner pointing here for manager content.
 

@@ -444,14 +444,15 @@ function classifyTask_Waratah(taskDescription) {
  * Non-blocking: returns { hasSufficientData: false } on any error or
  * insufficient history (<4 same-day rows).
  *
- * Waratah NIGHTLY_FINANCIAL col indexes (0-based, 22 cols A-V):
+ * Waratah NIGHTLY_FINANCIAL col indexes (0-based, 25 cols A-Y):
  *   A=0 Date, B=1 Day, C=2 WeekEnding, D=3 MOD, E=4 Staff,
  *   F=5 NetRevenue, G=6 ProductionAmount, H=7 CashTakings,
  *   I=8 GrossSalesIncCash, J=9 CashReturns, K=10 CDDiscount,
- *   L=11 Refunds, M=12 CDRedeem, N=13 TotalDiscount,
+ *   L=11 Refunds (NULL post-May 2026), M=12 CDRedeem (NULL post-May 2026), N=13 TotalDiscount,
  *   O=14 DiscountsCompsExcCD, P=15 GrossTaxableSales,
- *   Q=16 Taxes, R=17 NetSalesWTips, S=18 CardTips,
- *   T=19 CashTips, U=20 TotalTips, V=21 LoggedAt
+ *   Q=16 Taxes, R=17 NetSalesWTips (NULL post-May 2026), S=18 CardTips,
+ *   T=19 CashTips, U=20 TotalTips, V=21 CashCounted,
+ *   W=22 ExpectedCash, X=23 CashVariance, Y=24 LoggedAt
  *
  * @param {Object} shiftData   - Extracted shift data (same shape as M1 caller)
  * @param {string} warehouseId - Spreadsheet ID of the data warehouse

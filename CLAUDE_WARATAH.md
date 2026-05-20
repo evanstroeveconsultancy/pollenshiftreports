@@ -1,11 +1,38 @@
 # THE WARATAH - Quick Reference
 
-**Last Updated:** May 17, 2026 (Phase 1.2 — cell map correction)
+**Last Updated:** May 21, 2026 (Analytics dashboard enhancements — Average Weekly section, DoW Std Dev + Sparkline columns, Analytics Extensions block, Executive TOP MOD removal + INSIGHTS block, THIS WEEK vs 13W BASELINE)
 **Status:** 🟢 PRODUCTION READY (manual operations until triggers created)
 **Operating Days:** 5 days (Wed-Sun)
 **Fields:** 36 total (27 clearable, 9 formula-only)
 **Cell References:** Named range system (`WEDNESDAY_SR_NetRevenue`) via `RunWaratah.js`. All 197 named ranges active on new sheet. See [CELL_REFERENCE_MAP.md](docs/waratah/CELL_REFERENCE_MAP.md)
 **Rollover:** In-place system ✅ Code ready; automated trigger pending May 18 setup
+
+---
+
+## DEPLOYMENT (May 21, 2026) -- Analytics Dashboard Enhancements
+
+**ANALYTICS tab (`buildFinancialDashboard`):**
+- AVERAGE WEEKLY (ALL WEEKS) section added at rows 23-25: header + 2 metric rows using `AVERAGE(QUERY(...GROUP BY C))` for per-week-average semantics
+- DAY-OF-WEEK AVERAGES (Wed-Sun, rows 23-27) enhanced with two new columns: col G "Std Dev" (`STDEV(FILTER(...))`) and col H "13W Trend" (`SPARKLINE(FILTER(...), {"charttype","line"...})`)
+- WEEKLY TREND `trendCol` shifted from col I (9) to col J (10) to make room for Sparkline column
+- Extended Trends shifted +2 rows; YTD shifted +2 rows
+- New `buildAnalyticsExtensions_Waratah()` function adds 6 sections starting at row 45 (after Waratah YTD at row 43):
+  - 4-WEEK MOVING AVERAGE
+  - CONSISTENCY: Most Consistent / Most Volatile Day with CV %
+  - TOP 5 SHIFTS THIS MONTH: live `SORTN`
+  - BOTTOM 5 SHIFTS THIS MONTH: live `SORTN`
+  - OUTLIERS THIS MONTH: live `SORTN` by abs % variance from DoW baseline (VLOOKUP source A23:B27)
+  - RECENT DOW PATTERN: build-time JS computing ↑↓ arrows per day
+- Warehouse columns: F=NetRevenue, G=ProductionAmount, U=TotalTips, N=TotalDiscount (Waratah schema)
+
+**EXECUTIVE_DASHBOARD tab (`buildExecutiveDashboard`):**
+- TOP MOD PERFORMANCE block removed (rows 4-14, user requested) — replaced with INSIGHTS block
+- REVENUE BY DAY enhanced with "Share" column (col L, rows 6-11) using `REPT("▓",...)` bar
+- INSIGHTS block added at rows 13-21 (right side, cols H-J): 4-week trend (SLOPE B29:E29 — Waratah ROLLING 4-WEEK Revenue row), forecast next month (`AVERAGE(B13:B15)` — Waratah QUERY has no `headers=0` arg), last 4 weeks direction, best/worst shift this month, reports filed
+- THIS WEEK vs 13W BASELINE section added at rows 35-42 (header + 5 days Wed-Sun)
+
+**Files Changed:**
+- `AnalyticsDashboardWaratah.js` (new `buildAnalyticsExtensions_Waratah()` function, DoW table additions, column/row shifts, executive enhancements, TOP MOD removal)
 
 ---
 
@@ -30,7 +57,7 @@
 - `NightlyExportWaratah.js` — Mon/Tue guard (early return if sheet name starts with MONDAY/TUESDAY); cash variance Block Kit field
 - `MenuWaratah.js` — Named Ranges submenu; rollover menu updated to new functions; `setupAllTriggers_Waratah()` trigger name + timing updated
 - `AIInsightsWaratah.js` — `getRange(..., 22)` → `getRange(..., 25)` in both analytics functions; JSDoc updated to 25-col schema
-- `AnalyticsDashboardWaratah.js` — schema comment updated to 25 cols
+- `AnalyticsDashboardWaratah.js` — schema comment updated to 25 cols; analytics dashboard enhancements deployed May 21, 2026
 - `VenueConfig.js` — `cashTakings: 'B15'` → `'C19'`; added `cashCounted`, `expectedCash`, `cashVariance`
 
 ### Phase 2 Manual Steps (COMPLETED May 17, 2026)
@@ -894,7 +921,7 @@ if (config.name === 'THE WARATAH') {
 
 ---
 
-**Last Updated:** May 17, 2026 (Phase 1: Sakura-alignment migration — named range hardening, 3-col schema, rollover rewrite)
+**Last Updated:** May 21, 2026 (Analytics enhancements — see May 21 deployment entry above; Phase 1: Sakura-alignment migration completed May 17, 2026)
 **Version:** 3.4
 **Status:** ✅ Fully operational and production-ready
 **Total LOC:** ~9,371 lines across 22 code files + 5 HTML files (+ RunWaratah.js ~800 LOC)

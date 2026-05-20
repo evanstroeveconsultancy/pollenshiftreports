@@ -104,10 +104,10 @@ The rollover did not run, or ran and failed before the rename step.
 
 **Recovery:**
 
-1. Check Executions panel of the Shift Report project for Monday around 9pm. Look for `performWeeklyRollover` (or `pw_performWeeklyRollover`).
-2. If no execution exists, the trigger did not fire. Check the Triggers panel: is the trigger installed? (Phase 1.3 may not have installed triggers yet.)
+1. Check Executions panel of the Shift Report project for Monday around 9pm. Look for `runWaratahWeeklyRollover` (current) or `performWeeklyRollover` (legacy name).
+2. If no execution exists, the trigger did not fire. Check the Triggers panel: is the trigger installed?
 3. If the execution failed, read the log to see where it failed.
-4. Recovery: from the spreadsheet menu, run **Waratah Tools > Admin Tools > Run Weekly Rollover Now** (password gated). This re-runs the rollover idempotently. If the previous run had partial success, this one should complete the unfinished steps.
+4. Recovery: from the spreadsheet menu, run **Waratah Tools > Admin Tools > Weekly Reports > Weekly Rollover (In-Place) > Run Rollover Now** (password gated). This re-runs the rollover idempotently. If the previous run had partial success, this one should complete the unfinished steps.
 
 ### Symptom: Tabs are renamed for new week, but old data is still in cells
 
@@ -116,9 +116,10 @@ The rollover archived and renamed but the clear step did not complete.
 **Recovery:**
 
 1. Do not let anyone type fresh data into the cells.
-2. Confirm with the Executions panel: did `performWeeklyRollover` complete fully or fail at the clear step?
-3. From the menu, run **Waratah Tools > Admin Tools > Clear Manager Inputs (Day)** for each affected tab.
-4. Verify the cells are now empty.
+2. Confirm with the Executions panel: did `runWaratahWeeklyRollover` complete fully or fail at the clear step?
+3. Re-run the rollover idempotently from **Waratah Tools > Admin Tools > Weekly Reports > Weekly Rollover (In-Place) > Run Rollover Now**. The rollover is designed to complete unfinished steps when re-run, so this will normally clear the lingering data.
+4. If a re-run does not clear the cells, contact the developer for an ad-hoc cleanup; there is no dedicated "Clear Manager Inputs" menu item.
+5. Verify the cells are now empty.
 
 ### Symptom: PDF or spreadsheet copy missing from Drive archive
 
@@ -128,7 +129,7 @@ Drive permission failure, or the `ARCHIVE_ROOT_FOLDER_ID` is pointing at the wro
 
 1. Check the Drive folder ID in `ARCHIVE_ROOT_FOLDER_ID` Script Property. Open that ID in Drive and confirm it is the expected archive folder.
 2. Confirm the script owner has Edit access to the folder.
-3. Re-run **Run Weekly Rollover Now** which re-archives the week.
+3. Re-run **Waratah Tools > Admin Tools > Weekly Reports > Weekly Rollover (In-Place) > Run Rollover Now** which re-archives the week.
 
 ### Symptom: Rollover ran but Slack confirmation did not post
 
@@ -146,21 +147,30 @@ After every clasp push, **assume triggers need re-installation**. See [`04-deplo
 
 1. Open Apps Script project > left sidebar > **Triggers**.
 2. Count the triggers. The expected count:
-   - Shift Report project: 3 time-based triggers (rollover Mon 9pm, digest Mon 4pm, backfill Mon 2am).
-   - Task Management project: 6 time-based triggers (bi-hourly cleanup, daily 6am workload, daily 7am maintenance, Mon 6am archive, Mon 10am summary, on-edit handler).
+   - Shift Report project: 3 time-based triggers (rollover Mon 9pm, backfill Mon 8am, digest Mon 4pm).
+   - Task Management project: up to 6 installable triggers (bi-hourly cleanup, daily 6am workload, daily 6am task maintenance, Mon 6am archive, Mon 10am summary, on-edit handler).
 3. If a count is short, re-install the missing triggers from the relevant menu items.
 
-### Recovery procedure
+### Shift Report project triggers
 
-For the Shift Report project, from the spreadsheet menu:
+| Handler | Schedule | Menu path to install |
+|---|---|---|
+| `runWaratahWeeklyRollover` | Mon 9pm | `Waratah Tools > Admin Tools > Setup & Utilities > Setup All SR Triggers` OR `Waratah Tools > Admin Tools > Weekly Reports > Weekly Rollover (In-Place) > Create Rollover Trigger (Mon 9pm)` |
+| `runWeeklyBackfill_` | Mon 8am | `Setup All SR Triggers` OR `Waratah Tools > Admin Tools > Data Warehouse > Setup Weekly Backfill Trigger` |
+| `sendWeeklyRevenueDigest_Waratah` | Mon 4pm | `Setup All SR Triggers` OR `Waratah Tools > Admin Tools > Weekly Digest > Setup Monday Digest Trigger` |
 
-- **Admin Tools > Reinstall Weekly Rollover Trigger** (creates Mon 9pm trigger)
-- **Admin Tools > Reinstall Revenue Digest Trigger** (creates Mon 4pm)
-- **Admin Tools > Reinstall Weekly Backfill Trigger** (creates Mon 2am)
+### Task Management project triggers
 
-For the Task Management project, equivalent menu items exist. Open that spreadsheet's Waratah Tools menu.
+| Handler | Schedule | Menu path to install |
+|---|---|---|
+| `cleanupAndSortMasterActionables` | every 2 hours | `Task Management > 🔐 Admin Tools > 🔧 Setup Triggers > Create Bi-Hourly Cleanup Trigger (Every 2hrs)` |
+| `runScheduledStaffWorkload` | Daily 6am | `Task Management > 🔐 Admin Tools > 🔧 Setup Triggers > Create Daily Staff Workload Trigger (6am)` |
+| `runDailyTaskMaintenance` | Daily 6am (fires within the 6 to 7am window) | Not exposed in the current menu; installable from the Apps Script editor by running `createDailyMaintenanceTrigger()` |
+| `runScheduledArchive` | Mon 6am | `Task Management > 🔐 Admin Tools > 🔧 Setup Triggers > Create Weekly Archive Trigger (Mon 6am)` |
+| `sendWeeklyActiveTasksSummary` | Mon 10am | `Task Management > 🔐 Admin Tools > 🔧 Setup Triggers > Create Weekly Summary Trigger (Mon 10am)` |
+| `onTaskSheetEditWithAutoSort` | onEdit (installable, not simple) | `Task Management > 🔐 Admin Tools > 🔧 Setup Triggers > Create Edit Trigger (Auto-sort)` |
 
-After reinstalling, verify each trigger appears in the Triggers panel with the correct function name and schedule.
+After installing, verify each trigger appears in the Triggers panel with the correct function name and schedule.
 
 ---
 
@@ -168,9 +178,9 @@ After reinstalling, verify each trigger appears in the Triggers panel with the c
 
 ### Symptom: No digest posted Monday at 4pm
 
-1. Executions panel: did the digest function (`sendWeeklyDigest_Waratah` or similar) run Monday at 4pm? If not, trigger not installed; see Section 6.
+1. Executions panel: did `sendWeeklyRevenueDigest_Waratah` run Monday at 4pm? If not, trigger not installed; see Section 6.
 2. If it ran and failed: read the log. Common: warehouse spreadsheet not reachable (`WARATAH_DATA_WAREHOUSE_ID` Script Property is wrong or revoked), or no data rows found for the week (warehouse never received the week's nightly data; check the backfill).
-3. Recovery: run **Waratah Tools > Admin Tools > Run Revenue Digest Now** to manually post the digest.
+3. Recovery: run **Waratah Tools > Admin Tools > Weekly Digest > Send Revenue Digest (LIVE)** to manually post the digest.
 
 ### Symptom: Digest posted but shows zero or negative revenue
 
@@ -180,7 +190,7 @@ The data is in the warehouse but malformed:
 2. Filter NIGHTLY_FINANCIAL by date range = last week.
 3. Inspect each row's Net Revenue column. Look for negatives, blanks, or extreme outliers.
 4. If a row has a typo (e.g. cash variance accidentally typed as negative net revenue), correct it manually in the warehouse.
-5. Re-run the digest with **Run Revenue Digest Now** to repost with the corrected number.
+5. Re-run the digest with **Waratah Tools > Admin Tools > Weekly Digest > Send Revenue Digest (LIVE)** to repost with the corrected number.
 
 ---
 
@@ -197,9 +207,10 @@ The Analytics and Executive Dashboard tabs in the shift report spreadsheet rebui
 ### Procedure
 
 1. Open the shift report spreadsheet.
-2. **Waratah Tools > Admin Tools > Rebuild All Dashboards** (password gated).
-3. Wait for the success message; can take 30 to 60 seconds.
-4. Verify the dashboards show the expected current values.
+2. **Waratah Tools > Admin Tools > Analytics > Build Financial Dashboard** (password gated).
+3. Then **Waratah Tools > Admin Tools > Analytics > Build Executive Dashboard** (password gated).
+4. Wait for the success messages; each can take 30 to 60 seconds.
+5. Verify the dashboards show the expected current values.
 
 If rebuild fails, check the Executions panel for the function `pw_buildFinancialDashboard` or `pw_buildExecutiveDashboard` and read the error.
 
@@ -209,9 +220,9 @@ If rebuild fails, check the Executions panel for the function `pw_buildFinancial
 
 ### Symptom: Tasks from last night's shift report did not appear in Task Management
 
-1. Check Executions panel of the Shift Report project for the relevant nightly send. Look for the task-sync step (usually `pushTasksToManagement_` or similar). Did it run?
+1. Check Executions panel of the Shift Report project for the relevant nightly send. Look for the task-sync step (`pushTodosToMasterActionables` runs as part of the export pipeline). Did it run?
 2. If it ran and failed: read the error. Common: `TASK_MANAGEMENT_SPREADSHEET_ID` Script Property is wrong, or the Task Management spreadsheet is unreachable.
-3. Recovery: from the shift report spreadsheet menu, **Waratah Tools > Admin Tools > Re-sync Tasks** for that day's tab.
+3. Recovery: re-run the export for that day. `pushTodosToMasterActionables` runs inside `exportAndEmailPDF`, so re-running the export will re-sync the tasks. There is no standalone "Re-sync Tasks" menu item.
 
 ### Symptom: Task DMs not arriving for assignments
 
@@ -219,12 +230,12 @@ See Section 3 above (Slack webhook diagnostics). Apply the dual-update rule: con
 
 ### Symptom: BLOCKED task did not escalate after 14 days
 
-The escalation runs as part of the daily 7am task maintenance trigger.
+The escalation runs as part of the daily 6am task maintenance trigger (fires within the 6 to 7am window).
 
-1. Check Executions panel of the Task Management project for `runDailyTaskMaintenance` (or similar) on a recent morning. Did it run?
+1. Check Executions panel of the Task Management project for `runDailyTaskMaintenance` on a recent morning. Did it run?
 2. If yes: read its log for the escalation step. The log should list any tasks that triggered escalation.
 3. Confirm `ESCALATION_EMAIL` and `ESCALATION_SLACK_WEBHOOK` Script Properties point at correct targets.
-4. Recovery: from the Task Management spreadsheet menu, **Waratah Tools > Admin Tools > Run Escalation Now**.
+4. Recovery: from the Task Management spreadsheet menu, **Task Management > 🔐 Admin Tools > Manual Actions > Check Blocked Escalations Now**.
 
 ---
 
@@ -235,7 +246,7 @@ The escalation runs as part of the daily 7am task maintenance trigger.
 | Slack message missing | Slack workspace status, then webhook curl test | 3 |
 | Email missing for one person | Spam folder, then JSON validity | 4 |
 | Email missing for all | Executions panel, MailApp.sendEmail log | 4 |
-| Rollover didn't run | Executions panel for `performWeeklyRollover` | 5 |
+| Rollover didn't run | Executions panel for `runWaratahWeeklyRollover` | 5 |
 | Tabs renamed but data not cleared | Confirm rollover partial-fail state, then clear menu item | 5 |
 | Trigger missing after deploy | Triggers panel count vs expected (3 SR + 6 TM) | 6 |
 | No digest Monday afternoon | Trigger installed? Then warehouse reachable? | 7 |

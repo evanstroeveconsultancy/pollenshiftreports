@@ -11,9 +11,9 @@ The warehouse is a separate Google Sheets spreadsheet whose ID lives in `WARATAH
 | Tab | Purpose | Write cadence |
 |---|---|---|
 | `NIGHTLY_FINANCIAL` | One row per service day with all financial numbers | Once per nightly send |
-| `OPERATIONAL_EVENTS` | One row per maintenance or RSA incident | Per-event batch on send |
-| `WASTAGE_COMPS` | One row per wastage entry | Per-item batch on send |
-| `QUALITATIVE_LOG` | One row per service day with the five narrative fields | Once per nightly send |
+| `OPERATIONAL_EVENTS` | One row per TO-DO captured on the shift report | Per-todo batch on send |
+| `WASTAGE_COMPS` | One row per service day holding the wastage/comps narrative | Once per nightly send |
+| `QUALITATIVE_LOG` | One row per service day with the narrative fields | Once per nightly send |
 
 The warehouse is opened by ID, not by name. The script owner must have edit access. If permissions are revoked, the entire write step fails with a `You do not have permission` error.
 
@@ -25,220 +25,172 @@ The warehouse is opened by ID, not by name. The script owner must have edit acce
 
 The current 25-column schema (May 17, 2026 cutover):
 
-| Column | Header | Source field | Type |
+| Column | Header (per code) | Source field | Notes |
 |---|---|---|---|
 | A | Date | `shiftData.date` (via `toDateOnly_`) | Date |
 | B | Day | `shiftData.dayOfWeek` | String |
-| C | Week Ending | computed from date | Date |
-| D | MOD | `shiftData.MOD` | String |
-| E | Staff | `shiftData.staff` | String |
-| F | Net Revenue | `shiftData.netRevenue` | Number |
-| G | Production Amount | `shiftData.production` | Number |
-| H | Cash Counted | `shiftData.cashCounted` | Number |
-| I | Gross Sales (inc Cash) | `shiftData.grossSales` | Number |
-| J | Cash Returns | `shiftData.cashReturns` | Number |
-| K | CD Discount | `shiftData.cdDiscount` | Number |
-| L | Refunds | (deprecated, NULL going forward) | Number |
-| M | CD Redeem | (deprecated, NULL going forward) | Number |
-| N | Total Discount | `shiftData.totalDiscount` | Number |
-| O | Discounts/Comps (excl CD) | `shiftData.discountsExcCD` | Number |
-| P | Gross Taxable Sales | `shiftData.grossSalesLessDisc` | Number |
-| Q | Taxes | `shiftData.taxes` | Number |
-| R | Net Sales w/Tips | (deprecated, NULL going forward) | Number |
-| S | Card Tips | `shiftData.cardTips` | Number |
-| T | Cash Tips | `shiftData.cashTips` | Number |
-| U | Total Tips | `shiftData.totalTips` | Number |
-| V | Logged At | `new Date()` server timestamp | Datetime |
-| W | Cash Take (POS expected) | `shiftData.cashRecorded` | Number |
-| X | Cash Take (counted) | `shiftData.cashTakings` | Number |
-| Y | Cash Variance | `shiftData.cashVariance` | Number |
+| C | Week Ending | computed weekEnding (via `toDateOnly_`) | Date |
+| D | MOD | `shiftData.mod` | String |
+| E | Staff | `shiftData.staff` (concat "FOH: ... \| BOH: ...") | String |
+| F | Net Revenue | `shiftData.netRevenue` | B54 formula |
+| G | Production Amount | `shiftData.productionAmount` | B37 |
+| H | CashTakings | `shiftData.cashTake` | C19 (header label retained for schema compat) |
+| I | GrossSalesIncCash | `shiftData.grossSales` | B48 |
+| J | Cash Returns | `shiftData.cashReturns` | C22 |
+| K | CD Discount | `shiftData.cdDiscount` | C23 |
+| L | Refunds | `null` literal | Deprecated post-May 2026 |
+| M | CDRedeem | `null` literal | Deprecated post-May 2026 |
+| N | TotalDiscount | `shiftData.totalAdjustmentsDiscounts` | B50 |
+| O | DiscountsCompsExcCD | `shiftData.discountsExcCashDiscount` | B51 |
+| P | GrossTaxableSales | `shiftData.grossSalesLessDiscounts` | B52 |
+| Q | Taxes | `shiftData.taxes` | B53 |
+| R | NetSalesWTips | `null` literal | Deprecated post-May 2026 |
+| S | Card Tips | `shiftData.cardTips` | C30 |
+| T | Cash Tips | `shiftData.cashTips` | C29 |
+| U | Total Tips | `shiftData.totalTips` | C32 formula |
+| V | CashCounted | `shiftData.cashCounted \|\| null` | C18 formula (was LoggedAt pre-cutover) |
+| W | ExpectedCash | `shiftData.totalCashRecorded \|\| null` | C24 (header label retained) |
+| X | CashVariance | `shiftData.cashVariance \|\| null` | C26 formula |
+| Y | LoggedAt | `new Date()` | Server timestamp; moved from V to Y at cutover |
 
-**Deprecated columns (L, M, R):** these were active in earlier schema versions. They are now written as null (or empty string) to preserve column positions for historical rows. Do not remove these columns; do not repurpose them.
+**Deprecated columns (L, M, R):** these were active in earlier schema versions. They are now written as the `null` literal (not an empty string) to preserve column positions for historical rows. Do not remove these columns; do not repurpose them.
 
-**Cash reconciliation columns (W, X, Y):** added on May 17, 2026 when the cash recon workflow was integrated into the warehouse. Historical rows before May 17 have these columns empty.
+**Cash reconciliation columns (V, W, X):** added on May 17, 2026 when the cash recon workflow was integrated into the warehouse. LoggedAt moved from V to Y at the same cutover. Historical rows before May 17 have V/W/X empty.
 
 ---
 
 ## 3. NIGHTLY_FINANCIAL Write Code
 
-The write is in `IntegrationHubWaratah.js`:
+The write is in `IntegrationHubWaratah.js` inside `logToDataWarehouse_(shiftData, config, skipLock)` (line 425). There is no standalone `logToNightlyFinancial_` helper, no `getProp_` helper, no `isDuplicateInSheet_` helper, and no `computeWeekEnding_` helper. The warehouse ID is read inline from Script Properties; weekEnding is computed inside `extractShiftData_` (lines 322-324); duplicate detection is inline using `normaliseDateKey_` (line 404).
+
+Real header assertion and appendRow block (illustrative excerpt of the inline code):
 
 ```javascript
-function logToNightlyFinancial_(shiftData) {
-  const warehouseId = getProp_('WARATAH_DATA_WAREHOUSE_ID');
-  const warehouse = SpreadsheetApp.openById(warehouseId);
-  const sheet = warehouse.getSheetByName('NIGHTLY_FINANCIAL');
-
-  // Header assertion: enforce 25-column schema before writing.
-  const headerCount = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].length;
-  if (headerCount !== 25) {
-    throw new Error(`NIGHTLY_FINANCIAL header has ${headerCount} columns, expected 25`);
-  }
-
-  // Duplicate prevention
-  if (isDuplicateInSheet_(sheet, shiftData.date, 'NIGHTLY_FINANCIAL')) {
-    Logger.log(`Skipping duplicate write for ${shiftData.date} ${shiftData.dayOfWeek}`);
-    return { skipped: true, reason: 'duplicate' };
-  }
-
-  const weekEnding = computeWeekEnding_(shiftData.date);
-
-  sheet.appendRow([
-    toDateOnly_(shiftData.date),         // A Date
-    shiftData.dayOfWeek,                  // B Day
-    toDateOnly_(weekEnding),              // C Week Ending
-    shiftData.MOD,                        // D MOD
-    shiftData.staff,                      // E Staff
-    shiftData.netRevenue,                 // F Net Revenue
-    shiftData.production,                 // G Production
-    shiftData.cashCounted,                // H Cash Counted
-    shiftData.grossSales,                 // I Gross Sales
-    shiftData.cashReturns,                // J Cash Returns
-    shiftData.cdDiscount,                 // K CD Discount
-    '',                                   // L Refunds (deprecated)
-    '',                                   // M CD Redeem (deprecated)
-    shiftData.totalDiscount,              // N Total Discount
-    shiftData.discountsExcCD,             // O Discounts excl CD
-    shiftData.grossSalesLessDisc,         // P Gross Taxable Sales
-    shiftData.taxes,                      // Q Taxes
-    '',                                   // R Net Sales w/Tips (deprecated)
-    shiftData.cardTips,                   // S Card Tips
-    shiftData.cashTips,                   // T Cash Tips
-    shiftData.totalTips,                  // U Total Tips
-    new Date(),                           // V Logged At
-    shiftData.cashRecorded,               // W Cash Take (POS expected)
-    shiftData.cashTakings,                // X Cash Take (counted)
-    shiftData.cashVariance                // Y Cash Variance
-  ]);
-
-  return { written: true };
+// Header assertion (IntegrationHubWaratah.js:484-498)
+var actualCols = nfSheet.getLastColumn();
+if (actualCols > 0 && actualCols !== 25) {
+  throw new Error('NIGHTLY_FINANCIAL header has ' + actualCols + ' columns, expected 25');
 }
+
+// appendRow (IntegrationHubWaratah.js:500-526). Null literals for deprecated cols
+nfSheet.appendRow([
+  toDateOnly_(shiftData.date),               // A: Date
+  shiftData.dayOfWeek,                       // B: Day
+  toDateOnly_(shiftData.weekEnding),         // C: Week Ending
+  shiftData.mod,                             // D: MOD
+  shiftData.staff,                           // E: Staff
+  shiftData.netRevenue,                      // F: Net Revenue (B54)
+  shiftData.productionAmount,                // G: Production Amount (B37)
+  shiftData.cashTake,                        // H: CashTakings (C19)
+  shiftData.grossSales,                      // I: GrossSalesIncCash (B48)
+  shiftData.cashReturns,                     // J: Cash Returns (C22)
+  shiftData.cdDiscount,                      // K: CD Discount (C23)
+  null,                                      // L: Refunds (deprecated)
+  null,                                      // M: CDRedeem (deprecated)
+  shiftData.totalAdjustmentsDiscounts,       // N: TotalDiscount (B50)
+  shiftData.discountsExcCashDiscount,        // O: DiscountsCompsExcCD (B51)
+  shiftData.grossSalesLessDiscounts,         // P: GrossTaxableSales (B52)
+  shiftData.taxes,                           // Q: Taxes (B53)
+  null,                                      // R: NetSalesWTips (deprecated)
+  shiftData.cardTips,                        // S: Card Tips (C30)
+  shiftData.cashTips,                        // T: Cash Tips (C29)
+  shiftData.totalTips,                       // U: Total Tips (C32)
+  shiftData.cashCounted  || null,            // V: CashCounted (C18 formula)
+  shiftData.totalCashRecorded || null,       // W: ExpectedCash (C24)
+  shiftData.cashVariance || null,            // X: CashVariance (C26 formula)
+  new Date()                                 // Y: LoggedAt
+]);
 ```
 
-Note the explicit empty strings for deprecated columns (L, M, R) to preserve positions.
+Deprecated columns (L, M, R) are written as the `null` literal, not as empty strings.
 
 ---
 
 ## 4. OPERATIONAL_EVENTS Schema (8 Columns, A-H)
 
-For maintenance and RSA incidents.
+OPERATIONAL_EVENTS is the **TO-DOs log**, not a maintenance/RSA log. Rows come from `shiftData.todos` (the TO-DOs list captured on the shift report). There is no Week Ending column and no Event Type column. Maintenance and RSA narratives are warehoused in QUALITATIVE_LOG instead (Section 6).
 
 | Column | Header | Source |
 |---|---|---|
-| A | Date | `shiftData.date` (via `toDateOnly_`) |
+| A | Date | `toDateOnly_(shiftData.date)` |
 | B | Day | `shiftData.dayOfWeek` |
-| C | Week Ending | computed |
-| D | MOD | `shiftData.MOD` |
-| E | Event Type | "Maintenance" or "RSA" |
-| F | Description | the maintenance or RSA narrative |
-| G | Estimated Cost | optional, from narrative parsing |
+| C | MOD | `shiftData.mod` |
+| D | Description | `todo.description` |
+| E | Assignee | `todo.assignee` |
+| F | Priority | literal `"MEDIUM"` |
+| G | Source | literal `"Shift Report"` |
 | H | Logged At | `new Date()` |
 
 ### Write code
 
+There is no standalone `logToOperationalEvents_` function and no `extractCost_` helper. The write is inline inside `logToDataWarehouse_` (IntegrationHubWaratah.js:531-567), iterating `shiftData.todos`:
+
 ```javascript
-function logToOperationalEvents_(shiftData) {
-  const sheet = warehouse.getSheetByName('OPERATIONAL_EVENTS');
-
-  const events = [];
-  if (shiftData.maintenance && shiftData.maintenance !== 'None') {
-    events.push({ type: 'Maintenance', description: shiftData.maintenance });
-  }
-  if (shiftData.rsaIncidents && shiftData.rsaIncidents !== 'None') {
-    events.push({ type: 'RSA', description: shiftData.rsaIncidents });
-  }
-
-  if (events.length === 0) return { written: 0 };
-
-  const weekEnding = computeWeekEnding_(shiftData.date);
-  const rows = events.map(event => [
-    toDateOnly_(shiftData.date),
-    shiftData.dayOfWeek,
-    toDateOnly_(weekEnding),
-    shiftData.MOD,
-    event.type,
-    event.description,
-    extractCost_(event.description),  // tries to find $X.XX in the text
-    new Date()
-  ]);
-
-  // Batch write
-  const startRow = sheet.getLastRow() + 1;
-  sheet.getRange(startRow, 1, rows.length, 8).setValues(rows);
-
-  return { written: rows.length };
-}
+// Inline inside logToDataWarehouse_ (IntegrationHubWaratah.js:551-560)
+newEventRows.push([
+  toDateOnly_(shiftData.date),  // A: Date
+  shiftData.dayOfWeek,          // B: Day
+  shiftData.mod,                // C: MOD
+  todo.description,             // D: Description
+  todo.assignee,                // E: Assignee
+  "MEDIUM",                     // F: Priority (literal)
+  "Shift Report",               // G: Source (literal)
+  new Date()                    // H: Logged At
+]);
 ```
 
-`extractCost_` uses a simple regex (`/\$(\d+(?:\.\d+)?)/`) to find a dollar value in the description. If no value, returns null.
-
-Duplicate prevention is based on date + event type + description hash.
+Duplicate prevention is inline using `normaliseDateKey_` on Date + Description (cols 0 + 3).
 
 ---
 
 ## 5. WASTAGE_COMPS Schema (6 Columns, A-F)
 
-For wastage entries.
+One row per service day. The full wastage/comps narrative is written as a single string in col E. No per-item splitting, no cost regex, no `extractCost_` helper.
 
 | Column | Header | Source |
 |---|---|---|
 | A | Date | `toDateOnly_(shiftData.date)` |
 | B | Day | `shiftData.dayOfWeek` |
-| C | Week Ending | computed |
-| D | MOD | `shiftData.MOD` |
-| E | Description | parsed from `shiftData.wastage` |
-| F | Estimated Cost | parsed from description (regex) |
+| C | Week Ending | `toDateOnly_(shiftData.weekEnding)` |
+| D | MOD | `shiftData.mod` |
+| E | Notes | `shiftData.wastageComps` (full narrative as one string) |
+| F | Logged At | `new Date()` |
 
 ### Write pattern
 
-Wastage descriptions often contain multiple items separated by newlines or commas. The write code splits the narrative and writes one row per item:
+Single-row append per shift. Real inline block (IntegrationHubWaratah.js:583-590):
 
 ```javascript
-function logToWastageComps_(shiftData) {
-  if (!shiftData.wastage || shiftData.wastage === 'None') return { written: 0 };
-
-  const items = shiftData.wastage
-    .split(/[\n,]/)
-    .map(s => s.trim())
-    .filter(s => s.length > 0);
-
-  const weekEnding = computeWeekEnding_(shiftData.date);
-  const rows = items.map(item => [
-    toDateOnly_(shiftData.date),
-    shiftData.dayOfWeek,
-    toDateOnly_(weekEnding),
-    shiftData.MOD,
-    item,
-    extractCost_(item)
-  ]);
-
-  for (const row of rows) {
-    if (isDuplicateInSheet_(sheet, [row[0], row[4]], 'WASTAGE_COMPS')) continue;
-    sheet.appendRow(row);
-  }
-
-  return { written: rows.length };
-}
+wastageSheet.appendRow([
+  toDateOnly_(shiftData.date),           // A: Date
+  shiftData.dayOfWeek,                   // B: Day
+  toDateOnly_(shiftData.weekEnding),     // C: Week Ending
+  shiftData.mod,                         // D: MOD
+  shiftData.wastageComps,                // E: Notes (full narrative)
+  new Date()                             // F: Logged At
+]);
 ```
+
+Duplicate prevention is inline using `normaliseDateKey_` on Date + MOD (cols 0 + 3).
 
 ---
 
 ## 6. QUALITATIVE_LOG Schema (11 Columns, A-K)
 
-For the five narrative fields, one row per service day.
+One row per service day. There is no Week Ending column in this sheet (unlike NIGHTLY_FINANCIAL and WASTAGE_COMPS). MOD lives at col C; narrative fields run D-J; Logged At at K.
 
 | Column | Header | Source |
 |---|---|---|
 | A | Date | `toDateOnly_(shiftData.date)` |
 | B | Day | `shiftData.dayOfWeek` |
-| C | Week Ending | computed |
-| D | MOD | `shiftData.MOD` |
-| E | Shift Report | `shiftData.generalShiftComments` |
-| F | VIPs | `shiftData.vipsNotes` |
-| G | Good | `shiftData.goodHighlights` |
-| H | Bad | `shiftData.badHighlights` |
-| I | Kitchen | `shiftData.kitchenNotes` |
-| J | Task Count | `shiftData.todos.length` |
+| C | MOD | `shiftData.mod` |
+| D | Shift Summary | `shiftData.generalShiftComments` |
+| E | Guests of Note | `shiftData.guestsOfNote` |
+| F | Good | `shiftData.theGood` |
+| G | Bad | `shiftData.theBad` |
+| H | Kitchen | `shiftData.kitchenNotes` |
+| I | Maintenance | `shiftData.maintenanceIssues` |
+| J | RSA/Incidents | `shiftData.rsaIncidents` |
 | K | Logged At | `new Date()` |
 
 **Sheet name alias note:** historical code and docs sometimes call this sheet `QUALITATIVE_NOTES` rather than `QUALITATIVE_LOG`. The canonical name in current code is `QUALITATIVE_LOG`. If a deployment created the sheet under the alternative name, rename it before writes resume.
@@ -247,32 +199,18 @@ For the five narrative fields, one row per service day.
 
 ## 7. Duplicate Prevention
 
-All four sheets use a shared helper for duplicate detection:
+There is no standalone `isDuplicateInSheet_` helper. Each warehouse write block inside `logToDataWarehouse_` performs duplicate detection inline using `normaliseDateKey_(v)` (helper at IntegrationHubWaratah.js:404) to normalise the date portion of the key. Existing keys are pre-loaded into a `Set` for O(1) lookup before any append.
 
-```javascript
-function isDuplicateInSheet_(sheet, key, sheetName) {
-  const allData = sheet.getDataRange().getValues();
-  const composite = Array.isArray(key) ? key.join('|') : key;
+Per-sheet duplicate keys (per inline code at lines 469-478, 539-546, 573-581, 600-608):
 
-  // Each sheet has its own duplicate key columns:
-  const keyCols = {
-    NIGHTLY_FINANCIAL: [0],            // Date only
-    OPERATIONAL_EVENTS: [0, 4, 5],     // Date + Event Type + Description
-    WASTAGE_COMPS: [0, 4],             // Date + Description
-    QUALITATIVE_LOG: [0]               // Date only
-  };
+| Sheet | Key columns | Key form |
+|---|---|---|
+| NIGHTLY_FINANCIAL | Date + MOD (cols 0 + 3) | `normaliseDateKey_(date) + '|' + mod` |
+| OPERATIONAL_EVENTS | Date + Description (cols 0 + 3) | `normaliseDateKey_(date) + '|' + description` |
+| WASTAGE_COMPS | Date + MOD (cols 0 + 3) | `normaliseDateKey_(date) + '|' + mod` |
+| QUALITATIVE_LOG | Date + MOD (cols 0 + 2) | `normaliseDateKey_(date) + '|' + mod` |
 
-  const cols = keyCols[sheetName] || [0];
-  for (let i = 1; i < allData.length; i++) {
-    const row = allData[i];
-    const rowKey = cols.map(c => row[c]).join('|');
-    if (rowKey === composite) return true;
-  }
-  return false;
-}
-```
-
-The composite key strategy lets us re-run a write idempotently without creating duplicates. This is what makes the Monday 2am backfill safe to re-run.
+The composite key strategy lets a write re-run idempotently without creating duplicates. This is what makes the Monday 8am backfill safe to re-run.
 
 ---
 
@@ -282,45 +220,38 @@ The Australia locale fix on April 2, 2026 set the spreadsheet to `Australia/Sydn
 
 ### `parseCellDate_(value)`
 
-Used when reading raw cell values that might be Date objects, strings, or numbers:
+Used when reading raw cell values that might be Date objects, strings, or numbers. Real body at IntegrationHubWaratah.js:170-181:
 
 ```javascript
 function parseCellDate_(value) {
   if (value instanceof Date) return value;
-  if (typeof value === 'number') {
-    // Excel/Sheets serial date
-    return new Date((value - 25569) * 86400 * 1000);
+  if (typeof value === 'number') return new Date(value);
+  var str = String(value || '').trim();
+  if (!str) return new Date('');
+  try {
+    return Utilities.parseDate(str, 'Australia/Sydney', 'dd/MM/yyyy');
+  } catch (e) {
+    Logger.log('parseCellDate_: could not parse "' + str + '"; falling back to invalid date');
+    return new Date('');
   }
-  if (typeof value === 'string') {
-    // Try dd/mm/yyyy first
-    const match = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-    if (match) {
-      return new Date(parseInt(match[3]), parseInt(match[2]) - 1, parseInt(match[1]));
-    }
-    // Last resort, throw rather than use US default
-    const fallback = new Date('');  // intentionally invalid
-    Logger.log(`parseCellDate_: ambiguous date string ${value}, manual review needed`);
-    return fallback;
-  }
-  throw new Error(`Cannot parse date: ${typeof value} ${value}`);
 }
 ```
 
-Note the deliberate `new Date('')` (invalid) fallback. Earlier code used `new Date(str)` which would parse US format and silently mis-interpret dd/mm dates. The new behaviour is to fail loud rather than write a wrong date.
+Note the deliberate `new Date('')` (invalid) fallback on parse exception. Earlier code used `new Date(str)` which would parse US format and silently mis-interpret dd/mm dates. The new behaviour is to fail loud rather than write a wrong date.
 
 ### `toDateOnly_(d)`
 
-Used immediately before any warehouse appendRow to strip time components:
+Used immediately before any warehouse appendRow to strip time components. Real body at IntegrationHubWaratah.js:191-195:
 
 ```javascript
 function toDateOnly_(d) {
-  if (!d || isNaN(d.getTime())) {
-    Logger.log('toDateOnly_: invalid date input');
-    return null;
-  }
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  if (!d || isNaN(d.getTime())) return null;
+  var s = Utilities.formatDate(d, 'Australia/Sydney', 'yyyy-MM-dd');
+  return Utilities.parseDate(s, 'Australia/Sydney', 'yyyy-MM-dd');
 }
 ```
+
+The round-trip via `Utilities.formatDate` + `Utilities.parseDate` returns a Date at midnight Sydney via locale-aware parsing, rather than a naïve Date constructor.
 
 Without this, a Date object with a time component (`2026-04-01 19:00:00`) writes the time too, and downstream analytics sometimes interpret the date wrong (April 1 19:00 → "Sunday" because Sunday in some timezones starts at 21:00 the previous day).
 
@@ -330,37 +261,42 @@ Without this, a Date object with a time component (`2026-04-01 19:00:00`) writes
 
 ## 9. Backfill Flow
 
-`runWeeklyBackfill_()` runs Monday at 2am. It re-pushes any night's data that did not land in the warehouse during the original send.
+`runWeeklyBackfill_()` runs Monday at 8am. It re-pushes any night's data that did not land in the warehouse during the original send.
+
+Real implementation (IntegrationHubWaratah.js:1111-1189) operates on the active spreadsheet (the shift report itself, not an external file), iterates the uppercase day names, uses `startsWith` to match tabs that have been renamed by rollover (for example `WEDNESDAY 21/05/2026`), pre-loads existing warehouse keys into a `Set` for fast dedup, and passes `skipLock=true` to the inner `logToDataWarehouse_` call:
 
 ```javascript
+// Illustrative excerpt; see IntegrationHubWaratah.js:1111-1189 for full body
 function runWeeklyBackfill_() {
-  const shiftReportId = getProp_('WARATAH_SHIFT_REPORT_CURRENT_ID');
-  const shiftReport = SpreadsheetApp.openById(shiftReportId);
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var dayNames = ['WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
+  var sheets = ss.getSheets();
 
-  const dayTabs = ['Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  // Pre-load existing keys for dup-skip
+  // ...build Set of existing Date+MOD keys from NIGHTLY_FINANCIAL...
 
-  for (const tabName of dayTabs) {
-    const sheet = shiftReport.getSheetByName(tabName);
-    const shiftData = extractShiftData_(sheet);
+  for (var d = 0; d < dayNames.length; d++) {
+    var dayUpper = dayNames[d];
+    var sheet = sheets.find(function (s) {
+      return s.getName().toUpperCase().startsWith(dayUpper);
+    });
+    if (!sheet) continue;
 
-    if (!shiftData.date || !shiftData.MOD) {
-      Logger.log(`Skipping ${tabName}: no data`);
-      continue;
-    }
+    var shiftData = extractShiftData_(sheet);
+    if (!shiftData.date || !shiftData.mod) continue;
 
     try {
-      logToDataWarehouse_(shiftData);
-      Logger.log(`Backfilled ${tabName}: ${shiftData.date}`);
+      logToDataWarehouse_(shiftData, getWarehouseConfig_(), /*skipLock=*/true);
     } catch (e) {
-      Logger.log(`Backfill error for ${tabName}: ${e.message}`);
+      Logger.log('Backfill error for ' + sheet.getName() + ': ' + e.message);
     }
   }
 }
 ```
 
-The duplicate prevention in `logToDataWarehouse_` is what makes this safe to re-run. Nights already in the warehouse are skipped silently; only missing rows are written.
+The duplicate prevention inside `logToDataWarehouse_` is what makes this safe to re-run. Nights already in the warehouse are skipped silently; only missing rows are written.
 
-The Mon 2am timing is before the rollover (Mon 9pm) so the spreadsheet still contains last week's data when backfill runs.
+The Mon 8am timing is well before the rollover (Mon 9pm) so the spreadsheet still contains last week's data when backfill runs.
 
 ---
 

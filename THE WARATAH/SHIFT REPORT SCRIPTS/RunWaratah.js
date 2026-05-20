@@ -35,7 +35,7 @@ const VALID_DAY_PREFIXES = ["WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUND
  *
  * Only fields the SCRIPT needs to READ or CLEAR are defined here.
  *
- * Layout version: new sheet (live May 2026) — 36 fields.
+ * Layout version: new sheet (live May 2026) — 39 fields.
  * Named range convention: {DAY}_SR_{PascalCaseSuffix}
  *   e.g. WEDNESDAY_SR_FohStaff, WEDNESDAY_SR_CashCounted
  */

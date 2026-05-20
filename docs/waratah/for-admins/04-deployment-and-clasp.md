@@ -32,7 +32,7 @@ It is purely a code upload. Side effects (triggers being destroyed, configuratio
 
 Before any `clasp push` to production:
 
-1. **Test on a copy.** Make a copy of the production spreadsheet, change `WARATAH_SHIFT_REPORT_CURRENT_ID` Script Property in a separate Apps Script project to point at the copy, and verify your changes there first.
+1. **Test on a copy.** Make a copy of the production spreadsheet, then in a separate Apps Script project set both `WARATAH_SHIFT_REPORT_CURRENT_ID` and `WARATAH_WORKING_FILE_ID` to the copy's ID (and `WARATAH_SHEET_ID` if that fallback property is in use). Verify your changes there first.
 2. **Confirm relevant Script Properties.** If the new code introduces new properties, document them in [`01-configuration-reference.md`](01-configuration-reference.md) and add them to `_SETUP_ScriptProperties.js`.
 3. **Note the current triggers.** Apps Script may destroy triggers on push. Take a screenshot of the current Triggers panel for both projects so you know what to reinstall.
 4. **Confirm you are on the correct git branch.** Per the project convention: `waratah/develop` for Waratah work, `sakura/develop` for Sakura.
@@ -87,32 +87,32 @@ In order:
 2. Open one or two of the files you just changed. Confirm the new code is present.
 3. Save (Cmd+S). This is sometimes necessary even after clasp push to force a fresh permission grant.
 
-### Step 2: Reinstall triggers (Shift Report project)
+### Step 2: Install triggers (Shift Report project)
 
 Expected triggers for the Shift Report project:
 
-| Trigger | Schedule | Handler function | Reinstall menu item |
+| Trigger | Schedule | Handler function | Menu path to install |
 |---|---|---|---|
-| Weekly Rollover | Mon 9pm | `performWeeklyRollover` | Admin Tools > Reinstall Weekly Rollover Trigger |
-| Revenue Digest | Mon 4pm | `sendWeeklyDigest_Waratah` | Admin Tools > Reinstall Revenue Digest Trigger |
-| Weekly Backfill | Mon 2am | `backfillEntireWeekToWarehouse` | Admin Tools > Reinstall Weekly Backfill Trigger |
+| Weekly Rollover | Mon 9pm | `runWaratahWeeklyRollover` | `Waratah Tools > Admin Tools > Setup & Utilities > Setup All SR Triggers` OR `Waratah Tools > Admin Tools > Weekly Reports > Weekly Rollover (In-Place) > Create Rollover Trigger (Mon 9pm)` |
+| Weekly Backfill | Mon 8am | `runWeeklyBackfill_` | `Setup All SR Triggers` OR `Waratah Tools > Admin Tools > Data Warehouse > Setup Weekly Backfill Trigger` |
+| Revenue Digest | Mon 4pm | `sendWeeklyRevenueDigest_Waratah` | `Setup All SR Triggers` OR `Waratah Tools > Admin Tools > Weekly Digest > Setup Monday Digest Trigger` |
 
-For each, run the menu item. Confirm the trigger appears in the Triggers panel afterwards.
+The quickest path is the single `Setup All SR Triggers` menu item, which installs all three at once. Confirm each trigger appears in the Triggers panel afterwards.
 
-### Step 3: Reinstall triggers (Task Management project)
+### Step 3: Install triggers (Task Management project)
 
 Expected triggers for the Task Management project:
 
-| Trigger | Schedule | Handler function | Reinstall menu item |
+| Trigger | Schedule | Handler function | Menu path to install |
 |---|---|---|---|
-| Bi-hourly status cleanup | Every 2 hours, business hours | `runStatusCleanup` | Admin Tools > Reinstall Bi-Hourly Cleanup Trigger |
-| Daily 6am staff workload refresh | Daily 6am | `refreshStaffWorkload` | Admin Tools > Reinstall Daily Workload Trigger |
-| Daily 7am task maintenance | Daily 7am | `runDailyTaskMaintenance` | Admin Tools > Reinstall Daily Task Trigger |
-| Mon 6am weekly archive | Mon 6am | `archiveCompletedTasks` | Admin Tools > Reinstall Weekly Archive Trigger |
-| Mon 10am weekly summary | Mon 10am | `sendWeeklyActiveTaskSummary` | Admin Tools > Reinstall Weekly Summary Trigger |
-| On-edit handler | On any cell edit | `onEdit` | Installed automatically (simple trigger), no menu action |
+| Bi-hourly status cleanup | Every 2 hours | `cleanupAndSortMasterActionables` | `Task Management > 🔐 Admin Tools > 🔧 Setup Triggers > Create Bi-Hourly Cleanup Trigger (Every 2hrs)` |
+| Daily 6am staff workload | Daily 6am | `runScheduledStaffWorkload` | `Task Management > 🔐 Admin Tools > 🔧 Setup Triggers > Create Daily Staff Workload Trigger (6am)` |
+| Daily task maintenance | Daily 6am (fires within the 6 to 7am window) | `runDailyTaskMaintenance` | Not exposed in the current menu; install from the Apps Script editor by running `createDailyMaintenanceTrigger()` |
+| Mon 6am weekly archive | Mon 6am | `runScheduledArchive` | `Task Management > 🔐 Admin Tools > 🔧 Setup Triggers > Create Weekly Archive Trigger (Mon 6am)` |
+| Mon 10am weekly summary | Mon 10am | `sendWeeklyActiveTasksSummary` | `Task Management > 🔐 Admin Tools > 🔧 Setup Triggers > Create Weekly Summary Trigger (Mon 10am)` |
+| On-edit auto-sort | On any cell edit | `onTaskSheetEditWithAutoSort` | `Task Management > 🔐 Admin Tools > 🔧 Setup Triggers > Create Edit Trigger (Auto-sort)` (installable trigger, not a simple trigger) |
 
-Run each reinstall menu item. Verify the Triggers panel.
+Run each install menu item. Five of the six are exposed in the Setup Triggers submenu; `createDailyMaintenanceTrigger()` must be run from the Apps Script editor. Verify each appears in the Triggers panel.
 
 ### Step 4: Verify Script Properties survive
 
@@ -124,7 +124,7 @@ Apps Script does not destroy Script Properties on `clasp push`, but it is worth 
 
 ### Step 5: Smoke test
 
-1. From the shift report spreadsheet, **Waratah Tools > Send TEST Report**. This exercises the full nightly pipeline (read data, build Slack message, post to TEST channel, send email to TEST recipient if configured, write to warehouse, push tasks).
+1. From the shift report spreadsheet, **Waratah Tools > Daily Reports > Export & Email (TEST to me)**. This exercises the full nightly pipeline but routes outputs to TEST destinations: posts to the TEST Slack channel and emails the TEST recipient (Evan by default). It does NOT write to the warehouse or push tasks.
 2. Confirm TEST Slack message arrives.
 3. Confirm warehouse received the test write (open the warehouse spreadsheet, look for today's TEST row).
 4. Confirm Task Management received the test tasks (open Task Management, filter by Source = Shift Report and Date Created = today).
@@ -155,7 +155,7 @@ If the trigger setup function itself is broken in the new code, you need to fix 
 1. Have a manager try the send again (might be transient).
 2. Check the Executions panel for the failed call. Read the error.
 3. If the error is in code you just pushed, you have two options:
-   - **Quick rollback:** `clasp pull` an older commit's code from local git history, then `clasp push`. The Apps Script project reverts. Effective within minutes.
+   - **Quick rollback:** Check out the previous commit from local git (`git checkout <previous-commit-sha>` or `git revert HEAD`), then `clasp push` to deploy the older code. Note: `clasp pull` would pull from Google to local, which is the wrong direction for a rollback.
    - **Hotfix:** Identify the bug, fix locally, `clasp push` again.
 
 Document the incident and the fix in your change log.
@@ -202,8 +202,8 @@ This keeps the two venue branches from drifting on shared infrastructure files. 
 | Pre-deploy notes | Snapshot current triggers, confirm Script Properties unchanged | Yes |
 | `clasp push` (Shift Report) | From SHIFT REPORT SCRIPTS directory | Yes if SR files changed |
 | `clasp push` (Task Management) | From TASK MANAGEMENT SCRIPTS directory | Yes if TM files changed |
-| Reinstall SR triggers | 3 triggers via menu | Yes |
-| Reinstall TM triggers | 5 triggers via menu | Yes |
+| Install SR triggers | 3 triggers via menu (`Setup All SR Triggers` installs all three) | Yes |
+| Install TM triggers | 5 triggers via menu plus 1 from the Apps Script editor (`createDailyMaintenanceTrigger()`) | Yes |
 | Verify Script Properties | Both projects | Yes |
 | TEST shift report | Smoke test the full pipeline | Yes |
 | Confirm warehouse + tasks captured | Inspect dest spreadsheets | Yes |

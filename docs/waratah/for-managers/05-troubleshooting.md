@@ -24,7 +24,7 @@ If none of the above describes the symptom, see Section 8 for escalation.
 
 ## 2. The Menu Disappeared
 
-**Symptom:** Open the shift report or Task Management spreadsheet and **The Waratah Tools** menu is not in the menu bar.
+**Symptom:** The shift report spreadsheet's **Waratah Tools** menu, or the Task Management spreadsheet's **Task Management** menu, is missing from the menu bar.
 
 **Why this happens:** The menu is installed by an `onOpen` script that runs every time the spreadsheet is opened. Occasionally Google Apps Script does not run the trigger immediately. Refreshing or reopening usually fixes it.
 
@@ -41,15 +41,15 @@ If none of the above describes the symptom, see Section 8 for escalation.
 
 **Symptom:** Weekly rollover did not happen Monday night. Or Revenue Digest did not post Monday afternoon. Or backfill did not run.
 
-**Why this happens:** As of Phase 1.3 (May 2026), the new code is installed but the time-based triggers may not yet be set up. Some automation needs manual triggering until Evan completes setup. Also, when code is redeployed, existing triggers are sometimes destroyed and need recreation.
+**Why this happens:** Following the May 2026 cutover, the new code is installed but the time-based triggers may not yet be set up. Some automation needs manual triggering until Evan completes setup. Also, when code is redeployed, existing triggers are sometimes destroyed and need recreation.
 
 **What to do (manager-safe):**
 
-1. Confirm with Evan whether the triggers for this venue have been installed yet. Phase 1.3 left them pending.
+1. Confirm with Evan whether the triggers for this venue have been installed yet. The May 2026 cutover left them pending.
 2. While triggers are pending, run the missing automation manually from the menu:
-   - **Waratah Tools > Admin Tools > Run Weekly Rollover Now** for the rollover.
-   - **Waratah Tools > Admin Tools > Run Revenue Digest Now** for the digest.
-   - **Waratah Tools > Admin Tools > Backfill Entire Week to Warehouse** for the backfill.
+   - **Waratah Tools > Admin Tools > Weekly Reports > Weekly Rollover (In-Place) > Run Rollover Now** for the rollover.
+   - **Waratah Tools > Admin Tools > Weekly Digest > Send Revenue Digest (LIVE)** for the digest.
+   - **Waratah Tools > Admin Tools > Data Warehouse > Backfill This Sheet to Warehouse** for a per-sheet backfill (or ask Evan to run `runWeeklyBackfill_` from the Apps Script editor for a full-week backfill).
 3. If you do not have admin password access to the menu items above, contact Evan.
 
 Trigger setup itself is an admin task. See [`/docs/waratah/for-admins/`](../for-admins/) when Phase 3 is published.
@@ -70,7 +70,7 @@ Trigger setup itself is an admin task. See [`/docs/waratah/for-admins/`](../for-
 **What to do:**
 
 1. Check whether other Slack messages are arriving normally in the same channel (any chat, any bot). If Slack itself is down or the channel is broken, that is not a system problem; wait for Slack to recover.
-2. Resend the shift report by running **Waratah Tools > Send Shift Report** again. Re-sending repeats Slack and email; the warehouse write is skipped on duplicates so it is safe.
+2. Resend the shift report by running **Waratah Tools > Daily Reports > Export & Email PDF (LIVE)** again. Re-sending repeats Slack and email; the warehouse write is skipped on duplicates so it is safe.
 3. If Slack is healthy but the resend also fails, the webhook may have expired. This is an admin fix; tell Evan. The webhook lives in Script Properties.
 
 ---
@@ -90,7 +90,7 @@ Trigger setup itself is an admin task. See [`/docs/waratah/for-admins/`](../for-
 
 1. Ask the affected recipient to check their spam folder. Search for "Waratah shift report" or the sender address.
 2. If found in spam, ask them to mark as Not Spam to whitelist future sends.
-3. If not found anywhere, send a TEST report (**Waratah Tools > Send TEST Report**) and check whether the test email arrives in the affected recipient's inbox.
+3. If not found anywhere, send a TEST report (**Waratah Tools > Daily Reports > Export & Email (TEST to me)**) and check whether the test email arrives in your own inbox (TEST mode emails only the running user).
 4. If TEST also does not arrive, ask Evan to verify the recipient's address in `WARATAH_EMAIL_RECIPIENTS` Script Property.
 
 If only some recipients are missing emails while others receive them, that is almost certainly a per-recipient filtering issue, not a system problem.
@@ -99,7 +99,7 @@ If only some recipients are missing emails while others receive them, that is al
 
 ## 6. Rollover Symptom-Spotting
 
-The rollover runs Monday at 9pm and does five things: archives the week's PDF, saves a copy of the spreadsheet to Drive, renames day tabs for the new week, clears manager input cells, posts a Slack confirmation.
+The rollover runs Monday at 9pm and does four things: archives the week's PDF to Drive, saves a copy of the spreadsheet to Drive, renames day tabs for the new week, clears manager input cells. Success is silent; if the rollover fails, an error message is posted to Slack via `notifyError_`.
 
 ### Symptom: I logged in Tuesday morning and tab names show last week's dates
 
@@ -107,8 +107,8 @@ The rollover runs Monday at 9pm and does five things: archives the week's PDF, s
 
 **What to do:**
 
-1. Check the Slack manager channels for a rollover confirmation message. If you do not see one for Monday night, the rollover did not complete.
-2. Tell Evan. The fix is to run the rollover manually with **Waratah Tools > Admin Tools > Run Weekly Rollover Now**. Do not attempt to rename tabs by hand; the rollover script handles it correctly.
+1. Check the Slack manager channels for a rollover error message around Monday 9pm. If an error appeared, the rollover failed.
+2. Tell Evan. The fix is to run the rollover manually with **Waratah Tools > Admin Tools > Weekly Reports > Weekly Rollover (In-Place) > Run Rollover Now**. Do not attempt to rename tabs by hand; the rollover script handles it correctly.
 
 ### Symptom: Tab names rolled correctly but old data is still in the cells
 
@@ -117,7 +117,7 @@ The rollover runs Monday at 9pm and does five things: archives the week's PDF, s
 **What to do:**
 
 1. **Do not type fresh data into the dirty cells.** Tell Evan first.
-2. Evan will run **Waratah Tools > Admin Tools > Clear Manager Inputs (Day)** for each affected tab. This is a destructive admin operation and is restricted.
+2. Evan will re-run the rollover via `runWaratahWeeklyRollover`, or manually clear the affected ranges from the Apps Script editor using `_warClearAllSheetData_`. This is a restricted admin operation.
 
 ### Symptom: A PDF or spreadsheet copy is missing from the Drive archive
 
@@ -129,7 +129,7 @@ The rollover runs Monday at 9pm and does five things: archives the week's PDF, s
 
 ## 7. Don't Insert or Delete Rows on Day Tabs
 
-The Waratah shift report sheets use named ranges to refer to cells. As of May 2026 there are 197 named ranges across the system. The code refers to fields by their named range name (`WEDNESDAY_SR_NetRevenue`), not by row or column number.
+The Waratah shift report sheets use named ranges to refer to cells. Every input field has a named range, and the exact installed count is reported by the `namedRangeHealthCheck_Waratah` diagnostic. The code refers to fields by their named range name (`WEDNESDAY_SR_NetRevenue`), not by row or column number.
 
 **This means:**
 
@@ -152,7 +152,7 @@ The Read Me, Task Management, and Analytics tabs do not use named ranges. You ca
 If none of the above sections resolves your problem, escalate to Evan. When you escalate, send:
 
 1. **What you observed.** "The Slack message did not appear for last night's report." Specific date, channel, recipient.
-2. **What you tried.** "I refreshed the spreadsheet, ran Send Shift Report again. Slack still empty."
+2. **What you tried.** "I refreshed the spreadsheet, ran Export & Email PDF (LIVE) again. Slack still empty."
 3. **A screenshot if visible.** A broken cell, an error dialog, a missing menu item.
 4. **The time you noticed.** This helps narrow down which trigger or send is implicated.
 
@@ -166,13 +166,13 @@ For after-hours emergencies (a Friday or Saturday service-night failure), call r
 
 | Symptom | First check | Likely fix | Manager can do it? |
 |---|---|---|---|
-| Slack message missing | Is Slack itself working? | Re-run Send Shift Report | Yes |
+| Slack message missing | Is Slack itself working? | Re-run Export & Email PDF (LIVE) | Yes |
 | Email missing | Check spam folder | Whitelist sender, or fix recipient list (admin) | Partly |
 | Menu missing | Refresh, reopen | Run `onOpen()` from Apps Script editor | Mostly |
 | Rollover didn't run | Slack confirmation absent? | Run rollover manually (admin password) | No (escalate) |
 | Tasks not in Task Management | Check Task Management spreadsheet | Re-run send (skips warehouse, syncs tasks) | Yes |
 | Cell showing `#REF!` | Did you insert or delete a row? | Cmd+Z immediately | Yes (if quick) |
-| Dropdown missing | Run Reapply Dropdowns and Formatting | Menu action | Yes |
+| Dropdown missing | Open the Task Management spreadsheet; run **Task Management > Admin Tools > Cleanup > Reapply Dropdowns & Formatting** | Menu action (admin password required) | Partly (needs admin password) |
 | Numbers in cells look wrong | Check formula vs manager-input cell | Re-enter the manager input | Yes |
 | Wrong recipient list | Tell Evan | Edit `WARATAH_EMAIL_RECIPIENTS` (admin) | No |
 | Webhook expired | Test report fails to post | Regenerate webhook in Slack, give to Evan | Partly |

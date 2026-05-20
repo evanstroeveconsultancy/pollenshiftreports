@@ -1,6 +1,6 @@
 # SAKURA HOUSE - Deep Dive Architecture
 
-**Last Updated:** April 2, 2026 (File structure updated: NightlyBasicExportSakura.gs deleted, dead functions cleaned up)
+**Last Updated:** May 21, 2026 (Analytics dashboard enhancements; previously Apr 2, 2026: NightlyBasicExportSakura.gs deleted, dead functions cleaned up)
 **Type:** Detailed Technical Documentation
 **Load:** On-demand only (reference material)
 
@@ -19,7 +19,7 @@ SAKURA HOUSE/
 │   ├── NightlyExportSakura.gs    # PDF export, email, Slack, TO-DO aggregation
 │   ├── WeeklyRolloverInPlace.gs  # In-place rollover system
 │   ├── MenuSakura.gs             # Custom menu system
-│   ├── AnalyticsDashboardSakura.gs  # Financial dashboards
+│   ├── AnalyticsDashboardSakura.gs  # Financial dashboards (ANALYTICS + EXECUTIVE_DASHBOARD; new May 2026: DoW Std Dev + sparkline cols, Average Weekly rows 23-25, Extended Trends row 27+, YTD row 36+, Analytics Extensions rows 40+, Executive THIS WEEK vs 13W BASELINE + INSIGHTS block)
 │   ├── TaskIntegrationSakura.gs  # Push TO-DOs to Actionables sheet
 │   ├── WeeklyDigestSakura.gs     # Weekly revenue Slack digest
 │   ├── SlackBlockKitSakuraSR.gs  # Block Kit helper library

@@ -48,10 +48,10 @@ The Waratah system has two separate Apps Script projects with separate Script Pr
 
 | Project | Spreadsheet it owns | Script Properties stored in |
 |---|---|---|
-| Waratah Shift Report (`waratah/develop` clasp project) | Shift report spreadsheet | One set of properties (paths, recipients, webhooks for nightly send) |
-| Waratah Task Management (`waratah/develop` clasp project, separate folder) | Task Management spreadsheet | Different set of properties (escalation, task webhooks, task config) |
+| Waratah Shift Report (Apps Script project bound to the shift report spreadsheet) | Shift report spreadsheet | One set of properties (paths, recipients, webhooks for nightly send) |
+| Waratah Task Management (separate Apps Script project bound to the Master Actionables spreadsheet) | Task Management spreadsheet | Different set of properties (escalation, task webhooks, task config) |
 
-If you are editing a Script Property, **make sure you are in the correct Apps Script editor**. Both projects have a `Script Properties` panel under `Project Settings`. Selecting the wrong project and editing the wrong property is a common Phase 1.3 mistake.
+If you are editing a Script Property, **make sure you are in the correct Apps Script editor**. Both projects have a `Script Properties` panel under `Project Settings`. Selecting the wrong project and editing the wrong property is a common mistake.
 
 The naming convention helps: shift report properties usually have prefixes like `WARATAH_SLACK_WEBHOOK_*`, `WARATAH_EMAIL_*`. Task management properties have prefixes like `TASK_*`, `ESCALATION_*`. See [`01-configuration-reference.md`](01-configuration-reference.md) for the full list.
 

@@ -128,14 +128,17 @@ Check that:
 
 ### ANALYTICS Tab (Operational View)
 
-This week at a glance:
-- Shifts reported this week
-- Total and average revenue
-- Tips breakdown
-- Production amount
-- Day-of-week averages (historical — which days perform best?)
+This week at a glance (rows 3-7), then week-over-week comparison (rows 8-13), then day-of-week averages (rows 15-21) — now includes Std Dev and a 13-week sparkline trend per day so you can see at a glance which days are volatile and whether they are trending up or down.
 
-Week-over-week comparison with % changes.
+Below that, new sections added May 2026:
+- **Average Weekly (All Weeks)** — average revenue and tips per week across all history (rows 23-25)
+- **Extended Trends** — 13-week and 26-week rolling averages, DoW heatmap, YTD totals (rows 27 onwards)
+- **Analytics Extensions** — further analysis that builds automatically:
+  - 4-week moving average
+  - Consistency report: most consistent and most volatile day of the week (by coefficient of variation)
+  - Top 5 and Bottom 5 shifts this month (live, auto-sorted)
+  - Outliers this month: shifts that deviated most from their day-of-week baseline
+  - Recent day-of-week pattern: ↑↓ arrows showing whether each day improved or declined vs its own average
 
 ### EXECUTIVE_DASHBOARD Tab (High-Level View)
 
@@ -143,7 +146,9 @@ Broader trends:
 - Month-to-date snapshot
 - Monthly trends
 - Rolling 4-week comparison
-- Revenue by day breakdown (ranked performance)
+- Revenue by day breakdown (ranked performance) — now includes a Share column showing each day's revenue as a visual bar
+- **This Week vs 13W Baseline** — compares each day's revenue against its 13-week average (new, May 2026)
+- **Insights block** — 4-week trend direction, forecast for next month, best and worst shift this month, and reports filed count (new, May 2026)
 
 ### If Dashboards Look Broken or Blank
 
@@ -159,25 +164,28 @@ This is rare, but if either dashboard looks wrong:
 
 You'll see a completion message when it's done.
 
-### New: Extended Trend Analysis — Automatic Weekly Build
+### Analytics Extensions — Automatic Build
 
-> These are advanced analytics that build automatically as nightly reports arrive. They're designed for managers and owners who want to see deeper patterns in how the restaurant is performing.
+> These are advanced analytics that build automatically when you rebuild dashboards. They're designed for managers and owners who want to see deeper patterns in how the restaurant is performing.
 
 **What's Tracked:**
 - **13-week rolling average** — Medium-term trends. How's revenue trending over the past 3 months?
 - **26-week rolling average** — Long-term trends. Year-over-year comparison (same time last year).
 - **Day-of-week performance heatmap** — Which days consistently perform best? Cells are color-coded (green = best, red = lowest) so you can spot patterns at a glance.
 - **Year-to-date aggregation** — Running total of revenue, tips, and production from January 1 onwards.
+- **Consistency report** — Which day of the week is most predictable? Which is most volatile? Shown as coefficient of variation (CV%) so you know where revenue uncertainty sits.
+- **Top 5 / Bottom 5 shifts this month** — Ranked live. The month's best and worst shifts, with date and revenue amount.
+- **Outliers this month** — Shifts that deviated most from what that day of the week normally does. Useful for spotting unusually good or bad nights.
+- **Recent day-of-week pattern** — ↑↓ arrows for each day showing whether recent performance is tracking above or below that day's long-run average.
 
 **How to View Them:**
 1. Open the **Data Warehouse** spreadsheet
 2. Go to the **ANALYTICS** tab
-3. Scroll down — the extended trends appear as new sections below the basic dashboard
-4. Heatmap shows each day of the week with color-coding for performance
+3. Scroll down past the day-of-week averages — all the extended sections appear below
 
 **When These Update:**
-- Automatically rebuild each week when the first nightly report is sent (usually Monday after first shift)
-- Safe to rebuild anytime — go to **Shift Report > Admin Tools > Integrations & Analytics > Rebuild All Dashboards (Admin)**
+- Rebuild on demand via **Shift Report > Admin Tools > Integrations & Analytics > Rebuild All Dashboards (Admin)**
+- Run after any significant data backfill to refresh all sections
 
 ---
 
@@ -436,7 +444,7 @@ Data fields like revenue, cash, and notes should be empty. Formula fields will s
 ---
 
 **Document Version:** 1.1
-**Last Updated:** April 2, 2026 (Dashboard consolidation)
+**Last Updated:** May 21, 2026 (Analytics dashboard enhancements — new extensions block, DoW Std Dev + Sparkline, Executive INSIGHTS block)
 **For:** Sakura House Managers
 **Technical Review:** gas-code-review-agent
 **Peer Review:** documentation-agent

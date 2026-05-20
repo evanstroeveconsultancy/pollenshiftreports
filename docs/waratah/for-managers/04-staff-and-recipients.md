@@ -8,7 +8,7 @@ For deeper administrative changes (editing Script Properties, regenerating webho
 
 ## 1. Current Staff Roster (May 2026)
 
-The Waratah's active staff allocated in the system right now is 7 named individuals plus 5 role-based options:
+The Waratah's active staff allocated in the system right now is 7 named individuals plus 7 non-individual options (5 team-level plus 2 catch-all):
 
 | Name | Role |
 |---|---|
@@ -55,7 +55,7 @@ If a recipient says they are not receiving emails, first check their spam folder
 
 ## 3. Slack DM Recipients
 
-Personal Slack direct messages (DMs) for nightly shift reports go to six people:
+Personal Slack DM webhooks are used for task-related notifications (the Monday 10am weekly active task summary and BLOCKED-over-14-day escalations). They are not used for the nightly shift report send, which posts to a single channel webhook (`WARATAH_SLACK_WEBHOOK_LIVE`). Six people have a personal DM webhook configured:
 
 | Recipient | Has personal DM? |
 |---|---|
@@ -76,15 +76,16 @@ If a recipient stops receiving DMs, the most common cause is a revoked or expire
 
 ## 4. Slack Channel Posts
 
-Beyond DMs, the system posts the shift report to two manager channels for redundancy. The configured channels and what posts to them:
+The nightly shift report Slack message is posted to a single channel webhook (the LIVE webhook). There is no mirror post to a second channel. Channel-level webhooks used by the system live in Script Properties:
 
-| Channel | What posts | Frequency |
-|---|---|---|
-| `#waratah-shift-reports` | Full nightly Slack Block Kit message | Every LIVE send (Wed to Sun) |
-| `#waratah-management` | Full nightly Slack Block Kit message | Every LIVE send (mirror of above for visibility) |
-| `#waratah-tasks` | Task-related notifications (assignments, blocked task escalations) | As tasks are created, assigned, or escalated |
+| Script Property | Used for |
+|---|---|
+| `WARATAH_SLACK_WEBHOOK_LIVE` | Nightly shift report Block Kit message (LIVE mode) |
+| `WARATAH_SLACK_WEBHOOK_TEST` | Nightly shift report Block Kit message (TEST mode) |
+| `SLACK_MANAGERS_CHANNEL_WEBHOOK` | Managers channel posts (where used by the task system) |
+| `ESCALATION_SLACK_WEBHOOK` | BLOCKED-over-14-day task escalation alerts |
 
-Channel webhooks live in Script Properties (`WARATAH_SLACK_WEBHOOK_PRIMARY`, `WARATAH_SLACK_WEBHOOK_TASKS`, and so on). Changing them requires admin access.
+The specific Slack channel each webhook points at is configured in the Slack workspace, not in code. If you need to know which workspace channel a webhook targets, ask Evan. Changing the webhooks themselves requires admin access.
 
 ---
 
@@ -112,9 +113,9 @@ Tell Evan as soon as you know about a staff change, and follow up the day before
 
 The Staff Allocated column in the Task Management spreadsheet uses a closed-list dropdown. When you click a cell in that column, you see only the names and roles from Section 1 above.
 
-If the dropdown disappears, looks broken, or has the wrong names, run **Waratah Tools > Admin Tools > Reapply Dropdowns and Formatting** in the Task Management spreadsheet. This reasserts every dropdown rule from code. It is non-destructive: it does not change task data, only the validation rules.
+If the dropdown disappears, looks broken, or has the wrong names, open the Task Management spreadsheet and run **Task Management > Admin Tools > Cleanup > Reapply Dropdowns & Formatting** (requires admin password). This reasserts every dropdown rule from code. It is non-destructive: it does not change task data, only the validation rules.
 
-If running Reapply Dropdowns does not fix the issue, the underlying `STAFF_LIST` code likely changed without a refresh. Tell Evan.
+If running Reapply Dropdowns & Formatting does not fix the issue, the underlying `STAFF_LIST` code likely changed without a refresh. Tell Evan.
 
 ---
 
@@ -128,10 +129,12 @@ For a printable quick reference, here is the summary:
 
 **6 Slack DM recipients:** Evan, Cynthia, Adam, Jaiden, Joffy, Nick.
 
-**3 Slack channels for posts:** `#waratah-shift-reports`, `#waratah-management`, `#waratah-tasks`.
+**Channel webhooks (Script Properties):** `WARATAH_SLACK_WEBHOOK_LIVE`, `WARATAH_SLACK_WEBHOOK_TEST`, `SLACK_MANAGERS_CHANNEL_WEBHOOK`, `ESCALATION_SLACK_WEBHOOK`.
 
-**5 role-based assignees:** Bar Team, Kitchen Team, FOH Team, General Management, Marketing Explicit.
+**5 team-level assignees:** Bar Team, Kitchen Team, FOH Team, General Management, Marketing Explicit.
 
 **2 catch-all assignees:** Contractor, All.
+
+**Total non-individual assignees:** 7 (5 team-level plus 2 catch-all), matching Section 1.
 
 If you spot anything in this list that is wrong or out of date, tell Evan.

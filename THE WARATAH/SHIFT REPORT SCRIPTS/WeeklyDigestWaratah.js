@@ -93,9 +93,9 @@ function computeWeeklyStats_Waratah_(warehouseId) {
 
   const sum = function(arr, col) { return arr.reduce(function(acc, r) { return acc + (parseFloat(r[col]) || 0); }, 0); };
 
-  const thisRevenue = sum(thisWeek, 5);   // col F = Net Revenue (index 5 in new 22-col schema)
+  const thisRevenue = sum(thisWeek, 5);   // col F = Net Revenue (index 5 in 25-col schema)
   const lastRevenue = sum(lastWeek, 5);
-  const thisTips    = sum(thisWeek, 20);  // col U = Total Tips (index 20 in new 22-col schema)
+  const thisTips    = sum(thisWeek, 20);  // col U = Total Tips (index 20 in 25-col schema)
   const lastTips    = sum(lastWeek, 20);
 
   const revChange = lastRevenue > 0
@@ -167,7 +167,7 @@ function buildWeeklyDigestBlocks_Waratah_(stats) {
 }
 
 /**
- * Install a Monday morning trigger for the weekly digest.
+ * Install a Monday 4pm trigger for the weekly digest.
  * Safe to re-run — removes any existing digest trigger first.
  */
 function setupWeeklyDigestTrigger_Waratah() {
@@ -178,13 +178,13 @@ function setupWeeklyDigestTrigger_Waratah() {
   ScriptApp.newTrigger('sendWeeklyRevenueDigest_Waratah')
     .timeBased()
     .onWeekDay(ScriptApp.WeekDay.MONDAY)
-    .atHour(9)
+    .atHour(16)
     .create();
 
   try {
     SpreadsheetApp.getUi().alert(
       'Trigger Installed',
-      'Weekly revenue digest will be sent every Monday at 9am.\n\nTo remove: Apps Script editor → Triggers → delete.',
+      'Weekly revenue digest will be sent every Monday at 4pm.\n\nTo remove: Apps Script editor → Triggers → delete.',
       SpreadsheetApp.getUi().ButtonSet.OK
     );
   } catch (e) { Logger.log('UI alert skipped — trigger context'); }

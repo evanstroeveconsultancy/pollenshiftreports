@@ -8,8 +8,8 @@ The Waratah system runs across two Apps Script projects:
 
 | Project | What it powers | Properties stored |
 |---|---|---|
-| **Shift Report project** | The shift report spreadsheet (nightly send, weekly rollover, dashboards, warehouse writes) | 22 properties (21 standard + 1 optional) |
-| **Task Management project** | The Task Management spreadsheet (task tracking, dashboard, escalations) | 6 properties (all shared with Shift Report project) |
+| **Shift Report project** | The shift report spreadsheet (nightly send, weekly rollover, dashboards, warehouse writes) | 20 written by `setupScriptProperties()` (18 required + 2 default AI Insights); plus 3 optional manually-set properties = up to 23 total |
+| **Task Management project** | The Task Management spreadsheet (task tracking, dashboard, escalations) | 6 properties (overlapping with Shift Report project; see Section 8 for which are functionally dual-read) |
 
 The two projects are separate Apps Script bundles with their own Script Properties stores. Some properties exist in both projects and must be kept in sync.
 
@@ -26,11 +26,11 @@ The two projects are separate Apps Script bundles with their own Script Properti
 
 After saving, the new value takes effect immediately on the next code execution. You do not need to redeploy or restart anything.
 
-**Two-project caution:** if you are editing a property that exists in BOTH projects (see Section 8), edit BOTH copies in the same session. Forgetting one is the most common Phase 1.3 configuration drift.
+**Two-project caution:** if you are editing a property that exists in BOTH projects (see Section 8), edit BOTH copies in the same session for hygiene. Note that only `MENU_PASSWORD` and `TASK_MANAGEMENT_SPREADSHEET_ID` are functionally read by both projects at runtime; the others are stored in the Shift Report project for symmetry only.
 
 ---
 
-## 2. Shift Report Project Properties (21 + 1 optional)
+## 2. Shift Report Project Properties (20 written by setup, plus optional)
 
 ### Venue and Access
 
@@ -43,10 +43,10 @@ After saving, the new value takes effect immediately on the next code execution.
 
 | Property | Format | Required | What it does |
 |---|---|---|---|
-| `WARATAH_SLACK_WEBHOOK_LIVE` | Slack incoming webhook URL | Yes | Where LIVE shift report Slack messages go. Test by sending a LIVE report. |
-| `WARATAH_SLACK_WEBHOOK_TEST` | Slack incoming webhook URL | Yes | Where TEST shift report messages go. A separate channel for safe testing. |
-| `SLACK_MANAGERS_CHANNEL_WEBHOOK` | Slack incoming webhook URL | Yes | Managers channel for rollover confirmations, digest posts, integration alerts. Also stored in Task Management project. |
-| `SLACK_DM_WEBHOOKS` | JSON object, `{"StaffName": "webhook_url", ...}` | Yes | Personal Slack DMs per staff member. Six recipients currently configured (see [`02-staff-and-access-management.md`](02-staff-and-access-management.md) Section 4). Also stored in Task Management project. |
+| `WARATAH_SLACK_WEBHOOK_LIVE` | Slack incoming webhook URL | Yes | Where LIVE shift report Slack messages go. Test by sending a LIVE report. Note: read dynamically as `${VENUE_NAME}_SLACK_WEBHOOK_LIVE` (`NightlyExportWaratah.js:32-53`); changing `VENUE_NAME` would change the expected key name. |
+| `WARATAH_SLACK_WEBHOOK_TEST` | Slack incoming webhook URL | Yes | Where TEST shift report messages go. A separate channel for safe testing. Read dynamically (see note above). |
+| `SLACK_MANAGERS_CHANNEL_WEBHOOK` | Slack incoming webhook URL | Yes | Managers channel for task escalations and related alerts. Stored in the Shift Report project for symmetry, but read only by the Task Management project at runtime. |
+| `SLACK_DM_WEBHOOKS` | JSON object, `{"StaffName": "webhook_url", ...}` | Yes | Personal Slack DMs per staff member, used by the Task Management project. Six recipients currently configured (see [`02-staff-and-access-management.md`](02-staff-and-access-management.md) Section 4). Stored in the Shift Report project for symmetry only; the Shift Report nightly pipeline does not read this property. |
 
 ### Email Recipients
 
@@ -61,9 +61,10 @@ After saving, the new value takes effect immediately on the next code execution.
 | Property | Format | Required | What it does |
 |---|---|---|---|
 | `WARATAH_SHIFT_REPORT_CURRENT_ID` | Google Sheets file ID | Yes | The shift report spreadsheet itself. Used by setup and verification routines. |
-| `WARATAH_WORKING_FILE_ID` | Google Sheets file ID | Yes | Alias for the current working spreadsheet. Usually identical to `WARATAH_SHIFT_REPORT_CURRENT_ID`. |
-| `WARATAH_TASK_MANAGEMENT_ID` | Google Sheets file ID | Yes | The Task Management spreadsheet. Used when the Shift Report project syncs tasks. |
-| `TASK_MANAGEMENT_SPREADSHEET_ID` | Google Sheets file ID | Yes | Alias for `WARATAH_TASK_MANAGEMENT_ID`, used by the EnhancedTaskManagement code path. Same value. |
+| `WARATAH_WORKING_FILE_ID` | Google Sheets file ID | Yes | Used by the weekly rollover as a safety guard comparing against the active spreadsheet ID. Usually identical to `WARATAH_SHIFT_REPORT_CURRENT_ID`. |
+| `WARATAH_SHEET_ID` | Google Sheets file ID | Optional fallback | Recognised by `IntegrationHubWaratah.js:31` as a fallback for `WARATAH_SHIFT_REPORT_CURRENT_ID`. Keep in sync if set. |
+| `WARATAH_TASK_MANAGEMENT_ID` | Google Sheets file ID | Yes | The Task Management spreadsheet. Read by `IntegrationHubWaratah.js`. |
+| `TASK_MANAGEMENT_SPREADSHEET_ID` | Google Sheets file ID | Yes | Read by `TaskIntegrationWaratah.js` and the EnhancedTaskManagement code path. These are independent properties read by different files; admins must set them to identical values. |
 | `WARATAH_DATA_WAREHOUSE_ID` | Google Sheets file ID | Yes | Central data warehouse spreadsheet for nightly numbers. |
 | `WARATAH_CASH_RECON_FOLDER_ID` | Google Drive folder ID | Yes | Drive folder holding cash reconciliation copies. |
 | `ARCHIVE_ROOT_FOLDER_ID` | Google Drive folder ID | Yes | Root of weekly rollover archive structure (subfolders per week). |
@@ -72,16 +73,16 @@ After saving, the new value takes effect immediately on the next code execution.
 
 | Property | Format | Required | What it does |
 |---|---|---|---|
-| `ESCALATION_EMAIL` | Email address (string) | Yes | Where BLOCKED-for-14-days task escalations are emailed. Usually Evan. Also stored in Task Management project. |
-| `ESCALATION_SLACK_WEBHOOK` | Slack incoming webhook URL | Yes | Where escalations post to Slack. Usually the manager channel or Evan's DM. Also stored in Task Management project. |
+| `ESCALATION_EMAIL` | Email address (string) | Yes | Where BLOCKED-for-14-days task escalations are emailed. Usually Evan. Read by the Task Management project; the Shift Report project stores it for symmetry only. |
+| `ESCALATION_SLACK_WEBHOOK` | Slack incoming webhook URL | Yes | Where escalations post to Slack. Usually the manager channel or Evan's DM. Read by the Task Management project; the Shift Report project stores it for symmetry only. |
 
 ### AI Insights (optional but recommended)
 
 | Property | Format | Required | What it does |
 |---|---|---|---|
 | `ANTHROPIC_API_KEY` | API key string, starts with `sk-ant-` | Optional | Enables Claude-powered shift summaries in the Slack message. If unset, a simpler generic summary is used. Set via `setAnthropicApiKey_Waratah()` menu item, never hard-coded. |
-| `AI_INSIGHTS_MODE` | String, `"evan_only"` or `"live"` | Yes (default `evan_only`) | Soft-launch routing. `evan_only` sends upgraded AI insights to Evan only; everyone else gets generic summary. `live` sends upgraded insights to everyone. |
-| `AI_INSIGHTS_EVAN_EMAIL` | Email address (string) | Yes | The email address recognised as Evan for the `evan_only` routing mode. |
+| `AI_INSIGHTS_MODE` | String, `"evan_only"` or `"live"` | Optional (defaulted by setup to `evan_only`) | Soft-launch routing. `evan_only` sends upgraded AI insights to Evan only; everyone else gets generic summary. `live` sends upgraded insights to everyone. |
+| `AI_INSIGHTS_EVAN_EMAIL` | Email address (string) | Optional (defaulted by setup) | The email address recognised as Evan for the `evan_only` routing mode. |
 
 ### Sheet Protection (optional, manual)
 
@@ -91,20 +92,20 @@ After saving, the new value takes effect immediately on the next code execution.
 
 ---
 
-## 3. Task Management Project Properties (6, all shared with Shift Report)
+## 3. Task Management Project Properties (6, with overlap into Shift Report)
 
-The Task Management project has its own Script Properties store, but every property in it is also defined in the Shift Report project. **When you change any of these, change both copies.**
+The Task Management project has its own Script Properties store. Six of its properties are also written into the Shift Report project's setup. Of these, only `MENU_PASSWORD` and `TASK_MANAGEMENT_SPREADSHEET_ID` are functionally read by both projects at runtime. The remaining four are stored in the Shift Report project for hygiene and symmetry only; the Shift Report runtime does not read them.
 
-| Property | Format | Required | Also in SR project? |
+| Property | Format | Required | Read by Shift Report runtime? |
 |---|---|---|---|
 | `MENU_PASSWORD` | Plain string | Yes | Yes (must match) |
 | `TASK_MANAGEMENT_SPREADSHEET_ID` | Google Sheets file ID | Yes | Yes (must match) |
-| `SLACK_MANAGERS_CHANNEL_WEBHOOK` | Slack webhook URL | Yes | Yes (must match) |
-| `SLACK_DM_WEBHOOKS` | JSON object | Yes | Yes (must match) |
-| `ESCALATION_EMAIL` | Email address | Yes | Yes (must match) |
-| `ESCALATION_SLACK_WEBHOOK` | Slack webhook URL | Yes | Yes (must match) |
+| `SLACK_MANAGERS_CHANNEL_WEBHOOK` | Slack webhook URL | Yes | No (SR copy is hygiene only) |
+| `SLACK_DM_WEBHOOKS` | JSON object | Yes | No (SR copy is hygiene only) |
+| `ESCALATION_EMAIL` | Email address | Yes | No (SR copy is hygiene only) |
+| `ESCALATION_SLACK_WEBHOOK` | Slack webhook URL | Yes | No (SR copy is hygiene only) |
 
-If the two copies drift (different values in Shift Report project vs Task Management project), the system behaves erratically: tasks created in one project will not appear in the other, escalations may go to two different recipients, DMs may double up or vanish. The dual-update rule is critical.
+Keeping the two copies in sync is still recommended discipline, but a drift on the four hygiene-only properties will not affect Shift Report behaviour. Drift on `MENU_PASSWORD` or `TASK_MANAGEMENT_SPREADSHEET_ID` will: the password may work in one spreadsheet's menus but not the other, and task sync may target the wrong file.
 
 ---
 
@@ -167,7 +168,7 @@ A few formats are easy to get wrong. Use these examples as templates.
 }
 ```
 
-When you store this in Script Properties, paste the whole JSON as a single string. Apps Script's `JSON.parse()` reads it at run time. Common mistakes: stray trailing commas (invalid JSON), unescaped quotes inside names, or accidentally using the JSON array form (`["email1", "email2"]`) which is the older format from before the May 2026 update.
+When you store this in Script Properties, paste the whole JSON as a single string. Apps Script's `JSON.parse()` reads it at run time. Common mistakes: stray trailing commas (invalid JSON), unescaped quotes inside names, or accidentally using a JSON array form (`["email1", "email2"]`). Must be a JSON object mapping email to display-name, not an array.
 
 ### `SLACK_DM_WEBHOOKS` (JSON object)
 
@@ -224,16 +225,16 @@ Some values are load-bearing for the entire system. Changing them breaks things 
 
 ## 8. Properties That Exist in Both Projects
 
-Six properties exist in BOTH the Shift Report and Task Management Apps Script projects. When you update one, you MUST update the other.
+Six properties are written into both projects' Script Properties stores. Only two are functionally read by both projects at runtime; the other four are stored in the Shift Report project for symmetry only.
 
-| Property | Notes on dual update |
-|---|---|
-| `MENU_PASSWORD` | Both projects gate admin menu items with this. If they diverge, the password works in one project's menu but not the other. |
-| `TASK_MANAGEMENT_SPREADSHEET_ID` | Both projects need to know where the task spreadsheet is. |
-| `SLACK_MANAGERS_CHANNEL_WEBHOOK` | Both projects post to this channel (rollover confirmations from SR, task escalations from TM). |
-| `SLACK_DM_WEBHOOKS` | Both projects DM staff (nightly report DMs from SR, task DMs from TM). Format must be identical JSON. |
-| `ESCALATION_EMAIL` | Both projects send escalation alerts. Must match. |
-| `ESCALATION_SLACK_WEBHOOK` | Same as above for Slack. |
+| Property | Read by SR runtime? | Read by TM runtime? | Notes |
+|---|---|---|---|
+| `MENU_PASSWORD` | Yes | Yes | Both projects gate admin menu items with this. If they diverge, the password works in one project's menu but not the other. Functionally dual-read. |
+| `TASK_MANAGEMENT_SPREADSHEET_ID` | Yes | Yes | Both projects need to know where the task spreadsheet is. Functionally dual-read. |
+| `SLACK_MANAGERS_CHANNEL_WEBHOOK` | No | Yes | Stored in SR setup for symmetry; only the Task Management project reads it at runtime. |
+| `SLACK_DM_WEBHOOKS` | No | Yes | Stored in SR setup for symmetry; only the Task Management project reads it at runtime. The Shift Report nightly pipeline does not send personal DMs. |
+| `ESCALATION_EMAIL` | No | Yes | Stored in SR setup for symmetry; only the Task Management project reads it at runtime. |
+| `ESCALATION_SLACK_WEBHOOK` | No | Yes | Stored in SR setup for symmetry; only the Task Management project reads it at runtime. |
 
 **Procedure when changing one:**
 
@@ -241,7 +242,7 @@ Six properties exist in BOTH the Shift Report and Task Management Apps Script pr
 2. Open Task Management spreadsheet, Extensions > Apps Script > Project Settings > Script Properties. Update the same value.
 3. Save in both. Verify by running `verifyScriptProperties()` in each project.
 
-If you only update one, the next code execution that reads from the other project will use the stale value. This is the single most common configuration drift cause.
+For `MENU_PASSWORD` and `TASK_MANAGEMENT_SPREADSHEET_ID`, dual update is required for correct behaviour. For the other four, dual update is hygiene only; drift will not affect Shift Report behaviour, only Task Management.
 
 ---
 
@@ -251,7 +252,7 @@ After any property change, run a verification sequence:
 
 1. In the Shift Report project, run `verifyScriptProperties()`. Logger output lists all required and optional properties with their values (or `NOT SET`).
 2. In the Task Management project, run the equivalent verify function (located in the TM project's setup file).
-3. From the spreadsheet menu, **Waratah Tools > Send TEST Report**. A TEST report exercises Slack live and test webhooks, email recipient list, and warehouse write logic without going live. If it succeeds end-to-end, the configuration is healthy.
+3. From the spreadsheet menu, **Waratah Tools > Daily Reports > Export & Email (TEST to me)**. A TEST report posts to the test Slack channel and emails the test recipient (Evan by default); it does not write to the warehouse or push tasks. If it succeeds end-to-end, the configuration is healthy.
 4. If anything failed, see [`03-advanced-troubleshooting.md`](03-advanced-troubleshooting.md) for diagnosis.
 
 ---

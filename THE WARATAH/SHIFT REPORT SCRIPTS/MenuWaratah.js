@@ -114,7 +114,6 @@ function onOpen() {
       .addSubMenu(ui.createMenu('Daily Reports')
         .addItem('Export & Email PDF (LIVE)', 'exportAndEmailPDF')
         .addItem('Export & Email (TEST to me)', 'exportAndEmailPDF_TestToSelf')
-        .addItem('Send Basic Report', 'sendShiftReportBasic')
         .addSeparator()
         .addItem('Open Export Dashboard', 'openExportDashboard'))
 
@@ -138,7 +137,7 @@ function onOpen() {
           .addItem('Send Revenue Digest (LIVE)', 'pw_sendWeeklyRevenueDigest_Waratah')
           .addItem('Send Revenue Digest (TEST)', 'pw_sendWeeklyRevenueDigest_Waratah_Test')
           .addSeparator()
-          .addItem('Setup Monday Digest Trigger', 'pw_setupWeeklyDigestTrigger_Waratah'))
+          .addItem('Setup Monday 4pm Digest Trigger', 'pw_setupWeeklyDigestTrigger_Waratah'))
 
         .addSeparator()
 
@@ -211,9 +210,9 @@ function onOpen() {
  * Deletes any existing triggers with the same handler names first to avoid duplicates.
  *
  * Triggers installed:
- *   - performWeeklyRollover: Monday 10:00am
- *   - runWeeklyBackfill_:    Monday 8:00am
- *   - sendWeeklyRevenueDigest_Waratah: Wednesday 8:00am (Waratah digest runs Wed)
+ *   - runWaratahWeeklyRollover:        Monday 9:00pm
+ *   - runWeeklyBackfill_:              Monday 8:00am
+ *   - sendWeeklyRevenueDigest_Waratah: Monday 4:00pm
  */
 function setupAllTriggers_Waratah() {
   const handlers = [
@@ -247,11 +246,11 @@ function setupAllTriggers_Waratah() {
     .nearMinute(0)
     .create();
 
-  // Weekly Digest: Wednesday 8:00am (Waratah digest runs on Wednesday)
+  // Weekly Digest: Monday 4:00pm (before the Monday 9:00pm rollover)
   ScriptApp.newTrigger('sendWeeklyRevenueDigest_Waratah')
     .timeBased()
-    .onWeekDay(ScriptApp.WeekDay.WEDNESDAY)
-    .atHour(8)
+    .onWeekDay(ScriptApp.WeekDay.MONDAY)
+    .atHour(16)
     .nearMinute(0)
     .create();
 
@@ -263,7 +262,7 @@ function setupAllTriggers_Waratah() {
       '3 triggers installed successfully:\n\n' +
       '• Weekly Rollover — Monday 9:00pm\n' +
       '• Weekly Backfill — Monday 8:00am\n' +
-      '• Weekly Digest   — Wednesday 8:00am\n\n' +
+      '• Weekly Digest   — Monday 4:00pm\n\n' +
       'Verify in Apps Script Editor → Triggers (clock icon).',
       SpreadsheetApp.getUi().ButtonSet.OK
     );

@@ -64,7 +64,7 @@ Add the new person's name in the named-person section (above `"Bar Team"`). Save
 
 Deploy via `clasp push` (see [`04-deployment-and-clasp.md`](04-deployment-and-clasp.md)).
 
-After deployment, in the Task Management spreadsheet run **Waratah Tools > Admin Tools > Reapply Dropdowns and Formatting**. This refreshes the dropdown to show the new name. Verify by clicking any Staff Allocated cell and confirming the new name appears.
+After deployment, in the Task Management spreadsheet run **Task Management > 🔐 Admin Tools > Cleanup > 🔧 Reapply Dropdowns & Formatting**. This refreshes the dropdown to show the new name. Verify by clicking any Staff Allocated cell and confirming the new name appears.
 
 ### Step 3: Get their personal Slack DM webhook (if applicable)
 
@@ -95,14 +95,16 @@ Open the **Shift Report project** Script Properties:
 
 4. Save.
 
-Repeat exactly the same in the **Task Management project**:
+The Shift Report project copy of `SLACK_DM_WEBHOOKS` is stored for hygiene and symmetry only; the Shift Report runtime does not read it. The Task Management project copy is the one that actually drives task-assigned DMs.
+
+Repeat the same edit in the **Task Management project** (this is the consequential one):
 
 1. Open the Task Management spreadsheet, Extensions > Apps Script > Project Settings > Script Properties.
 2. Find `SLACK_DM_WEBHOOKS`. Click edit.
 3. Paste the identical JSON.
 4. Save.
 
-The dual update is critical. Skipping the Task Management project means task-assigned DMs will not reach the new person, even though nightly report DMs will.
+Skipping the Task Management project means task-assigned DMs will not reach the new person. Skipping the Shift Report project copy is harmless to nightly behaviour but leaves the two projects out of sync, which makes future debugging harder.
 
 ### Step 5: Add to `WARATAH_EMAIL_RECIPIENTS` (if applicable)
 
@@ -122,12 +124,12 @@ This property is **only** in the Shift Report project. The Task Management proje
 
 ### Step 6: Verify
 
-Send a TEST shift report to confirm the new person appears in the Slack DM and email lists:
+The Send TEST shift report flow does not exercise `SLACK_DM_WEBHOOKS`. To verify the new person's personal DM, you must trigger a Task Management dropdown change instead:
 
-1. Open the shift report spreadsheet, navigate to any day tab.
-2. **Waratah Tools > Send TEST Report**.
-3. Confirm the TEST Slack message includes a DM to the new person (their Slack should show the test message).
-4. Confirm the TEST email arrives in the new person's inbox.
+1. Open the Task Management spreadsheet.
+2. Create or assign a test task to the new person (set Staff Allocated to their name and Status to TO DO).
+3. Confirm the new person receives a Slack DM about the assignment.
+4. To verify the email recipient list separately, send a TEST shift report from the shift report spreadsheet (**Waratah Tools > Daily Reports > Export & Email (TEST to me)**). Note: the TEST send delivers a single PDF email to the configured test recipient (Evan by default), not to the full `WARATAH_EMAIL_RECIPIENTS` distribution. To verify a new addition to the LIVE distribution, perform a controlled LIVE send and confirm receipt.
 
 If anything fails, see [`03-advanced-troubleshooting.md`](03-advanced-troubleshooting.md).
 
@@ -161,7 +163,7 @@ Edit `EnhancedTaskManagementWaratah.gs`. Remove the name from the list. Save and
 
 ### Step 5: Reapply dropdowns
 
-Run **Waratah Tools > Admin Tools > Reapply Dropdowns and Formatting**. This refreshes the Task Management dropdown so the removed name disappears from new task entry.
+Run **Task Management > 🔐 Admin Tools > Cleanup > 🔧 Reapply Dropdowns & Formatting**. This refreshes the Task Management dropdown so the removed name disappears from new task entry.
 
 ### Step 6: Slack workspace and Drive cleanup
 
@@ -214,7 +216,7 @@ If multiple webhooks need updating at once (workspace move), do them all in one 
 
 ## 6. Changing the Admin Password
 
-The `MENU_PASSWORD` property gates roughly 17 admin menu items in the shift report spreadsheet and another set in the Task Management spreadsheet. Both projects share the same password.
+The `MENU_PASSWORD` property gates about 20 admin menu items in the shift report spreadsheet and another set in the Task Management spreadsheet. Both projects share the same password.
 
 ### When to change
 
@@ -275,16 +277,16 @@ When a former admin leaves:
 
 ## 8. The Two-Project Dual-Update Rule (Reminder)
 
-Six properties exist in both projects. When you change any of these, change both copies in the same session:
+Six properties are written into both projects' Script Properties stores:
 
-- `MENU_PASSWORD`
-- `TASK_MANAGEMENT_SPREADSHEET_ID`
-- `SLACK_MANAGERS_CHANNEL_WEBHOOK`
-- `SLACK_DM_WEBHOOKS`
-- `ESCALATION_EMAIL`
-- `ESCALATION_SLACK_WEBHOOK`
+- `MENU_PASSWORD` (functionally dual-read; both projects use it)
+- `TASK_MANAGEMENT_SPREADSHEET_ID` (functionally dual-read; both projects use it)
+- `SLACK_MANAGERS_CHANNEL_WEBHOOK` (hygiene only in SR; functionally read only by TM)
+- `SLACK_DM_WEBHOOKS` (hygiene only in SR; functionally read only by TM)
+- `ESCALATION_EMAIL` (hygiene only in SR; functionally read only by TM)
+- `ESCALATION_SLACK_WEBHOOK` (hygiene only in SR; functionally read only by TM)
 
-Set up a habit: when editing one of these, immediately switch tabs to the other project's Script Properties and apply the same change. Do not move on until both are saved.
+For the first two, dual update is required. For the other four, the Task Management copy is the consequential one; the Shift Report copy is hygiene. Best practice is still to keep them in sync. When editing one, immediately switch tabs to the other project's Script Properties and apply the same change.
 
 ---
 

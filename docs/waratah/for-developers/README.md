@@ -13,7 +13,7 @@ This directory holds the canonical technical reference. Each file is exhaustive 
 | File | What it covers | When to read |
 |---|---|---|
 | [`01-architecture-and-data-flow.md`](01-architecture-and-data-flow.md) | File structure, code module responsibilities, dependency graph, data flow diagrams, sequence diagrams, key technical rules (sheet.clear vs Range.clearContent, getUi in trigger context), error handling philosophy | Before any non-trivial code change; first read for new developers and AI agents |
-| [`02-cell-reference-and-field-config.md`](02-cell-reference-and-field-config.md) | All 36 fields, 197 named ranges, FIELD_CONFIG structure, named range naming convention, setup-bug procedure, rollover clearables list | When touching sheet layout, named ranges, or FIELD_CONFIG |
+| [`02-cell-reference-and-field-config.md`](02-cell-reference-and-field-config.md) | All 39 fields, 197 named ranges, FIELD_CONFIG structure, named range naming convention, setup-bug procedure, rollover clearables list | When touching sheet layout, named ranges, or FIELD_CONFIG |
 | [`03-integration-pipeline.md`](03-integration-pipeline.md) | End-to-end nightly send pipeline: extraction, validation, Slack Block Kit, email, warehouse write, task sync; cash reconciliation flow; error handling per integration | When debugging integration failures or modifying the nightly send |
 | [`04-warehouse-schemas.md`](04-warehouse-schemas.md) | NIGHTLY_FINANCIAL schema, OPERATIONAL_EVENTS, WASTAGE_COMPS, QUALITATIVE_NOTES; duplicate-prevention pattern; date-only helper; backfill flow | When changing warehouse schema, adding columns, or debugging data writes |
 | [`05-rollover-and-triggers.md`](05-rollover-and-triggers.md) | Weekly rollover internals (in-place model), fresh template handling, trigger setup/teardown, formula preservation, archive folder structure, trigger destruction recovery | When changing rollover logic or trigger schedules |
@@ -42,7 +42,7 @@ These appear in detail throughout the developer files. The summary lives here fo
 
 1. **`sheet.clear()` is forbidden.** It destroys formatting, validation, conditional formatting, notes. Use `Range.clearContent()` for ranges, `Sheet.clearContents()` (PLURAL) for sheets. `sheet.clearContent()` (singular) does NOT exist on Sheet objects, only on Range objects. This has burned the project twice (TaskDashboard in both venues). See [`01-architecture-and-data-flow.md`](01-architecture-and-data-flow.md) Section on Key Technical Rules.
 
-2. **`SpreadsheetApp.getUi()` throws in trigger context.** Any function that may run from a time-based trigger must wrap `getUi().alert(...)` calls in try/catch. Pattern: `try { SpreadsheetApp.getUi().alert(...); } catch (e) { Logger.log('UI skipped'); }`. Trigger-eligible: `performWeeklyRollover()`, `runDailyTaskMaintenance()`, all `pw_*` wrappers if called from triggers.
+2. **`SpreadsheetApp.getUi()` throws in trigger context.** Any function that may run from a time-based trigger must wrap `getUi().alert(...)` calls in try/catch. Pattern: `try { SpreadsheetApp.getUi().alert(...); } catch (e) { Logger.log('UI skipped'); }`. Trigger-eligible: `runWaratahWeeklyRollover()`, `runDailyTaskMaintenance()`, all `pw_*` wrappers if called from triggers.
 
 3. **Named ranges are authoritative; cell addresses are fallback.** The code uses `WEDNESDAY_SR_NetRevenue` etc. via FIELD_CONFIG. Hard-coded cell addresses exist as fallback. Do not add new hard-coded cell references in new code; use the FIELD_CONFIG entry instead.
 
