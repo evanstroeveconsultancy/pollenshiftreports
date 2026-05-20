@@ -521,12 +521,13 @@ function buildExecutiveDashboard() {
   // Flags shifts performing above/below their day-of-week 13-week average.
   // Uses MAX(C:C) as "current week" and AVERAGEIFS with TODAY()-91 window.
   row = 36;
-  _sectionHeader_(sheet, row, "THIS WEEK vs 13W BASELINE");
+  applyHairlineSection_(sheet, 'A36', 'THIS WEEK vs 13W BASELINE');
+  applyRowHeight_(sheet, row, 'section');
 
   row = 37;
   const baseHeaders = ["Day", "This Week", "13W DoW Avg", "Diff $", "Diff %"];
   baseHeaders.forEach((h, i) => sheet.getRange(row, i + 1).setValue(h));
-  sheet.getRange(row, 1, 1, baseHeaders.length).setFontWeight("bold").setBackground("#f3f3f3");
+  applyTableHeader_(sheet, 'A37:E37');
 
   const baselineDays = ["Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
   baselineDays.forEach((day, i) => {
@@ -540,12 +541,21 @@ function buildExecutiveDashboard() {
     sheet.getRange(r, 3).setFormula(
       `=IFERROR(AVERAGEIFS(${src}!F:F,${src}!B:B,"${day}",${src}!A:A,">="&TODAY()-91),0)`
     ).setNumberFormat("$#,##0");
-    sheet.getRange(r, 4).setFormula(`=IFERROR(B${r}-C${r},0)`).setNumberFormat("$#,##0;[red]-$#,##0");
-    sheet.getRange(r, 5).setFormula(`=IFERROR(D${r}/C${r},0)`).setNumberFormat("+0.0%;[red]-0.0%");
+    // Delta $ and % — number formats without [red] prefix; delta colour applied below via applyDeltaCell_
+    sheet.getRange(r, 4).setFormula(`=IFERROR(B${r}-C${r},0)`).setNumberFormat("$#,##0;-$#,##0");
+    sheet.getRange(r, 5).setFormula(`=IFERROR(D${r}/C${r},0)`).setNumberFormat("+0.0%;-0.0%");
   });
+  applyTableBody_(sheet, 'A38:E42');
 
-  // Diff %/Diff $ colour-coding handled by the number format strings above
-  // (red for negative); no separate conditional formatting rule needed.
+  // Delta colours baked in at build time — reflect data at the moment of rebuild.
+  // A dashboard rebuild refreshes them. applyDeltaCell_ reads current values.
+  baselineDays.forEach((day, i) => {
+    const r = 38 + i;
+    const diffDollar = sheet.getRange(r, 4).getValue();
+    const diffPct    = sheet.getRange(r, 5).getValue();
+    applyDeltaCell_(sheet, `D${r}`, typeof diffDollar === 'number' ? diffDollar : null);
+    applyDeltaCell_(sheet, `E${r}`, typeof diffPct    === 'number' ? diffPct    : null);
+  });
 
   // ─── SECTION 5: INSIGHTS (right side) ──────────────────────────────
   // Replaces former TOP MOD block. Three sub-sections:
