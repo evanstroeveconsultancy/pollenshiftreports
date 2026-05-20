@@ -912,7 +912,8 @@ function buildExtendedTrends_Waratah(sheet, src) {
 function buildAnalyticsExtensions_Waratah(sheet, src) {
   // ── 4-WEEK MOVING AVERAGE ─────────────────────────────────────────────
   let row = 45;
-  _sectionHeader_(sheet, row, "4-WEEK MOVING AVERAGE");
+  applyHairlineSection_(sheet, 'A45', '4-WEEK MOVING AVERAGE');
+  applyRowHeight_(sheet, row, 'section');
 
   row = 46;
   sheet.getRange(row, 1).setValue("Current 4W MA");
@@ -928,10 +929,13 @@ function buildAnalyticsExtensions_Waratah(sheet, src) {
   sheet.getRange(row, 5).setValue("Change");
   sheet.getRange(row, 6).setFormula(`=IFERROR((B${row}-D${row})/D${row},0)`).setNumberFormat("+0.0%;[red]-0.0%");
 
+  applyTableBody_(sheet, 'A46:F46');
+
   // ── CONSISTENCY ────────────────────────────────────────────────────────
   // DoW Avg in B23:B27, StdDev in H23:H27. CV = StdDev/Avg.
   row = 48;
-  _sectionHeader_(sheet, row, "CONSISTENCY");
+  applyHairlineSection_(sheet, 'A48', 'CONSISTENCY');
+  applyRowHeight_(sheet, row, 'section');
 
   row = 49;
   sheet.getRange(row, 1).setValue("Most Consistent Day");
@@ -944,15 +948,17 @@ function buildAnalyticsExtensions_Waratah(sheet, src) {
   sheet.getRange(row, 2).setFormula(
     `=IFERROR(INDEX(A23:A27,MATCH(MAX(ARRAYFORMULA(IF(B23:B27>0,H23:H27/B23:B27,0))),ARRAYFORMULA(IF(B23:B27>0,H23:H27/B23:B27,0)),0))&" (±"&TEXT(MAX(ARRAYFORMULA(IF(B23:B27>0,H23:H27/B23:B27,0))),"0%")&")","-")`
   );
+  applyTableBody_(sheet, 'A49:B50');
 
   // ── TOP 5 SHIFTS THIS MONTH ────────────────────────────────────────────
   row = 52;
-  _sectionHeader_(sheet, row, "TOP 5 SHIFTS THIS MONTH");
+  applyHairlineSection_(sheet, 'A52', 'TOP 5 SHIFTS THIS MONTH');
+  applyRowHeight_(sheet, row, 'section');
 
   row = 53;
   const shiftHeaders = ["Date", "Day", "MOD", "Revenue"];
   shiftHeaders.forEach((h, i) => sheet.getRange(row, i + 1).setValue(h));
-  sheet.getRange(row, 1, 1, shiftHeaders.length).setFontWeight("bold").setBackground("#f3f3f3");
+  applyTableHeader_(sheet, 'A53:D53');
 
   row = 54;
   sheet.getRange(row, 1).setFormula(
@@ -960,14 +966,18 @@ function buildAnalyticsExtensions_Waratah(sheet, src) {
   );
   sheet.getRange(row, 1, 5, 1).setNumberFormat("dd/MM/yyyy");
   sheet.getRange(row, 4, 5, 1).setNumberFormat("$#,##0");
+  applyTableBody_(sheet, 'A54:D58');
+  // Rank accent: first date column gets good (green) colour to flag top shifts
+  sheet.getRange('A54:A58').setFontWeight('bold').setFontColor(STYLE.colour.good);
 
   // ── BOTTOM 5 SHIFTS THIS MONTH ─────────────────────────────────────────
   row = 60;
-  _sectionHeader_(sheet, row, "BOTTOM 5 SHIFTS THIS MONTH");
+  applyHairlineSection_(sheet, 'A60', 'BOTTOM 5 SHIFTS THIS MONTH');
+  applyRowHeight_(sheet, row, 'section');
 
   row = 61;
   shiftHeaders.forEach((h, i) => sheet.getRange(row, i + 1).setValue(h));
-  sheet.getRange(row, 1, 1, shiftHeaders.length).setFontWeight("bold").setBackground("#f3f3f3");
+  applyTableHeader_(sheet, 'A61:D61');
 
   row = 62;
   sheet.getRange(row, 1).setFormula(
@@ -975,6 +985,9 @@ function buildAnalyticsExtensions_Waratah(sheet, src) {
   );
   sheet.getRange(row, 1, 5, 1).setNumberFormat("dd/MM/yyyy");
   sheet.getRange(row, 4, 5, 1).setNumberFormat("$#,##0");
+  applyTableBody_(sheet, 'A62:D66');
+  // Rank accent: first date column gets bad (terracotta) colour to flag bottom shifts
+  sheet.getRange('A62:A66').setFontWeight('bold').setFontColor(STYLE.colour.bad);
 
   // ── OUTLIERS THIS MONTH (vs DoW 13W Baseline) ──────────────────────────
   // Lists top 5 shifts by absolute % variance from DoW average (A23:B27).
