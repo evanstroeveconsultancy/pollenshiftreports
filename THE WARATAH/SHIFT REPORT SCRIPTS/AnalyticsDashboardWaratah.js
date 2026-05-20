@@ -683,9 +683,7 @@ function buildExecutiveDashboard() {
   }
 
   // ─── FORMATTING ─────────────────────────────────────────────────────
-  for (let c = 1; c <= 7; c++) sheet.setColumnWidth(c, c === 1 ? 160 : 130);
-  for (let c = modCol; c <= modCol + 3; c++) sheet.setColumnWidth(c, 130);
-  sheet.setColumnWidth(modCol + 4, 170); // Share column (col L) — wider for bar+%
+  // Column widths applied via applyColumnWidths_() at top of function.
 
   // Bold labels
   sheet.getRange("A5:A8").setFontWeight("bold");
