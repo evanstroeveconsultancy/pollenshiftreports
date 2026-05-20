@@ -333,48 +333,105 @@ function buildExecutiveDashboard() {
 
   // ─── SECTION 2: CURRENT MONTH SNAPSHOT ──────────────────────────────
   row = 4;
-  _sectionHeader_(sheet, row, "CURRENT MONTH");
+  applyHeroCard_(sheet, 'A4', null, null, 'A4:E8', 'CURRENT MONTH');
+  sheet.getRange('A4:E4').merge();
+  applyRowHeight_(sheet, row, 'section');
 
   row = 5;
   sheet.getRange(row, 1).setValue("Month");
+  sheet.getRange(row, 1).setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.body)
+       .setFontColor(STYLE.colour.inkMuted)
+       .setFontWeight('normal');
   sheet.getRange(row, 2).setFormula('=TEXT(TODAY(),"MMMM YYYY")');
-  sheet.getRange(row, 2).setFontWeight("bold");
+  sheet.getRange(row, 2).setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.body)
+       .setFontColor(STYLE.colour.ink);
 
   row = 6;
   sheet.getRange(row, 1).setValue("Total Revenue");
+  sheet.getRange(row, 1).setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.body)
+       .setFontColor(STYLE.colour.inkMuted)
+       .setFontWeight('normal');
   sheet.getRange(row, 2).setFormula(
     `=IFERROR(SUMPRODUCT((MONTH(${src}!A2:A)=MONTH(TODAY()))*(YEAR(${src}!A2:A)=YEAR(TODAY()))*${src}!F2:F),0)` // F=NetRevenue
   );
-  sheet.getRange(row, 2).setNumberFormat("$#,##0");
+  sheet.getRange(row, 2).setNumberFormat("$#,##0")
+       .setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.hero)
+       .setFontWeight('bold')
+       .setFontColor(STYLE.colour.ink);
+  applyRowHeight_(sheet, row, 'hero');
 
   sheet.getRange(row, 4).setValue("Shifts");
+  sheet.getRange(row, 4).setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.body)
+       .setFontColor(STYLE.colour.inkMuted)
+       .setFontWeight('normal');
   sheet.getRange(row, 5).setFormula(
     `=IFERROR(SUMPRODUCT((MONTH(${src}!A2:A)=MONTH(TODAY()))*(YEAR(${src}!A2:A)=YEAR(TODAY()))*(${src}!A2:A<>"")*1),0)`
   );
+  sheet.getRange(row, 5).setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.metric)
+       .setFontWeight('bold')
+       .setFontColor(STYLE.colour.ink);
 
   row = 7;
   sheet.getRange(row, 1).setValue("Avg Daily Revenue");
+  sheet.getRange(row, 1).setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.body)
+       .setFontColor(STYLE.colour.inkMuted)
+       .setFontWeight('normal');
   sheet.getRange(row, 2).setFormula("=IFERROR(B6/E6,0)");
-  sheet.getRange(row, 2).setNumberFormat("$#,##0");
+  sheet.getRange(row, 2).setNumberFormat("$#,##0")
+       .setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.metric)
+       .setFontWeight('bold')
+       .setFontColor(STYLE.colour.ink);
 
   sheet.getRange(row, 4).setValue("Total Tips");
+  sheet.getRange(row, 4).setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.body)
+       .setFontColor(STYLE.colour.inkMuted)
+       .setFontWeight('normal');
   sheet.getRange(row, 5).setFormula(
     `=IFERROR(SUMPRODUCT((MONTH(${src}!A2:A)=MONTH(TODAY()))*(YEAR(${src}!A2:A)=YEAR(TODAY()))*${src}!U2:U),0)` // U=TotalTips
   );
-  sheet.getRange(row, 5).setNumberFormat("$#,##0");
+  sheet.getRange(row, 5).setNumberFormat("$#,##0")
+       .setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.metric)
+       .setFontWeight('bold')
+       .setFontColor(STYLE.colour.ink);
 
   row = 8;
   sheet.getRange(row, 1).setValue("Total Discounts");
+  sheet.getRange(row, 1).setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.body)
+       .setFontColor(STYLE.colour.inkMuted)
+       .setFontWeight('normal');
   sheet.getRange(row, 2).setFormula(
     `=IFERROR(SUMPRODUCT((MONTH(${src}!A2:A)=MONTH(TODAY()))*(YEAR(${src}!A2:A)=YEAR(TODAY()))*${src}!N2:N),0)` // N=TotalDiscount
   );
-  sheet.getRange(row, 2).setNumberFormat("$#,##0");
+  sheet.getRange(row, 2).setNumberFormat("$#,##0")
+       .setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.metric)
+       .setFontWeight('bold')
+       .setFontColor(STYLE.colour.ink);
 
   sheet.getRange(row, 4).setValue("Total Taxes");
+  sheet.getRange(row, 4).setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.body)
+       .setFontColor(STYLE.colour.inkMuted)
+       .setFontWeight('normal');
   sheet.getRange(row, 5).setFormula(
     `=IFERROR(SUMPRODUCT((MONTH(${src}!A2:A)=MONTH(TODAY()))*(YEAR(${src}!A2:A)=YEAR(TODAY()))*${src}!Q2:Q),0)` // Q=Taxes
   );
-  sheet.getRange(row, 5).setNumberFormat("$#,##0");
+  sheet.getRange(row, 5).setNumberFormat("$#,##0")
+       .setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.metric)
+       .setFontWeight('bold')
+       .setFontColor(STYLE.colour.ink);
 
   // ─── SECTION 3: MONTHLY TREND ──────────────────────────────────────
   row = 10;
