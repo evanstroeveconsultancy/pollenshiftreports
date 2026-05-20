@@ -52,24 +52,40 @@ function buildFinancialDashboard() {
   sheet.clearFormats();
   sheet.clearConditionalFormatRules();
 
+  applyColumnWidths_(sheet);
+
   const src = config.sourceSheet;
   const tz = config.timezone;
-  const now = Utilities.formatDate(new Date(), tz, "dd/MM/yyyy HH:mm");
+  const now = Utilities.formatDate(new Date(), tz, 'd MMM yyyy h:mm a');
 
   // ─── SECTION 1: HEADER ─────────────────────────────────────────────
   let row = 1;
-  sheet.getRange(row, 1).setValue("THE WARATAH — FINANCIAL ANALYTICS");
-  sheet.getRange(row, 1).setFontSize(16).setFontWeight("bold");
-  sheet.getRange(row, 1, 1, 6).merge();
+  sheet.getRange('A1').breakApart();
+  sheet.getRange('A1')
+       .setValue('WARATAH · ANALYTICS DASHBOARD')
+       .setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.metric)
+       .setFontWeight('bold')
+       .setFontColor(STYLE.colour.ink)
+       .setHorizontalAlignment('left')
+       .setVerticalAlignment('middle');
+  sheet.getRange('I1')
+       .setValue('Last updated: ' + now)
+       .setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.label)
+       .setFontColor(STYLE.colour.inkMuted)
+       .setHorizontalAlignment('right')
+       .setVerticalAlignment('middle');
+  applyRowHeight_(sheet, 1, 'section');
 
   row = 2;
-  sheet.getRange(row, 1).setValue(`Dashboard built: ${now}  •  Data refreshes automatically`);
-  sheet.getRange(row, 1).setFontSize(9).setFontColor("#666666").setFontStyle("italic");
-  sheet.getRange(row, 1, 1, 6).merge();
+  sheet.getRange('A2:I2').breakApart().clearContent();
+  applyRowHeight_(sheet, 2, 'spacer');
 
   // ─── SECTION 2: THIS WEEK SNAPSHOT ──────────────────────────────────
   row = 4;
-  _sectionHeader_(sheet, row, "THIS WEEK");
+  applyHeroCard_(sheet, 'A4', null, null, 'A4:F9', 'THIS WEEK');
+  sheet.getRange('A4:F4').merge();
 
   row = 5;
   // Find the most recent week-ending date
@@ -238,20 +254,7 @@ function buildFinancialDashboard() {
   sheet.getRange(7, trendCol, 50, 1).setNumberFormat("dd/MM/yyyy");
 
   // ─── FORMATTING ─────────────────────────────────────────────────────
-  // Column widths
-  sheet.setColumnWidth(1, 160);
-  sheet.setColumnWidth(2, 120);
-  sheet.setColumnWidth(3, 120);
-  sheet.setColumnWidth(4, 160);
-  sheet.setColumnWidth(5, 120);
-  sheet.setColumnWidth(6, 120);
-  sheet.setColumnWidth(7, 80);
-  sheet.setColumnWidth(8, 110); // Std Dev column
-  sheet.setColumnWidth(9, 140); // Sparkline column — wider for visual chart
-  // Trend columns
-  for (let c = trendCol; c <= trendCol + 5; c++) {
-    sheet.setColumnWidth(c, 120);
-  }
+  // Column widths applied via applyColumnWidths_() at top of function.
 
   // Bold labels in column A
   sheet.getRange("A5:A9").setFontWeight("bold");
