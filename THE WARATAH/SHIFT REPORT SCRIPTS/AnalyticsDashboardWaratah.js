@@ -457,12 +457,13 @@ function buildExecutiveDashboard() {
 
   // ─── SECTION 4: ROLLING 4-WEEK COMPARISON ──────────────────────────
   row = 26;
-  _sectionHeader_(sheet, row, "ROLLING 4-WEEK COMPARISON");
+  applyHairlineSection_(sheet, 'A26', 'ROLLING 4-WEEK COMPARISON');
+  applyRowHeight_(sheet, row, 'section');
 
   row = 27;
   const weekCompHeaders = ["", "Week 1 (Latest)", "Week 2", "Week 3", "Week 4"];
   weekCompHeaders.forEach((h, i) => sheet.getRange(row, i + 1).setValue(h));
-  sheet.getRange(row, 1, 1, weekCompHeaders.length).setFontWeight("bold").setBackground("#f3f3f3");
+  applyTableHeader_(sheet, 'A27:E27');
 
   row = 28;
   sheet.getRange(row, 1).setValue("Week Ending");
@@ -516,6 +517,8 @@ function buildExecutiveDashboard() {
   sheet.getRange(row, 3).setFormula("=IFERROR((C29-D29)/D29,0)").setNumberFormat("+0.0%;-0.0%");
   sheet.getRange(row, 4).setFormula("=IFERROR((D29-E29)/E29,0)").setNumberFormat("+0.0%;-0.0%");
   sheet.getRange(row, 5).setValue("—");
+
+  applyTableBody_(sheet, 'A28:E34');
 
   // ─── SECTION 4b: THIS WEEK vs 13W BASELINE ─────────────────────────
   // Flags shifts performing above/below their day-of-week 13-week average.
