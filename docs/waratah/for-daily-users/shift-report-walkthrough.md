@@ -18,10 +18,10 @@ Before you start filling in fields, scan the day's tab. You will see four kinds 
 
 | Kind | What it looks like | Do you touch it? |
 |---|---|---|
-| Manager input cells | Empty white cells with a light border | **Yes**, this is where your numbers go |
-| Auto-calculated cells | Cells that show a formula in the formula bar (anything starting with `=`) | **No**, never edit these |
+| Manager input cells | Empty light green cells with a light border | **Yes**, this is where your numbers go |
+| Auto-calculated cells | Cells that show a formula in the formula bar (anything starting with `=`) | **No**, you cannot edit these |
 | Narrative text fields | Five large fields lower down on the sheet | **Yes**, type your notes here |
-| Header and label cells | Bold text, coloured backgrounds | **No**, these are layout only |
+| Header and label cells | Bold text, coloured backgrounds | **No**, these are layout only, and cannot be changed |
 
 **Quick rule for cells:** if you click a cell and see a formula in the formula bar (something starting with `=`), do not type into it. The system will recalculate it. If you click a cell and see either nothing or a plain number you typed previously, you can edit it.
 
