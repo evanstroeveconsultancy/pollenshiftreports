@@ -435,12 +435,13 @@ function buildExecutiveDashboard() {
 
   // ─── SECTION 3: MONTHLY TREND ──────────────────────────────────────
   row = 10;
-  _sectionHeader_(sheet, row, "MONTHLY TREND");
+  applyHairlineSection_(sheet, 'A10', 'MONTHLY TREND');
+  applyRowHeight_(sheet, row, 'section');
 
   row = 11;
   const monthHeaders = ["Month", "Revenue", "Tips", "Discounts", "Taxes", "Shifts"];
   monthHeaders.forEach((h, i) => sheet.getRange(row, i + 1).setValue(h));
-  sheet.getRange(row, 1, 1, monthHeaders.length).setFontWeight("bold").setBackground("#f3f3f3");
+  applyTableHeader_(sheet, 'A11:F11');
 
   row = 12;
   sheet.getRange(row, 1).setFormula(
@@ -452,6 +453,7 @@ function buildExecutiveDashboard() {
     `LABEL YEAR(A)*100+MONTH(A) 'Month', SUM(F) 'Revenue', SUM(U) 'Tips', SUM(N) 'Discounts', ` +
     `SUM(Q) 'Taxes', COUNT(A) 'Shifts'"),"")`
   );
+  applyTableBody_(sheet, 'A12:F24');
 
   // ─── SECTION 4: ROLLING 4-WEEK COMPARISON ──────────────────────────
   row = 26;
