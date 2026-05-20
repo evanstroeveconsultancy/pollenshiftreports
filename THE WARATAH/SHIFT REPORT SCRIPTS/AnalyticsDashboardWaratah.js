@@ -15,7 +15,7 @@
  *   L=Refunds, M=CDRedeem, N=TotalDiscount,
  *   O=DiscountsCompsExcCD, P=GrossTaxableSales,
  *   Q=Taxes, R=NetSalesWTips, S=CardTips, T=CashTips,
- *   U=TotalTips, V=LoggedAt, W=CashCounted, X=ExpectedCash, Y=CashVariance
+ *   U=TotalTips, V=CashCounted, W=ExpectedCash, X=CashVariance, Y=LoggedAt
  *
  * @version 3.0.0
  ****************************************************/
@@ -483,14 +483,16 @@ function buildExecutiveDashboard() {
   row = 12;
   sheet.getRange(row, 1).setFormula(
     `=IFERROR(QUERY(${src}!A2:V,` +
-    `"SELECT YEAR(A)*100+MONTH(A), SUM(F), SUM(U), SUM(N), SUM(Q), COUNT(A) ` +
+    `"SELECT YEAR(A)*100+(MONTH(A)+1), SUM(F), SUM(U), SUM(N), SUM(Q), COUNT(A) ` +
     `WHERE A IS NOT NULL ` +
-    `GROUP BY YEAR(A)*100+MONTH(A) ` +
-    `ORDER BY YEAR(A)*100+MONTH(A) DESC ` +
-    `LABEL YEAR(A)*100+MONTH(A) 'Month', SUM(F) 'Revenue', SUM(U) 'Tips', SUM(N) 'Discounts', ` +
+    `GROUP BY YEAR(A)*100+(MONTH(A)+1) ` +
+    `ORDER BY YEAR(A)*100+(MONTH(A)+1) DESC ` +
+    `LABEL YEAR(A)*100+(MONTH(A)+1) 'Month', SUM(F) 'Revenue', SUM(U) 'Tips', SUM(N) 'Discounts', ` +
     `SUM(Q) 'Taxes', COUNT(A) 'Shifts'"),"")`
   );
   applyTableBody_(sheet, 'A12:F24');
+  // Render the month column as YYYY/MM (QUERY returns raw integer like 202605).
+  sheet.getRange('A12:A24').setNumberFormat('0000"/"00');
 
   // ─── SECTION 4: ROLLING 4-WEEK COMPARISON ──────────────────────────
   row = 26;
