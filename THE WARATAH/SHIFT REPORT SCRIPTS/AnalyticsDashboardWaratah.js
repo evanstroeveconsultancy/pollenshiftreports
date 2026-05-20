@@ -614,14 +614,14 @@ function buildExecutiveDashboard() {
 
   // ─── SECTION 6: DAY-OF-WEEK REVENUE RANKING (right side) ──────────
   let dowRow = 16;
-  sheet.getRange(dowRow, modCol).setValue("REVENUE BY DAY (RANKED)");
-  sheet.getRange(dowRow, modCol).setFontSize(11).setFontWeight("bold").setFontColor("#1a73e8");
-  sheet.getRange(dowRow, modCol, 1, 5).merge();
+  applyHeroCard_(sheet, 'H16', null, null, 'H16:L22', 'REVENUE BY DAY');
+  sheet.getRange('H16:L16').merge();
+  applyRowHeight_(sheet, dowRow, 'section');
 
   dowRow = 17;
   const dowRankHeaders = ["Day", "Avg Revenue", "Total Revenue", "Shifts", "Share"];
   dowRankHeaders.forEach((h, i) => sheet.getRange(dowRow, modCol + i).setValue(h));
-  sheet.getRange(dowRow, modCol, 1, dowRankHeaders.length).setFontWeight("bold").setBackground("#f3f3f3");
+  applyTableHeader_(sheet, 'H17:L17');
 
   dowRow = 18;
   sheet.getRange(dowRow, modCol).setFormula(
@@ -632,6 +632,7 @@ function buildExecutiveDashboard() {
     `ORDER BY AVG(F) DESC ` +
     `LABEL B 'Day', AVG(F) 'Avg Revenue', SUM(F) 'Total Revenue', COUNT(A) 'Shifts'"),"")`
   );
+  applyTableBody_(sheet, 'H18:L22');
 
   // Share % column (col L, rows 19-23 = Waratah's 5 operating days).
   // J19:J23 holds Total Revenue per day from QUERY above. Bar uses REPT for visual.
