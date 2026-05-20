@@ -174,15 +174,15 @@ const STAFF_LIST = [
 ];
 ```
 
-7 named individuals + 5 team-level + 2 catch-all. The dropdown rule `setAllowInvalid(false)` enforces this list strictly.
+7 named individuals + 7 team/group entries (including `All` and `Contractor` as catch-alls). The dropdown rule `setAllowInvalid(false)` enforces this list strictly.
 
 ---
 
 ## 4. The Status State Machine
 
-The state machine is implicit in the spreadsheet (the Status column is a dropdown) but the transition rules are enforced by the `onTaskSheetEditWithAutoSort` handler.
+The state machine is implicit in the spreadsheet (the Status column is a dropdown). No transition table is enforced by code; `handleStatusChange_` (lines 1537-1568) only handles DONE/CANCELLED/BLOCKED side-effects.
 
-### Allowed transitions
+### Suggested transitions (not enforced by code)
 
 ```
 NEW → TO DO | TO DISCUSS | CANCELLED
@@ -190,73 +190,68 @@ TO DO → IN PROGRESS | TO DISCUSS | BLOCKED | DEFERRED | DONE | CANCELLED
 IN PROGRESS → BLOCKED | DEFERRED | DONE | CANCELLED | TO DISCUSS
 TO DISCUSS → TO DO | IN PROGRESS | CANCELLED
 BLOCKED → IN PROGRESS | DEFERRED | DONE | CANCELLED
-DEFERRED → TO DO | IN PROGRESS | CANCELLED (auto-returns to TO DO on hold-until date)
+DEFERRED → TO DO | IN PROGRESS | CANCELLED
 DONE → (terminal; can be reactivated by changing to any active status)
 CANCELLED → (terminal; can be reactivated)
-RECURRING → (this is a template; generates instances; cannot transition)
+RECURRING → (template; on DONE it regenerates the next instance and the original's Recurrence is reset to "None")
 ```
 
-In practice the system does not block any transition; it allows the dropdown to accept any value. The state machine is therefore advisory rather than enforced. The escalation logic and daily maintenance check are what enforce hygiene over time.
+The dropdown accepts any STATUS_LIST value. The state machine is therefore advisory. Escalation logic and daily maintenance enforce hygiene over time.
 
-### Automatic transitions
+DEFERRED tasks do not auto-return on any "hold-until" date. The system has no hold-until field and no auto-return automation.
+
+### Automatic side-effects on edit
 
 | Trigger | Auto-action |
 |---|---|
 | Task marked DONE | Date Completed set to today; Days Open recomputed |
 | Task transitions FROM DONE back to active | Date Completed cleared |
 | Task marked CANCELLED | Date Completed set to today |
-| DEFERRED task's hold-until date passes | Status auto-transitions to TO DO (daily maintenance) |
-| RECURRING task marked DONE | New instance generated (Section 6) |
+| Task marked BLOCKED | Blocker Notes cell is highlighted (no DM, no email at the edit moment) |
+| DONE task with Recurrence set | On next daily maintenance, a fresh instance is generated; the original's Recurrence is reset to "None" (Section 6) |
 
 ---
 
 ## 5. Auto-Escalation Algorithm
 
-`escalateBlockedTasks_()` runs as part of `runDailyTaskMaintenance` each morning at 7am.
+`escalateBlockedTasks_()` (lines 1074-1162) runs as part of `runDailyTaskMaintenance` each morning at 6am (Apps Script 6-7am window, not 7am).
+
+Real implementation opens the sheet via `SpreadsheetApp.openById(getTaskSpreadsheetId_())`, computes days-blocked inline (no `daysBetween_` helper exists), builds Block Kit blocks inline using the `bk_*` builders, posts via `bk_post(webhook, blocks, fallbackText)`, and builds HTML via `buildEscalationEmailHtml_(tasks)`:
 
 ```javascript
+// Illustrative excerpt; see EnhancedTaskManagementWaratah.gs:1074-1162
 function escalateBlockedTasks_() {
-  const sheet = getMasterActionablesSheet_();
-  const data = sheet.getDataRange().getValues();
-  const today = new Date();
-  const threshold = TASK_CONFIG.escalation.blockedDaysBeforeEscalate; // 14
+  var sheet = SpreadsheetApp.openById(getTaskSpreadsheetId_())
+    .getSheetByName(TASK_CONFIG.sheets.master);
+  var data = sheet.getDataRange().getValues();
+  var today = new Date();
+  var threshold = TASK_CONFIG.escalation.blockedDaysBeforeEscalate; // 14
 
-  const tasksToEscalate = [];
-
-  for (let i = 1; i < data.length; i++) {
-    const row = data[i];
+  var tasksToEscalate = [];
+  for (var i = 1; i < data.length; i++) {
+    var row = data[i];
     if (row[COLS.STATUS] !== STATUSES.BLOCKED) continue;
 
-    const lastUpdated = row[COLS.LAST_UPDATED] || row[COLS.DATE_CREATED];
-    const daysBlocked = daysBetween_(lastUpdated, today);
+    var referenceDate = row[COLS.LAST_UPDATED] || row[COLS.DATE_CREATED];
+    var daysBlocked = Math.floor((today - referenceDate) / (24 * 60 * 60 * 1000));
 
     if (daysBlocked >= threshold) {
-      tasksToEscalate.push({
-        rowIndex: i + 1,
-        priority: row[COLS.PRIORITY],
-        assignee: row[COLS.STAFF],
-        description: row[COLS.DESCRIPTION],
-        blockerNotes: row[COLS.BLOCKER_NOTES],
-        daysBlocked: daysBlocked
-      });
+      tasksToEscalate.push({ /* ... */ });
     }
   }
 
-  if (tasksToEscalate.length === 0) {
-    Logger.log("No blocked tasks require escalation.");
-    return;
-  }
+  if (tasksToEscalate.length === 0) return;
 
-  // Build Block Kit message
-  const blockKit = buildEscalationBlockKit_(tasksToEscalate);
-  postToSlack_(getEscalationSlackWebhook_(), blockKit);
+  // Build blocks inline using bk_header / bk_section / bk_divider / bk_buttons
+  var blocks = [/* bk_header(...), bk_section(...), ... */];
+  bk_post(getEscalationSlackWebhook_(), blocks, 'Waratah: BLOCKED tasks escalation');
 
-  // Send HTML email
-  const htmlBody = composeEscalationEmail_(tasksToEscalate);
-  GmailApp.sendEmail(getEscalationEmail_(), 'Waratah: BLOCKED tasks escalation', '', { htmlBody });
+  // HTML email
+  var htmlBody = buildEscalationEmailHtml_(tasksToEscalate);
+  GmailApp.sendEmail(getEscalationEmail_(), 'Waratah: BLOCKED tasks escalation', '', { htmlBody: htmlBody });
 
-  // Audit
-  logAuditEntry_('ESCALATION', 'System', `Escalated ${tasksToEscalate.length} blocked tasks to Evan`);
+  logAuditEntry_('ESCALATION', 'System',
+                 'Escalated ' + tasksToEscalate.length + ' blocked tasks to ' + TASK_CONFIG.escalation.escalateToName);
 }
 ```
 
@@ -268,76 +263,72 @@ The threshold (14 days) and recipient (Evan) come from `TASK_CONFIG`. Editable i
 
 ## 6. Recurring Task Generation
 
-`processRecurringTasks_()` runs as part of daily maintenance. It looks for RECURRING-status template tasks and generates instances on schedule.
+`processRecurringTasks_()` (lines 1207-1312) runs as part of daily maintenance. It processes tasks that have just been completed (`STATUSES.DONE`) and have a non-`"None"` Recurrence value, then generates the next instance and resets the original's Recurrence to `"None"`.
+
+The model is: **mark a recurring task DONE → on the next daily maintenance run, a fresh TO DO is generated for the next occurrence, and the original task's Recurrence column is cleared to "None"**. The original DONE task remains in place as the completion record. Templates are not held at RECURRING permanently.
 
 ```javascript
+// Illustrative excerpt; see EnhancedTaskManagementWaratah.gs:1207-1312
 function processRecurringTasks_() {
-  const sheet = getMasterActionablesSheet_();
-  const data = sheet.getDataRange().getValues();
+  var sheet = SpreadsheetApp.openById(getTaskSpreadsheetId_())
+    .getSheetByName(TASK_CONFIG.sheets.master);
+  var data = sheet.getDataRange().getValues();
 
-  for (let i = 1; i < data.length; i++) {
-    const row = data[i];
-    if (row[COLS.STATUS] !== STATUSES.RECURRING) continue;
+  data.forEach(function (row, i) {
+    if (i === 0) return;
+    var status = row[COLS.STATUS];
+    var recurrence = row[COLS.RECURRENCE];
+    if (status !== STATUSES.DONE) return;
+    if (!recurrence || recurrence === "None") return;
 
-    const recurrence = row[COLS.RECURRENCE];
-    if (!recurrence || recurrence === 'None') continue;
+    var lastDueDate = row[COLS.DUE_DATE] || row[COLS.DATE_CREATED];
+    var nextDueDate;
+    switch (recurrence) {
+      case 'Weekly':      nextDueDate = getNextMonday_(lastDueDate, 1); break;
+      case 'Fortnightly': nextDueDate = getNextMonday_(lastDueDate, 2); break;
+      case 'Monthly':
+        nextDueDate = new Date(lastDueDate);
+        nextDueDate.setMonth(nextDueDate.getMonth() + 1);
+        nextDueDate = getNextMonday_(nextDueDate, 0);
+        break;
+    }
 
-    const lastGenerated = row[COLS.LAST_UPDATED] || row[COLS.DATE_CREATED];
-    const nextDueDate = computeNextOccurrence_(lastGenerated, recurrence);
+    // Append the new TO DO instance with the same Description, Staff, Area, Priority...
+    sheet.appendRow([/* ... */]);
 
-    if (nextDueDate > new Date()) continue; // Not yet due
+    // Reset the original task's Recurrence to "None" so it does not regenerate again
+    sheet.getRange(i + 1, COLS.RECURRENCE + 1).setValue('None');
 
-    // Generate the new instance
-    sheet.appendRow([
-      row[COLS.PRIORITY],
-      STATUSES.TODO,                       // Instance starts as TO DO
-      row[COLS.STAFF],
-      row[COLS.AREA],
-      row[COLS.DESCRIPTION],
-      toDateOnly_(nextDueDate),            // Due Date
-      toDateOnly_(new Date()),             // Date Created
-      '',                                  // Date Completed (blank)
-      '',                                  // Days Open (formula)
-      '',                                  // Blocker Notes
-      row[COLS.SOURCE],
-      row[COLS.RECURRENCE],
-      toDateOnly_(new Date()),             // Last Updated
-      'System (recurring generator)'
-    ]);
-
-    // Update template's Last Updated
-    sheet.getRange(i + 1, COLS.LAST_UPDATED + 1).setValue(toDateOnly_(new Date()));
-
-    logAuditEntry_('RECURRING_GENERATED', 'System', `Generated instance for ${row[COLS.DESCRIPTION]}`);
-  }
+    logAuditEntry_('RECURRING_REGENERATED', 'System',
+                   'Generated instance for ' + row[COLS.DESCRIPTION]);
+  });
 }
 ```
 
-### `computeNextOccurrence_` helper
+### `getNextMonday_` helper
+
+There is no `computeNextOccurrence_` function. The recurrence switch is inline (lines 1235-1249). `getNextMonday_(fromDate, weeksAhead)` (lines 1318-1336):
 
 ```javascript
-function computeNextOccurrence_(lastDate, recurrence) {
-  const base = new Date(lastDate);
-  switch (recurrence) {
-    case 'Weekly':      return getNextMonday_(base, 1);
-    case 'Fortnightly': return getNextMonday_(base, 2);
-    case 'Monthly':     return new Date(base.getFullYear(), base.getMonth() + 1, base.getDate());
-    default:            return null;
-  }
-}
-
 function getNextMonday_(fromDate, weeksAhead) {
-  const d = new Date(fromDate);
-  const dayOfWeek = d.getDay(); // 0=Sun, 1=Mon
-  const daysToNextMonday = (1 - dayOfWeek + 7) % 7 || 7;
-  d.setDate(d.getDate() + daysToNextMonday + (weeksAhead - 1) * 7);
-  return d;
+  var result = new Date(fromDate);
+  var dayOfWeek = result.getDay(); // 0=Sun, 1=Mon
+  if (dayOfWeek === 0) {
+    result.setDate(result.getDate() + 1);
+  } else if (dayOfWeek === 1) {
+    if (weeksAhead === 0) result.setDate(result.getDate() + 7);
+  } else {
+    var daysUntilMonday = 8 - dayOfWeek;
+    result.setDate(result.getDate() + daysUntilMonday);
+  }
+  if (weeksAhead > 1) result.setDate(result.getDate() + (weeksAhead - 1) * 7);
+  return result;
 }
 ```
 
-Weekly and fortnightly recurrences anchor to Monday; monthly anchors to the same day-of-month as the previous instance.
+Weekly and fortnightly anchor to the next Monday. Monthly adds one calendar month then snaps to the next Monday (it does not preserve the day-of-month).
 
-The RECURRING template task itself is never marked DONE; it stays at RECURRING permanently, regenerating instances. To stop a recurrence, change the template's Status to CANCELLED.
+To stop a recurrence chain, set the task's Recurrence to `"None"` before marking DONE, or change the Status to CANCELLED.
 
 ---
 
@@ -348,7 +339,7 @@ The AUDIT LOG sheet records every status change and significant event. Schema:
 | Column | Header | Purpose |
 |---|---|---|
 | A | Timestamp | `new Date()` at log time |
-| B | Action | Enum: STATUS_CHANGE, ESCALATION, RECURRING_GENERATED, ARCHIVE, CREATED, DELETED, ERROR |
+| B | Action | Enum (real values observed in code): EDIT, STATUS_CHANGE, CLEANUP, MIGRATION, ESCALATION, RECURRING_REGENERATED, ARCHIVE, CREATED, WEEKLY_SUMMARY, MAINTENANCE_ERROR, REFORMAT, TEST |
 | C | User | Email of the user who triggered the action (or "System") |
 | D | Task ID | Row index in MASTER ACTIONABLES SHEET |
 | E | Field | Which column changed (for STATUS_CHANGE only) |
@@ -357,8 +348,11 @@ The AUDIT LOG sheet records every status change and significant event. Schema:
 ### `logAuditEntry_` helper
 
 ```javascript
+// EnhancedTaskManagementWaratah.gs:934-957. There is no getAuditLogSheet_ helper;
+// the sheet is opened inline by ID + name.
 function logAuditEntry_(action, user, details, taskId, fieldChanged) {
-  const sheet = getAuditLogSheet_();
+  var sheet = SpreadsheetApp.openById(getTaskSpreadsheetId_())
+    .getSheetByName(TASK_CONFIG.sheets.audit);
   sheet.appendRow([
     new Date(),
     action,
@@ -376,7 +370,7 @@ The audit log is never cleared. Even after a task is archived, its audit entries
 
 ## 8. On-Edit Handler
 
-`onTaskSheetEditWithAutoSort(e)` is installed as a simple `onEdit` trigger by `createOnEditTrigger()`. It fires on every cell edit in the Task Management spreadsheet.
+`onTaskSheetEditWithAutoSort(e)` is installed as an **installable** onEdit trigger by `createOnEditTrigger()` (`ScriptApp.newTrigger(...).forSpreadsheet(...).onEdit().create()`, lines 1915-1929). It is not a simple trigger. Installable onEdit triggers have full permissions including UrlFetch and MailApp.
 
 ```javascript
 function onTaskSheetEditWithAutoSort(e) {
@@ -413,29 +407,30 @@ function handleStatusChange_(sheet, rowIndex, newStatus, oldStatus) {
     sheet.getRange(rowIndex, COLS.DATE_COMPLETED + 1).setValue('');
   }
 
-  // Notify assignee if status changed to BLOCKED (immediate, before 14-day escalation)
+  // BLOCKED edit: highlight the Blocker Notes cell. No DM, no email at the edit moment.
   if (newStatus === STATUSES.BLOCKED) {
-    const taskData = sheet.getRange(rowIndex, 1, 1, TOTAL_COLS).getValues()[0];
-    notifyAssigneeOfBlock_(taskData);
+    sheet.getRange(rowIndex, COLS.BLOCKER_NOTES + 1)
+      .setBackground('#FFF2CC');
   }
 
   // Audit
   logAuditEntry_('STATUS_CHANGE', Session.getActiveUser().getEmail(),
-                 `${oldStatus} -> ${newStatus}`, rowIndex, 'Status');
+                 oldStatus + ' -> ' + newStatus, rowIndex, 'Status');
 }
 ```
 
-Simple onEdit triggers run with restricted permissions (no UrlFetch, no MailApp). For Slack DMs and email, the bi-hourly cleanup trigger picks up the state change and dispatches notifications.
+There is no `notifyAssigneeOfBlock_` helper. The handler does not dispatch a Slack DM or email when status flips to BLOCKED; it only highlights the Blocker Notes cell so the assignee can fill in context. Slack DMs for BLOCKED tasks are sent later by the daily `escalateBlockedTasks_` step (Section 5), gated by the 14-day threshold. The bi-hourly cleanup does not dispatch DMs either; it only sorts and removes empty rows.
 
 ---
 
 ## 9. Daily Maintenance Loop
 
-`runDailyTaskMaintenance()` is the daily 7am workhorse:
+`runDailyTaskMaintenance()` is the daily 6am workhorse (Apps Script 6-7am window). Real body at lines 1588-1607 has four steps; there is no step 5 and no success-path audit log. Helpers `returnDeferredTasksWhenDue_` and `notifyAdminOfMaintenanceFailure_` do not exist.
 
 ```javascript
+// Illustrative excerpt; see EnhancedTaskManagementWaratah.gs:1579-1630
 function runDailyTaskMaintenance() {
-  const lock = LockService.getScriptLock();
+  var lock = LockService.getScriptLock();
   if (!lock.tryLock(30000)) {
     Logger.log('Could not acquire lock for daily maintenance');
     return;
@@ -445,74 +440,65 @@ function runDailyTaskMaintenance() {
     // 1. Bi-hourly cleanup (run inline)
     cleanupAndSortMasterActionables();
 
-    // 2. Process recurring tasks (generate new instances)
+    // 2. Process recurring tasks (regenerate from DONE templates)
     processRecurringTasks_();
 
     // 3. Archive completed/cancelled tasks older than 30 days
-    archiveCompletedTasks_();
+    archiveOldCompletedTasks_();
 
     // 4. Escalate BLOCKED tasks older than 14 days
     escalateBlockedTasks_();
 
-    // 5. Auto-return DEFERRED tasks past their hold-until date
-    returnDeferredTasksWhenDue_();
-
-    logAuditEntry_('MAINTENANCE_COMPLETE', 'System', 'Daily maintenance succeeded');
+    // (No step 5; overdue summary removed April 2026; no MAINTENANCE_COMPLETE audit entry)
   } catch (e) {
-    Logger.log(`Daily maintenance error: ${e.message}`);
-    notifyAdminOfMaintenanceFailure_(e);
-    logAuditEntry_('ERROR', 'System', `Daily maintenance error: ${e.message}`);
+    Logger.log('Daily maintenance error: ' + e.message);
+    logAuditEntry_('MAINTENANCE_ERROR', 'System', e.message);
   } finally {
     lock.releaseLock();
   }
 }
 ```
 
-The lock prevents overlap if a manual run happens to coincide with the scheduled trigger. Each step is independent (failure of one does not block the next).
+Function name precision: step 3 is `archiveOldCompletedTasks_`, not `archiveCompletedTasks_`. The lock prevents overlap if a manual run happens to coincide with the scheduled trigger. Each step is independent (failure of one does not block the next).
 
-The previously-scheduled `runScheduledOverdueSummary()` is no longer called from this loop (removed April 2026). The function remains as a no-op stub for backwards compatibility with the trigger installer.
+The previously-scheduled `runScheduledOverdueSummary()` is no longer called from this loop (removed April 2026). The wrapper function remains as a no-op stub. The internal handler `sendOverdueTasksSummary_` (lines 1347-1424) is still fully implemented but is unreachable from any installed trigger.
 
 ---
 
 ## 10. Weekly Active Tasks Summary (Monday 10am)
 
-`sendWeeklyActiveTasksSummary()` runs Monday at 10am, builds a per-staff summary of open tasks, and sends each staff member a Slack DM with their list.
+`sendWeeklyActiveTasksSummary()` runs Monday at 10am. The top-level function delegates to a two-stage core: a managers-channel post (now commented out as of April 2026) followed by per-assignee DMs.
 
 ```javascript
+// EnhancedTaskManagementWaratah.gs:1642-1786 (illustrative)
 function sendWeeklyActiveTasksSummary() {
-  const sheet = getMasterActionablesSheet_();
-  const data = sheet.getDataRange().getValues();
-  const dmWebhooks = JSON.parse(getProp_('SLACK_DM_WEBHOOKS') || '{}');
+  _sendWeeklyActiveTasksSummaryCore(getManagersChannelWebhook_(), /*isTest=*/false);
+}
 
-  // Group tasks by assignee
-  const byAssignee = {};
-  for (let i = 1; i < data.length; i++) {
-    const row = data[i];
-    if (!ACTIVE_STATUSES.includes(row[COLS.STATUS])) continue;
-    const assignee = row[COLS.STAFF];
-    if (!assignee) continue;
-    if (!byAssignee[assignee]) byAssignee[assignee] = [];
-    byAssignee[assignee].push(row);
-  }
+function _sendWeeklyActiveTasksSummaryCore(channelWebhook, isTest) {
+  // Build staffMap from MASTER ACTIONABLES SHEET
+  var staffMap = /* group ACTIVE_STATUSES rows by assignee */;
+  var today = new Date();
+  var tz = TASK_CONFIG.timezone;
 
-  // DM each assignee with personal webhook
-  for (const [name, tasks] of Object.entries(byAssignee)) {
-    const webhook = dmWebhooks[name];
-    if (!webhook) {
-      Logger.log(`No DM webhook for ${name}, skipping`);
-      continue;
-    }
-    const blockKit = buildWeeklySummaryBlockKit_(name, tasks);
-    try {
-      postToSlack_(webhook, blockKit);
-    } catch (e) {
-      Logger.log(`Weekly summary DM to ${name} failed: ${e.message}`);
-    }
-  }
+  // Channel post commented out April 2026; DMs only now.
+  // bk_post(channelWebhook, buildChannelBlocks_(staffMap), 'Weekly active tasks');
+
+  _sendWeeklyActiveTasksDMs_(staffMap, today, tz, isTest);
+}
+
+function _sendWeeklyActiveTasksDMs_(staffMap, today, tz, isTest) {
+  var dmWebhooks = getSlackDmWebhooks_(); // reads SLACK_DM_WEBHOOKS Script Property
+  Object.keys(staffMap).forEach(function (name) {
+    var webhook = dmWebhooks[name];
+    if (!webhook) return;
+    var blocks = /* build per-assignee blocks via bk_* builders */;
+    bk_post(webhook, blocks, 'Your active Waratah tasks');
+  });
 }
 ```
 
-The summary is DM-only as of April 2026; it no longer posts to the managers channel.
+The summary is DM-only as of April 2026; the channel-post path is commented out. The function reads Slack DM webhooks through the `getSlackDmWebhooks_()` helper (line 71), not by reading the Script Property directly.
 
 Test variant `sendWeeklyActiveTasksSummary_Test` (admin menu) sends only to Evan, useful for verifying the message format before the live 10am cadence.
 
@@ -524,15 +510,15 @@ All seven trigger installers in `EnhancedTaskManagementWaratah.gs`, with their t
 
 | Installer function | Handler installed | Schedule |
 |---|---|---|
-| `createDailyMaintenanceTrigger()` | `runDailyTaskMaintenance` | Daily 07:00 |
+| `createDailyMaintenanceTrigger()` | `runDailyTaskMaintenance` | Daily 06:00 (Apps Script 6-7am window) |
 | `createWeeklySummaryTrigger()` | `sendWeeklyActiveTasksSummary` | Mon 10:00 |
-| `createOnEditTrigger()` | `onTaskSheetEditWithAutoSort` | On any cell edit (simple trigger) |
+| `createOnEditTrigger()` | `onTaskSheetEditWithAutoSort` | On any cell edit (installable trigger) |
 | `createBiHourlyCleanupTrigger()` | `cleanupAndSortMasterActionables` | Every 2 hours |
 | `createDailyStaffWorkloadTrigger()` | `runScheduledStaffWorkload` | Daily 06:00 |
 | `createWeeklyArchiveTrigger()` | `runScheduledArchive` | Mon 06:00 |
-| `createWeeklyOverdueSummaryTrigger()` | `sendOverdueTasksSummary_` (deprecated) | Sun 09:00 |
+| `createWeeklyOverdueSummaryTrigger()` | (gutted; no trigger created) | n/a |
 
-The seventh installer is kept for backwards compatibility but **do not call it**. The corresponding handler is a no-op as of April 2026, so installing the trigger only consumes a trigger slot in the project's 20-trigger quota without doing useful work.
+The seventh installer is gutted. Its entire body is a single log line; it does not call `ScriptApp.newTrigger(...)` and therefore consumes no trigger slot. The corresponding trigger-bound wrapper `runScheduledOverdueSummary` is also a no-op. The internal handler `sendOverdueTasksSummary_` (lines 1347-1424) is still fully implemented but is unreachable from any installed trigger; it can only be invoked manually from the editor.
 
 All installers follow the defensive-delete pattern: remove any existing trigger with the same handler function before creating the new one. This makes them safe to re-run idempotently.
 

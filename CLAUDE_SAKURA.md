@@ -6,6 +6,29 @@
 
 > **Note:** This is the Sakura-specific guide. For The Waratah, see `CLAUDE_WARATAH.md`. For shared architecture patterns, see `CLAUDE_SHARED.md`.
 
+## DEPLOYMENT (May 21, 2026) -- Analytics Dashboard Enhancements
+
+**ANALYTICS tab (`buildFinancialDashboard`):**
+- AVERAGE WEEKLY (ALL WEEKS) section added at rows 23-25: header + 2 metric rows using `AVERAGE(QUERY(...GROUP BY C))` for per-week-average semantics
+- DAY-OF-WEEK AVERAGES enhanced with two new columns: col G "Std Dev" (`STDEV(FILTER(...))`) and col H "13W Trend" (`SPARKLINE(FILTER(...), {"charttype","line"...})`)
+- WEEKLY TREND `trendCol` shifted from col H (8) to col I (9) to make room for Sparkline column
+- Extended Trends shifted +2 rows (was row 25, now row 27); YTD shifted +2 rows (was rows 34-36, now rows 36-38)
+- New `buildAnalyticsExtensions_Sakura()` function adds 6 sections starting at row 40:
+  - 4-WEEK MOVING AVERAGE (rows 40-41)
+  - CONSISTENCY (rows 43-45): Most Consistent / Most Volatile Day with CV %
+  - TOP 5 SHIFTS THIS MONTH (rows 47-53): live `SORTN`
+  - BOTTOM 5 SHIFTS THIS MONTH (rows 55-61): live `SORTN`
+  - OUTLIERS THIS MONTH (rows 63-69): live `SORTN` by abs % variance from DoW baseline (VLOOKUP source A17:B22)
+  - RECENT DOW PATTERN (rows 71-78): build-time JS computing ↑↓ arrows per day
+
+**EXECUTIVE_DASHBOARD tab (`buildExecutiveDashboard`):**
+- THIS WEEK vs 13W BASELINE section added at rows 35-42 (header + 6 days Mon-Sat)
+- REVENUE BY DAY enhanced with "Share" column (col L, rows 6-11) using `REPT("▓",...)` bar; references E5 for reports filed
+- INSIGHTS block added at rows 13-21 (right side, cols H-J): 4-week trend slope, forecast next month (`AVERAGE(B11:B13)` — Sakura QUERY uses `headers=0` so row 11 is first data row), last 4 weeks direction, best/worst shift this month (MAXIFS/MINIFS + INDEX/MATCH), reports filed
+
+**Files Changed:**
+- `AnalyticsDashboardSakura.gs` (new `buildAnalyticsExtensions_Sakura()` function, DoW table additions, column/row shifts, executive enhancements)
+
 ---
 
 ## DEPLOYMENT (April 2, 2026) -- Menu Simplification & Rollover Notification Removal
@@ -65,8 +88,8 @@
 - Removed TOP MOD PERFORMANCE section from EXECUTIVE_DASHBOARD (formerly Section 5)
 - Removed empty spacer rows between sections for more compact layout
 - All cell references (weekRef, prevRef, monthly, etc.) now computed dynamically instead of hardcoded strings
-- ANALYTICS tab: THIS WEEK starts row 3, WoW starts row 8, DoW heatmap starts row 15, Extended Trends starts row 25; Weekly Trend on right side starts row 3
-- EXECUTIVE_DASHBOARD tab: CURRENT MONTH starts row 3, MONTHLY TREND starts row 9, ROLLING 4-WEEK starts row 24; REVENUE BY DAY (right side) starts row 3
+- ANALYTICS tab: THIS WEEK starts row 3, WoW starts row 8, DoW heatmap starts row 15 (now cols A-H — Std Dev col G, 13W Trend sparkline col H), AVERAGE WEEKLY (ALL WEEKS) at rows 23-25, Extended Trends rows 27+ (shifted +2), YTD rows 36-38 (shifted +2), Analytics Extensions rows 40-78 (4-week moving avg, consistency, top/bottom 5 shifts, outliers, recent DoW pattern); Weekly Trend shifted to col I (row 3 right side)
+- EXECUTIVE_DASHBOARD tab: CURRENT MONTH starts row 3, MONTHLY TREND starts row 9, ROLLING 4-WEEK starts row 24, THIS WEEK vs 13W BASELINE rows 35-42 (new); REVENUE BY DAY right side rows 3-11 now includes Share column (col L, `REPT("▓",...)` bar); INSIGHTS block rows 13-21 (right side, 4-week trend slope, forecast, best/worst shift, reports filed)
 - Code refactor: `modCol` renamed to `rightCol` in dashboard builders for consistency
 - `buildExtendedTrends_Sakura()` start row changed from 29 to 25
 
@@ -247,9 +270,9 @@
   - 26-week rolling average (tracks long-term trends)
   - Day-of-week heatmap (which days perform best? colors by performance quartile)
   - Year-to-date aggregation (running total revenue, tips, production since Jan 1)
-- Auto-builds in `AnalyticsDashboardSakura.gs` as new section in ANALYTICS tab
+- Auto-builds in `AnalyticsDashboardSakura.gs` as new section in ANALYTICS tab (now starts at row 27 — shifted +2 by new Average Weekly section)
 - Called on first `logToDataWarehouse_()` write of each week; rebuilds if tab missing
-- Safe to re-run anytime via menu: **Shift Report > Admin Tools > Integrations & Analytics > Build Analytics Dashboard**
+- Safe to re-run anytime via menu: **Shift Report > Admin Tools > Integrations & Analytics > Rebuild All Dashboards (Admin)**
 
 **M8 — Task SLA Tracking:**
 - New functions `buildSLASection_()` and `sendWeeklySLASummary_Sakura()` in `TaskDashboard_Sakura.gs`
@@ -1238,5 +1261,5 @@ Note: `_SETUP_*` files are gitignored (they contain Slack webhook secrets). `.cl
 
 ---
 
-**Last Updated:** April 2, 2026
+**Last Updated:** May 21, 2026 (Analytics dashboard enhancements — Average Weekly section, DoW Std Dev + Sparkline columns, Analytics Extensions block, Executive THIS WEEK vs 13W BASELINE + INSIGHTS block)
 **Total LOC:** ~14,996 lines across 22 .gs + 4 .html files (2 GAS script projects: Shift Reports + Task Management)

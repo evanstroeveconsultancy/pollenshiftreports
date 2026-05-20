@@ -41,7 +41,7 @@ const ACTIVE_DAY_PREFIXES_SETUP = ['WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'
 const ALL_DAY_PREFIXES_SETUP = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
 
 /**
- * Field definitions for the new sheet layout (live May 2026, 36 fields).
+ * Field definitions for the new sheet layout (live May 2026, 39 fields).
  *
  * suffix:      Named range suffix (full name = {DAY}_SR_{suffix})
  * cell:        A1 notation on each day sheet

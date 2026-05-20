@@ -3,7 +3,7 @@
  * Version: 1.2.0
  *
  * Features:
- *   - 8-status workflow system
+ *   - 9-status workflow system (NEW, TO DO, IN PROGRESS, TO DISCUSS, BLOCKED, DEFERRED, DONE, CANCELLED, RECURRING)
  *   - Priority levels with visual highlighting
  *   - Due date tracking with overdue escalation
  *   - Recurring task regeneration
@@ -15,10 +15,11 @@
  *
  * Triggers Required:
  *   - Bi-hourly: cleanupAndSortMasterActionables()
+ *   - Daily 6am: runDailyTaskMaintenance() (cleanup, recurring, archive, escalations)
  *   - Daily 6am: runScheduledStaffWorkload()
  *   - Weekly Mon 6am: runScheduledArchive()
  *   - Weekly Mon 10am: sendWeeklyActiveTasksSummary() [optional]
- *   - Weekly Sun 9am: runScheduledOverdueSummary() [DISABLED Apr 2026 — overdue summaries removed]
+ *   - Weekly Sun 9am: runScheduledOverdueSummary() [DISABLED Apr 2026, overdue summaries removed]
  *   - onEdit: onTaskSheetEditWithAutoSort(e) [installable trigger]
  *
  * @author Claude (Anthropic) for Pollen Hospitality
@@ -645,7 +646,7 @@ function migrateToEnhancedSchema() {
     "✅ Migration Complete",
     `Migrated ${newData.length} tasks to new schema.\n\n` +
     "New features enabled:\n" +
-    "• 8-status workflow\n" +
+    "• 9-status workflow\n" +
     "• Priority levels\n" +
     "• Due dates\n" +
     "• Audit logging\n" +
@@ -1574,7 +1575,7 @@ function handleStatusChange_(sheet, row, oldStatus, newStatus, user) {
 
 /**
  * Main daily maintenance function.
- * Run this via time-based trigger at 7am daily.
+ * Run this via time-based trigger at 6am daily (Apps Script 6–7am window).
  */
 function runDailyTaskMaintenance() {
   const lock = LockService.getScriptLock();

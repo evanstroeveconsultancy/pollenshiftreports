@@ -409,11 +409,13 @@ function normaliseDateKey_(v) {
 
 /**
  * Log shift data to centralized analytics warehouse.
- * Populates: NIGHTLY_FINANCIAL (22 cols), OPERATIONAL_EVENTS (8 cols),
+ * Populates: NIGHTLY_FINANCIAL (25 cols A-Y), OPERATIONAL_EVENTS (8 cols),
  *            WASTAGE_COMPS (6 cols), QUALITATIVE_LOG (11 cols).
  *
  * Schema updated 2026-03-06: removed Covers/Labor/derived metrics,
  * added full financial breakdown (B8, B15-B29).
+ * Schema updated 2026-05-17: expanded to 25 cols — V=CashCounted, W=ExpectedCash,
+ * X=CashVariance, Y=LoggedAt (was V); L/M/R are NULL post-May 2026.
  *
  * @param {Object}  shiftData  - Standardized shift data from extractShiftData_()
  * @param {Object}  [config]   - Optional pre-loaded INTEGRATION_CONFIG
@@ -460,7 +462,7 @@ function logToDataWarehouse_(shiftData, config, skipLock) {
 
   const warehouse = SpreadsheetApp.openById(INTEGRATION_CONFIG.dataWarehouseId);
 
-  // 1. Log financial data to NIGHTLY_FINANCIAL sheet (22 columns A-V)
+  // 1. Log financial data to NIGHTLY_FINANCIAL sheet (25 columns A-Y)
   const financialSheet = warehouse.getSheetByName(INTEGRATION_CONFIG.sheets.financialLog);
   if (!financialSheet) {
     throw new Error(`Sheet "${INTEGRATION_CONFIG.sheets.financialLog}" not found in warehouse`);

@@ -4,28 +4,28 @@
 
 **Time required:** About 20 minutes once you know the system
 
-This guide walks you through every step of completing and sending the shift report at The Waratah, from the cash count to clicking Send. You do not need to know how the system works underneath. You just need to know what to type where, and when to click which button.
+This guide walks you through every step of completing and sending the shift report at The Waratah, from the cash count to clicking Confirm & Send. You do not need to know how the system works underneath. You just need to know what to type where, and when to click which button.
 
-If you want to understand what happens after you click Send (the Slack posts, the emails, the data warehouse), there is a brief overview in Section 6, and a manager-level explanation in [`for-managers/01-shift-reports.md`](../for-managers/01-shift-reports.md) (becoming available in Phase 2 of the documentation migration).
+If you want to understand what happens after you click Confirm & Send (the Slack post, the email, the data warehouse), there is a brief overview in Section 5, and a manager-level explanation in [`for-managers/01-shift-reports.md`](../for-managers/01-shift-reports.md).
 
 ---
 
 ## 1. What You Are Filling In
 
-The Waratah shift report is one Google Sheet with one tab per service day, Wednesday through Sunday. At the start of your shift, the correct day's tab will already be active. You do not need to navigate between days yourself.
+The Waratah shift report is one Google Sheet with one tab per service day, Wednesday through Sunday.
 
 Before you start filling in fields, scan the day's tab. You will see four kinds of content:
 
 | Kind | What it looks like | Do you touch it? |
 |---|---|---|
-| Manager input cells | Empty white cells with a light border | **Yes**, this is where your numbers go |
-| Auto-calculated cells | Cells that show a formula in the formula bar (anything starting with `=`) | **No**, never edit these |
-| Narrative text fields | Five large merged cells lower down on the sheet | **Yes**, type your notes here |
-| Header and label cells | Bold text, coloured backgrounds | **No**, these are layout only |
+| Manager input cells | Empty light green cells with a light border | **Yes**, this is where your numbers go |
+| Auto-calculated cells | Cells that show a formula in the formula bar (anything starting with `=`) | **No**, you cannot edit these |
+| Narrative text fields | Five large fields lower down on the sheet | **Yes**, type your notes here |
+| Header and label cells | Bold text, coloured backgrounds | **No**, these are layout only, and cannot be changed |
 
 **Quick rule for cells:** if you click a cell and see a formula in the formula bar (something starting with `=`), do not type into it. The system will recalculate it. If you click a cell and see either nothing or a plain number you typed previously, you can edit it.
 
-### Checklist before you click Send
+### Checklist before you send
 
 You must have filled in:
 
@@ -41,7 +41,7 @@ You should have filled in (where applicable):
 7. Any tasks (TO-DOs)
 8. Any wastage, maintenance, or RSA incidents from tonight
 
-If the cash variance shown by the sheet is more than fifty dollars in either direction, **stop and recount before sending**. A variance of plus or minus fifty triggers a system warning and almost always means a count mistake, not a real shortfall.
+If the cash variance shown by the sheet is more than fifty dollars in either direction, **stop and recount before sending**. A variance of plus or minus fifty almost always means a count mistake, not a real shortfall. This is an operational rule the venue follows; the system itself does not block the send.
 
 ---
 
@@ -49,7 +49,9 @@ If the cash variance shown by the sheet is more than fifty dollars in either dir
 
 ### 2.1 Check the date and enter your name
 
-Look at the tab name at the bottom of the spreadsheet and confirm it matches today's date. The tabs cycle automatically each Monday evening, so if today is Wednesday, the active tab should say "Wednesday" and the date in the top-left should be today's date.
+Look at the tab name at the bottom of the spreadsheet and confirm it matches today's date. The tabs cycle automatically each Monday evening, so if today is Wednesday, the active tab should read something like `WEDNESDAY 21/05/2026` (the day name in capitals followed by the date), and the date in cells B3:F3 should match today's date.
+
+Note: the spreadsheet also has Monday and Tuesday tabs for visual consistency, but the system blocks sending from them. Only the five service-day tabs (Wednesday through Sunday) accept a send.
 
 Type your name in the MOD (Manager on Duty) cell, and any other staff who worked the shift in the Staff cell underneath. Use first names only; full names are not required.
 
@@ -62,7 +64,7 @@ The Waratah operates two tills, Public and Terrace. Both need a full count at th
 For each till, you enter:
 
 - **Closing count**: every denomination and the total
-- **Refloat**: the cash you left in the till to start tomorrow's service. Always $350.
+- **Refloat**: the cash you left in the till to start tomorrow's service. House policy is $350; the system does not enforce this.
 - **Cash variance**: this is auto-calculated, you do not type it
 
 The system computes:
@@ -71,7 +73,7 @@ The system computes:
 - **Cash Take**: the cash you should have, based on POS expected cash
 - **Cash Variance**: the difference between the two
 
-**The fifty-dollar rule.** If Cash Variance shows anything more than plus or minus fifty dollars, stop and recount. Variance over fifty almost always means a counting error or a refloat figure typed wrong. A genuine fifty-dollar shortfall is rare; a counting mistake of fifty dollars is common.
+**The fifty-dollar rule.** If Cash Variance shows anything more than plus or minus fifty dollars, stop and recount. Variance over fifty almost always means a counting error or a refloat figure typed wrong. A genuine fifty-dollar shortfall is rare; a counting mistake of fifty dollars is common. This is an operational guideline you follow; the system shows the variance figure in the Slack post but does not enforce a threshold.
 
 If the recount comes out the same, send the report anyway. The variance figure will be visible to managers in the Slack post and they can follow up.
 
@@ -85,7 +87,7 @@ You will need to enter:
 - **Production Amount**: from the POS Takings
 - **Function Deposit**: any deposits paid by function clients in advance, see Cynthia
 - **Cash Returns and CD (Credit Discount)**: our recorded cash takings, leave blank if zero
-- **Total Tips Card**: the card tips total from  POS
+- **Total Tips Card**: the card tips total from POS
 - **Total Tips Cash**: the cash tips total
 
 Cells that calculate automatically (do not touch):
@@ -146,7 +148,7 @@ If you have nothing to record, type "None" rather than leaving the field blank.
 
 ### 2.7 Send the report
 
-Go to the menu bar at the top of the spreadsheet and click **The Waratah Tools**, then **Send Shift Report**.
+Go to the menu bar at the top of the spreadsheet and click **Waratah Tools → Daily Reports → Export & Email PDF (LIVE)**.
 
 What happens:
 
@@ -154,7 +156,7 @@ What happens:
 2. A second checklist dialog appears asking you to tick that you have:
    - Approved Deputy timesheets
    - Done the fruit order
-3. Tick the boxes and click **Send**.
+3. Tick both boxes and click **Confirm & Send**.
 4. A green confirmation message appears for about ten to fifteen seconds while the system processes.
 5. The dialog auto-closes when complete.
 
@@ -164,56 +166,35 @@ You do not need a password to send the report. If the system asks for one, somet
 
 **Do not send from the Read Me, Task Management, or Analytics tabs.** The Send action only works correctly from one of the five day tabs (Wednesday through Sunday).
 
-If the send fails (red error message or no confirmation after thirty seconds), do not retry immediately. Wait two minutes and try once more. If it fails a second time, see Section 9, Common Mistakes and Quick Fixes.
+If the send fails (red error message or no confirmation after thirty seconds), do not retry immediately. Wait two minutes and try once more. If it fails a second time, see Section 7, Common Mistakes and Quick Fixes.
 
 ---
 
 ## 3. TEST Mode, Optional Practice Run
 
-You can run the system in TEST mode to practise sending the report without anything actually going out. This is useful for training new managers and for confirming the report is filled in correctly before a real send.
+You can run the system in TEST mode to practise sending the report without anything going to the production recipients. This is useful for training new managers and for confirming the report is filled in correctly before a real send.
 
 In TEST mode:
 
 - A Slack message is posted to a **test channel only**, not to the manager channels
-- **No email** is sent to the management team
+- A single PDF email is sent to the configured test recipient (Evan by default); the management distribution list does not receive anything
 - **No data is written to the warehouse**
 - **No tasks are pushed to the Task Management spreadsheet**
 
-To send a test, go to **The Waratah Tools** then **Send TEST Report**. The same checklist dialog appears. After you confirm, the system processes the report exactly as it would in live mode but redirects all outputs to the test channel.
+To send a test, go to **Waratah Tools → Daily Reports → Export & Email (TEST to me)**. The same checklist dialog appears. After you confirm, the system processes the report exactly as it would in live mode but redirects all outputs as above.
 
 You can run TEST mode as many times as you like. It does not consume any quotas or write any permanent records.
 
 ---
 
-## 4. The Basic Report, Emergency Fallback
-
-If the main Send Shift Report function fails repeatedly, or if the spreadsheet looks visibly broken (cells in the wrong place, formulas showing as errors), there is a fallback called the Basic Report.
-
-How to use it:
-
-1. Go to **The Waratah Tools** then **Send Basic Report**.
-2. Click through any prompts.
-3. The system extracts whatever it can read from the sheet and sends a simplified Slack message and email.
-
-What the Basic Report does:
-
-- Sends a stripped-down Slack message and email to the management team
-- Does **not** run the pre-send checklist dialog
-- Does **not** sync tasks to the Task Management spreadsheet
-- Does **not** write to the data warehouse
-
-The Basic Report is for emergencies only. If you use it, also send Evan a message saying so, because the warehouse will be missing tonight's data and somebody will need to backfill it manually.
-
----
-
-## 5. What Happens After You Click Send
+## 4. What Happens After You Click Confirm & Send
 
 This is for your information only, you do not need to do anything for this section. It is here so you know the report is in motion.
 
-When you click Send, four things happen in sequence over about ten seconds:
+When you click Confirm & Send, four things happen in sequence over about ten seconds:
 
 1. The system reads every field on the day's tab and builds a structured report.
-2. A formatted message is posted to the venue's Slack manager channels.
+2. A formatted message is posted to the venue's Slack manager channel.
 3. A PDF copy of the report is generated and emailed to the management team.
 4. The numbers are written to the central data warehouse for weekly analytics.
 
@@ -223,7 +204,7 @@ If a system failure does occur, there is a backfill procedure your manager can r
 
 ---
 
-## 6. What Gets Posted to Slack
+## 5. What Gets Posted to Slack
 
 The Slack message your management team receives is built from your report. It includes:
 
@@ -249,67 +230,60 @@ The Slack message your management team receives is built from your report. It in
 
 **AI Insights section:**
 
-- A short paragraph generated by Claude that highlights anything notable about tonight's numbers in context, for example trend comparisons, discount impact, or recommended actions. If the AI service is unavailable, a simpler version is generated from the raw numbers.
+- A short paragraph generated by Claude that highlights anything notable about tonight's numbers in context, for example trend comparisons, discount impact, or recommended actions. If the AI service is unavailable, the AI block is simply omitted from the post.
 
 **Action buttons:**
 
-- A link to view the full PDF report
-- A link to email the team
+- A `View PDF` button that opens the full PDF report
+- An `Open Shift Report` button that opens the live spreadsheet
 
 The message is posted as one structured Slack block, not a wall of text. If you want to see what your shift report will look like, send a TEST report first.
 
 ---
 
-## 7. Who Receives the Report
+## 6. Who Receives the Report
 
-The shift report email goes to the management team. As of May 2026, that is six people:
+The shift report email goes to a list of managers maintained in the `WARATAH_EMAIL_RECIPIENTS` Script Property, and Slack DMs go to staff whose webhook is recorded in `SLACK_DM_WEBHOOKS`. The lists change as the team changes, so this guide does not enumerate them.
 
-| Recipient | Role |
-|---|---|
-| Evan | Admin |
-| Cynthia | Owner |
-| Nick | Head Chef |
-| Ian | Shareholder |
-| Adam | Owner |
+For the current canonical list and the procedure for updating it, see [`for-admins/02-staff-and-access-management.md`](../for-admins/02-staff-and-access-management.md).
 
-The Slack message goes to the venue's manager channels (multiple channels for redundancy) and also as direct messages to a subset of the team who have opted in.
+The Slack message goes to the venue's single manager-channel webhook. Personal DMs are handled separately by the Task Management system, not the nightly shift report.
 
 If the recipient list needs to change (someone leaves, new manager joins), that is an admin change made by Evan via the Script Properties. As a floor staff member you do not need to do this yourself.
 
-For the canonical list and update procedure, see [`for-admins/01-configuration-reference.md`](../for-admins/01-configuration-reference.md) (becoming available in Phase 3 of the documentation migration).
-
 ---
 
-## 8. Common Mistakes and Quick Fixes
+## 7. Common Mistakes and Quick Fixes
 
 | Mistake | What happens | Quick fix |
 |---|---|---|
 | Sent from the wrong tab (Read Me, Task Management, Analytics) | Send menu greyed out, or error message | Click on the correct day tab and retry |
-| Sent TEST when you meant LIVE | Test report goes to test channel only, no email | Click **Send Shift Report** (not TEST) and retry |
-| Cash Variance over $50 not investigated | Slack message flags the variance, manager will ask | Recount, then add a note in Shift Report explaining the actual discrepancy |
+| Sent TEST when you meant LIVE | TEST report goes to test channel only, no group email | Click **Waratah Tools → Daily Reports → Export & Email PDF (LIVE)** and retry |
+| Cash Variance over $50 not investigated | Slack message shows the variance, a manager will ask | Recount, then add a note in Shift Report explaining the actual discrepancy |
 | Left MOD field blank | System warning before send, or unattributed report | Type your name in the MOD cell and retry |
 | Typed a number into a formula cell | The formula breaks, downstream calculations become wrong | Press Cmd+Z (undo) immediately. If too late, click the cell and look for a `=` sign; if missing, contact Evan |
 | Slack message did not appear | Slack outage, popup blocker, or expired webhook | Check the venue's Slack first. If others' messages are appearing, the issue is in the script; contact Evan |
 | Email did not arrive | Spam folder, or recipient filter | Search "Waratah shift report" in your spam folder; if not there, contact Evan |
-| Send dialog froze or never completed | Network issue or script timeout | Wait two minutes, refresh the spreadsheet, try once more. If still failing, use the Basic Report (Section 4) |
+| Send dialog froze or never completed | Network issue or script timeout | Wait two minutes, refresh the spreadsheet, try once more. If still failing, contact Evan |
 
-If your specific problem is not in this table, see the manager troubleshooting guide at [`for-managers/05-troubleshooting.md`](../for-managers/05-troubleshooting.md) (becoming available in Phase 2), or contact Evan directly.
+If your specific problem is not in this table, see the manager troubleshooting guide at [`for-managers/05-troubleshooting.md`](../for-managers/05-troubleshooting.md), or contact Evan directly.
 
 ---
 
-## 9. What Happens on Monday Evening
+## 8. What Happens on Monday Evening
 
 Every Monday at around 9pm, the system runs the **weekly rollover**. You do not need to do anything for this. It happens automatically.
 
 What the rollover does:
 
-1. Generates a PDF of the full week (Wednesday through Sunday) and emails it to the management team.
-2. Saves a copy of the complete spreadsheet to a Google Drive archive folder for permanent record.
+1. Generates a PDF of the full week (Wednesday through Sunday) and archives it to a Google Drive folder.
+2. Saves a copy of the complete spreadsheet to the same archive folder for permanent record.
 3. Renames each day tab to reflect the next week's dates.
 4. Clears the manager input cells so the sheet is ready for the new week's Wednesday service.
-5. Posts a notification to Slack confirming the rollover completed.
 
 The Read Me, Task Management, and Analytics tabs are **not** touched. They roll across weeks unchanged.
+
+If the rollover fails partway, the system posts a Slack notification with the error. If everything succeeds, no Slack message is sent (you simply find the tabs ready for the new week on Tuesday morning).
 
 If you log in on Tuesday morning and the tabs show last week's dates instead of this week's, the rollover did not run. This is rare but it happens occasionally if the script trigger fails. Contact Evan; the rollover can be run manually from the menu.
 
@@ -317,7 +291,7 @@ If you start your Wednesday shift and find old data still in the input cells (nu
 
 ---
 
-## 10. Quick Reference Card
+## 9. Quick Reference Card
 
 Print this section and stick it inside the cash drawer for first weeks.
 
@@ -349,35 +323,35 @@ Print this section and stick it inside the cash drawer for first weeks.
 
 **Send:**
 
-- The Waratah Tools menu, then Send Shift Report
+- Waratah Tools → Daily Reports → Export & Email PDF (LIVE)
 - Click Yes on the confirmation
-- Tick all four checklist boxes
+- Tick both checklist boxes
+- Click Confirm & Send
 - Wait for green confirmation (about 30 seconds)
 
 **If something fails:**
 
 - Wait two minutes, try once more
-- If still failing, use Send Basic Report
-- Tell Evan it failed
+- If still failing, contact Evan
 
 ---
 
-## 11. Where to Go Next
+## 10. Where to Go Next
 
-If you are responsible for more than just sending tonight's report, the following guides will help once they are written:
+If you are responsible for more than just sending tonight's report, the following guides will help:
 
-- [`for-managers/01-shift-reports.md`](../for-managers/01-shift-reports.md) (Phase 2): managing the daily report process, watching the numbers, follow-ups
-- [`for-managers/02-task-management.md`](../for-managers/02-task-management.md) (Phase 2): the Task Management spreadsheet, the 8-status workflow
-- [`for-managers/03-weekly-automation.md`](../for-managers/03-weekly-automation.md) (Phase 2): the weekly rollover, the digest, dashboards
-- [`for-managers/05-troubleshooting.md`](../for-managers/05-troubleshooting.md) (Phase 2): things that go wrong and how to fix them yourself
+- [`for-managers/01-shift-reports.md`](../for-managers/01-shift-reports.md): managing the daily report process, watching the numbers, follow-ups
+- [`for-managers/02-task-management.md`](../for-managers/02-task-management.md): the Task Management spreadsheet, the 9-status workflow
+- [`for-managers/03-weekly-automation.md`](../for-managers/03-weekly-automation.md): the weekly rollover, the digest, dashboards
+- [`for-managers/05-troubleshooting.md`](../for-managers/05-troubleshooting.md): things that go wrong and how to fix them yourself
 
 For the canonical reference of all current settings (Script Properties, recipient lists, webhooks):
 
-- [`for-admins/01-configuration-reference.md`](../for-admins/01-configuration-reference.md) (Phase 3)
+- [`for-admins/01-configuration-reference.md`](../for-admins/01-configuration-reference.md)
 
 For the technical internals (named ranges, cell maps, code structure):
 
-- [`for-developers/`](../for-developers/) (Phase 4)
+- [`for-developers/`](../for-developers/)
 
 For any AI-assisted task on this project (Claude Code sessions):
 
