@@ -36,25 +36,22 @@ const ANALYTICS_CONFIG = {
  * Sets up headers, formulas, and formatting on the ANALYTICS tab.
  * Safe to re-run — clears and rebuilds each time.
  *
- * Layout (compressed):
- *   Row 1:   Header
- *   Row 2:   Timestamp
- *   Row 3:   THIS WEEK header  |  WEEKLY TREND header (col H)
- *   Row 4:   Week Ending + Shifts  |  Trend column headers (col H)
- *   Row 5:   Total Revenue + Avg Daily  |  Trend QUERY (col H)
- *   Row 6:   Total Tips + Production
- *   Row 7:   Total Discounts
- *   Row 8:   WEEK-OVER-WEEK header
- *   Row 9:   Previous Week Ending
- *   Row 10:  WoW column headers
- *   Rows 11-14: WoW data rows
- *   Row 15:  DAY-OF-WEEK AVERAGES header
- *   Row 16:  DoW column headers
- *   Rows 17-22: DoW data (Mon-Sat)
- *   Row 23:  AVERAGE WEEKLY (ALL WEEKS) header
- *   Row 24:  Avg Weekly Net Revenue + Avg Weekly Production
- *   Row 25:  Avg Weekly Tips + Avg Weekly Discounts
- *   Row 27+: Extended Trends (M7) — header 27, data 29-34, YTD 36-38
+ * Layout (unified design system):
+ *   Row 1:   Header (SAKURA · ANALYTICS DASHBOARD) + timestamp
+ *   Row 2:   Spacer
+ *   Row 4:   THIS WEEK hero card (A4:F9)  |  WEEKLY TREND hero card (I4:N5)
+ *   Rows 5-9: THIS WEEK data              |  Trend col headers (I5) + QUERY (I6)
+ *   Row 11:  WEEK-OVER-WEEK hairline
+ *   Row 12:  Previous Week Ending
+ *   Row 13:  WoW column headers
+ *   Rows 14-17: WoW data (4 metrics)
+ *   Row 21:  DAY-OF-WEEK AVERAGES hairline
+ *   Row 22:  DoW column headers
+ *   Rows 23-28: DoW data (Mon-Sat, 6 days)
+ *   Row 30:  AVERAGE WEEKLY (ALL WEEKS) hairline
+ *   Rows 31-32: Avg Weekly data
+ *   Row 34+: Extended Trends (M7) — buildExtendedTrends_Sakura
+ *   Row ?+:  Analytics Extensions (M8) — buildAnalyticsExtensions_Sakura
  */
 function buildFinancialDashboard() {
   const warehouseId = getDataWarehouseId_();
@@ -83,129 +80,168 @@ function buildFinancialDashboard() {
   sheet.clearFormats();
   sheet.clearConditionalFormatRules();
 
+  applyColumnWidths_(sheet);
+
   const src = ANALYTICS_CONFIG.sourceSheet;
   const tz = ANALYTICS_CONFIG.timezone;
-  const now = Utilities.formatDate(new Date(), tz, "dd/MM/yyyy HH:mm");
+  const now = Utilities.formatDate(new Date(), tz, 'd MMM yyyy h:mm a');
 
   // ─── SECTION 1: HEADER ─────────────────────────────────────────────
   let row = 1;
-  sheet.getRange(row, 1).setValue("SAKURA HOUSE — FINANCIAL ANALYTICS");
-  sheet.getRange(row, 1).setFontSize(16).setFontWeight("bold");
-  sheet.getRange(row, 1, 1, 6).merge();
+  sheet.getRange('A1').breakApart();
+  sheet.getRange('A1')
+       .setValue('SAKURA · ANALYTICS DASHBOARD')
+       .setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.metric)
+       .setFontWeight('bold')
+       .setFontColor(STYLE.colour.ink)
+       .setHorizontalAlignment('left')
+       .setVerticalAlignment('middle');
+  sheet.getRange('I1')
+       .setValue('Last updated: ' + now)
+       .setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.label)
+       .setFontColor(STYLE.colour.inkMuted)
+       .setHorizontalAlignment('right')
+       .setVerticalAlignment('middle');
+  applyRowHeight_(sheet, 1, 'section');
 
   row = 2;
-  sheet.getRange(row, 1).setValue(`Dashboard built: ${now}  •  Data refreshes automatically`);
-  sheet.getRange(row, 1).setFontSize(9).setFontColor("#666666").setFontStyle("italic");
-  sheet.getRange(row, 1, 1, 6).merge();
+  sheet.getRange('A2:I2').breakApart().clearContent();
+  applyRowHeight_(sheet, 2, 'spacer');
 
   // ─── SECTION 2: THIS WEEK SNAPSHOT ──────────────────────────────────
-  row = 3;
-  _sectionHeader_(sheet, row, "THIS WEEK");
-
   row = 4;
+  applyHeroCard_(sheet, 'A4', null, null, 'A4:F9', 'THIS WEEK');
+  sheet.getRange('A4:F4').merge();
+
+  row = 5;
+  // Find the most recent week-ending date
   sheet.getRange(row, 1).setValue("Week Ending");
   sheet.getRange(row, 2).setFormula(`=IFERROR(MAX(${src}!C:C),"")`);
   sheet.getRange(row, 2).setNumberFormat("dd/MM/yyyy");
 
   sheet.getRange(row, 4).setValue("Shifts Reported");
-  sheet.getRange(row, 5).setFormula(`=IFERROR(COUNTIF(${src}!C:C,B${row}),0)`);
+  sheet.getRange(row, 5).setFormula(`=IFERROR(COUNTIF(${src}!C:C,B5),0)`);
 
-  const weekRef = `B${row}`; // dynamic: "B4"
-
-  row = 5;
+  row = 6;
+  const weekRef = "B5"; // points to the current week-ending date
   sheet.getRange(row, 1).setValue("Total Revenue");
-  sheet.getRange(row, 2).setFormula(`=IFERROR(SUMIFS(${src}!E:E,${src}!C:C,${weekRef}),0)`);
+  sheet.getRange(row, 2).setFormula(`=IFERROR(SUMIFS(${src}!E:E,${src}!C:C,${weekRef}),0)`); // E=NetRevenue
   sheet.getRange(row, 2).setNumberFormat("$#,##0");
 
   sheet.getRange(row, 4).setValue("Avg Daily Revenue");
-  sheet.getRange(row, 5).setFormula(`=IFERROR(AVERAGEIFS(${src}!E:E,${src}!C:C,${weekRef}),0)`);
-  sheet.getRange(row, 5).setNumberFormat("$#,##0");
-
-  row = 6;
-  sheet.getRange(row, 1).setValue("Total Tips");
-  sheet.getRange(row, 2).setFormula(`=IFERROR(SUMIFS(${src}!H:H,${src}!C:C,${weekRef}),0)`);
-  sheet.getRange(row, 2).setNumberFormat("$#,##0");
-
-  sheet.getRange(row, 4).setValue("Production Amount");
-  sheet.getRange(row, 5).setFormula(`=IFERROR(SUMIFS(${src}!J:J,${src}!C:C,${weekRef}),0)`);
+  sheet.getRange(row, 5).setFormula(`=IFERROR(AVERAGEIFS(${src}!E:E,${src}!C:C,${weekRef}),0)`); // E=NetRevenue
   sheet.getRange(row, 5).setNumberFormat("$#,##0");
 
   row = 7;
+  sheet.getRange(row, 1).setValue("Total Tips");
+  sheet.getRange(row, 2).setFormula(`=IFERROR(SUMIFS(${src}!H:H,${src}!C:C,${weekRef}),0)`); // H=TipsTotal
+  sheet.getRange(row, 2).setNumberFormat("$#,##0");
+
+  sheet.getRange(row, 4).setValue("Production Amount");
+  sheet.getRange(row, 5).setFormula(`=IFERROR(SUMIFS(${src}!J:J,${src}!C:C,${weekRef}),0)`); // J=ProductionAmount
+  sheet.getRange(row, 5).setNumberFormat("$#,##0");
+
+  row = 8;
   sheet.getRange(row, 1).setValue("Total Discounts");
-  sheet.getRange(row, 2).setFormula(`=IFERROR(SUMIFS(${src}!K:K,${src}!C:C,${weekRef}),0)`);
+  sheet.getRange(row, 2).setFormula(`=IFERROR(SUMIFS(${src}!K:K,${src}!C:C,${weekRef}),0)`); // K=Discounts
+  sheet.getRange(row, 2).setNumberFormat("$#,##0");
+
+  row = 9;
+  sheet.getRange(row, 1).setValue("Cash Takings");
+  sheet.getRange(row, 2).setFormula(`=IFERROR(SUMIFS(${src}!F:F,${src}!C:C,${weekRef}),0)`); // F=CashTotal
   sheet.getRange(row, 2).setNumberFormat("$#,##0");
 
   // ─── SECTION 3: WEEK-OVER-WEEK COMPARISON ──────────────────────────
-  row = 8;
-  _sectionHeader_(sheet, row, "WEEK-OVER-WEEK");
+  row = 11;
+  applyHairlineSection_(sheet, 'A11', 'WEEK-OVER-WEEK');
+  applyRowHeight_(sheet, row, 'section');
 
-  row = 9;
+  row = 12;
   sheet.getRange(row, 1).setValue("Previous Week Ending");
+  // Second most recent week-ending date
   sheet.getRange(row, 2).setFormula(`=IFERROR(LARGE(UNIQUE(${src}!C2:C),2),"")`);
   sheet.getRange(row, 2).setNumberFormat("dd/MM/yyyy");
 
-  const prevRef = `B${row}`; // dynamic: "B9"
+  const prevRef = "B12";
 
-  row = 10;
+  row = 13;
   sheet.getRange(row, 1).setValue("");
   sheet.getRange(row, 2).setValue("This Week");
   sheet.getRange(row, 3).setValue("Last Week");
   sheet.getRange(row, 4).setValue("Change");
   sheet.getRange(row, 5).setValue("% Change");
-  sheet.getRange(row, 1, 1, 5).setFontWeight("bold").setBackground("#f3f3f3");
+  applyTableHeader_(sheet, 'A13:E13');
 
   const wowMetrics = [
-    { label: "Revenue",    thisFormula: `=IFERROR(SUMIFS(${src}!E:E,${src}!C:C,${weekRef}),0)`, lastFormula: `=IFERROR(SUMIFS(${src}!E:E,${src}!C:C,${prevRef}),0)`, fmt: "$#,##0" },
-    { label: "Tips",       thisFormula: `=IFERROR(SUMIFS(${src}!H:H,${src}!C:C,${weekRef}),0)`, lastFormula: `=IFERROR(SUMIFS(${src}!H:H,${src}!C:C,${prevRef}),0)`, fmt: "$#,##0" },
-    { label: "Production", thisFormula: `=IFERROR(SUMIFS(${src}!J:J,${src}!C:C,${weekRef}),0)`, lastFormula: `=IFERROR(SUMIFS(${src}!J:J,${src}!C:C,${prevRef}),0)`, fmt: "$#,##0" },
-    { label: "Discounts",  thisFormula: `=IFERROR(SUMIFS(${src}!K:K,${src}!C:C,${weekRef}),0)`, lastFormula: `=IFERROR(SUMIFS(${src}!K:K,${src}!C:C,${prevRef}),0)`, fmt: "$#,##0" },
+    { label: "Revenue",    col: "E", fmt: "$#,##0" }, // E=NetRevenue
+    { label: "Tips",       col: "H", fmt: "$#,##0" }, // H=TipsTotal
+    { label: "Production", col: "J", fmt: "$#,##0" }, // J=ProductionAmount
+    { label: "Discounts",  col: "K", fmt: "$#,##0" }, // K=Discounts
   ];
 
-  const wowStartRow = 11;
   wowMetrics.forEach((m, i) => {
-    const r = wowStartRow + i;
+    const r = 14 + i;
     sheet.getRange(r, 1).setValue(m.label);
-    sheet.getRange(r, 2).setFormula(m.thisFormula).setNumberFormat(m.fmt);
-    sheet.getRange(r, 3).setFormula(m.lastFormula).setNumberFormat(m.fmt);
+    sheet.getRange(r, 2).setFormula(`=IFERROR(SUMIFS(${src}!${m.col}:${m.col},${src}!C:C,${weekRef}),0)`).setNumberFormat(m.fmt);
+    sheet.getRange(r, 3).setFormula(`=IFERROR(SUMIFS(${src}!${m.col}:${m.col},${src}!C:C,${prevRef}),0)`).setNumberFormat(m.fmt);
     sheet.getRange(r, 4).setFormula(`=IFERROR(B${r}-C${r},0)`).setNumberFormat(m.fmt);
     sheet.getRange(r, 5).setFormula(`=IFERROR(D${r}/C${r},0)`).setNumberFormat("+0.0%;-0.0%");
   });
+  applyTableBody_(sheet, 'A14:E17');
+
+  // Force recalculation so getValue() returns current formula results, not stale values.
+  SpreadsheetApp.flush();
+
+  // Delta colours baked in at build time. D column = change $, E column = change %.
+  // Conditional formatting on D14:D17 (from existing CF rules) handles red/green for $;
+  // we apply applyDeltaCell_ to E14:E17 (% column) which has no CF rule.
+  for (let i = 0; i < wowMetrics.length; i++) {
+    const r = 14 + i;
+    const pctVal = sheet.getRange(`E${r}`).getValue();
+    applyDeltaCell_(sheet, `E${r}`, typeof pctVal === 'number' ? pctVal : null);
+  }
 
   // ─── SECTION 4: DAY-OF-WEEK AVERAGES ───────────────────────────────
-  row = 15;
-  _sectionHeader_(sheet, row, "DAY-OF-WEEK AVERAGES (ALL TIME)");
+  row = 21;
+  applyHairlineSection_(sheet, 'A21', 'DAY-OF-WEEK AVERAGES (ALL TIME)');
+  applyRowHeight_(sheet, row, 'section');
 
-  row = 16;
+  row = 22;
   const dowHeaders = ["Day", "Avg Revenue", "Avg Tips", "Avg Production", "Avg Discounts", "Count", "Std Dev", "13W Trend"];
   dowHeaders.forEach((h, i) => sheet.getRange(row, i + 1).setValue(h));
-  sheet.getRange(row, 1, 1, dowHeaders.length).setFontWeight("bold").setBackground("#f3f3f3");
+  applyTableHeader_(sheet, 'A22:H22');
 
   const sakuraDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   sakuraDays.forEach((day, i) => {
-    const r = 17 + i;
+    const r = 23 + i;
     sheet.getRange(r, 1).setValue(day);
-    sheet.getRange(r, 2).setFormula(`=IFERROR(AVERAGEIFS(${src}!E:E,${src}!B:B,"${day}"),0)`).setNumberFormat("$#,##0");
-    sheet.getRange(r, 3).setFormula(`=IFERROR(AVERAGEIFS(${src}!H:H,${src}!B:B,"${day}"),0)`).setNumberFormat("$#,##0");
-    sheet.getRange(r, 4).setFormula(`=IFERROR(AVERAGEIFS(${src}!J:J,${src}!B:B,"${day}"),0)`).setNumberFormat("$#,##0");
-    sheet.getRange(r, 5).setFormula(`=IFERROR(AVERAGEIFS(${src}!K:K,${src}!B:B,"${day}"),0)`).setNumberFormat("$#,##0");
+    sheet.getRange(r, 2).setFormula(`=IFERROR(AVERAGEIFS(${src}!E:E,${src}!B:B,"${day}"),0)`).setNumberFormat("$#,##0"); // E=NetRevenue
+    sheet.getRange(r, 3).setFormula(`=IFERROR(AVERAGEIFS(${src}!H:H,${src}!B:B,"${day}"),0)`).setNumberFormat("$#,##0"); // H=TipsTotal
+    sheet.getRange(r, 4).setFormula(`=IFERROR(AVERAGEIFS(${src}!J:J,${src}!B:B,"${day}"),0)`).setNumberFormat("$#,##0"); // J=ProductionAmount
+    sheet.getRange(r, 5).setFormula(`=IFERROR(AVERAGEIFS(${src}!K:K,${src}!B:B,"${day}"),0)`).setNumberFormat("$#,##0"); // K=Discounts
     sheet.getRange(r, 6).setFormula(`=COUNTIF(${src}!B:B,"${day}")`).setNumberFormat("#,##0");
-    // Std Dev (col G): population stddev of all revenue for this day
+    // Std Dev (col G): population stddev of NetRevenue for this day
     sheet.getRange(r, 7).setFormula(
       `=IFERROR(STDEV(FILTER(${src}!E:E,${src}!B:B="${day}",${src}!E:E>0)),0)`
     ).setNumberFormat("$#,##0");
-    // 13-week Sparkline (col H): trend of last 91 days' revenue for this day
+    // 13-week Sparkline (col H): trend of last 91 days for this day
+    // Colour param replaced with STYLE.colour.good — only the colour changes, not chart type/linewidth/etc.
     sheet.getRange(r, 8).setFormula(
-      `=IFERROR(SPARKLINE(FILTER(${src}!E:E,${src}!B:B="${day}",${src}!A:A>=TODAY()-91),{"charttype","line";"color","#1a73e8";"linewidth",2}),"")`
+      `=IFERROR(SPARKLINE(FILTER(${src}!E:E,${src}!B:B="${day}",${src}!A:A>=TODAY()-91),{"charttype","line";"color","` + STYLE.colour.good + `";"linewidth",2}),"")`
     );
   });
+  applyTableBody_(sheet, 'A23:H28');
 
   // ─── SECTION 5: AVERAGE WEEKLY (ALL WEEKS) ─────────────────────────
   // Average of per-week totals (not per-shift). Uses AVERAGE(QUERY(...GROUP BY C))
   // so each week contributes one value regardless of how many shifts it contains.
-  row = 23;
-  _sectionHeader_(sheet, row, "AVERAGE WEEKLY (ALL WEEKS)");
+  row = 30;
+  applyHairlineSection_(sheet, 'A30', 'AVERAGE WEEKLY (ALL WEEKS)');
+  applyRowHeight_(sheet, row, 'section');
 
-  row = 24;
+  row = 31;
   sheet.getRange(row, 1).setValue("Avg Weekly Net Revenue");
   sheet.getRange(row, 2).setFormula(
     `=IFERROR(AVERAGE(QUERY(${src}!A2:P,"SELECT SUM(E) WHERE C IS NOT NULL GROUP BY C LABEL SUM(E) ''")),0)`
@@ -216,7 +252,7 @@ function buildFinancialDashboard() {
     `=IFERROR(AVERAGE(QUERY(${src}!A2:P,"SELECT SUM(J) WHERE C IS NOT NULL GROUP BY C LABEL SUM(J) ''")),0)`
   ).setNumberFormat("$#,##0");
 
-  row = 25;
+  row = 32;
   sheet.getRange(row, 1).setValue("Avg Weekly Tips");
   sheet.getRange(row, 2).setFormula(
     `=IFERROR(AVERAGE(QUERY(${src}!A2:P,"SELECT SUM(H) WHERE C IS NOT NULL GROUP BY C LABEL SUM(H) ''")),0)`
@@ -227,19 +263,24 @@ function buildFinancialDashboard() {
     `=IFERROR(AVERAGE(QUERY(${src}!A2:P,"SELECT SUM(K) WHERE C IS NOT NULL GROUP BY C LABEL SUM(K) ''")),0)`
   ).setNumberFormat("$#,##0");
 
+  applyTableBody_(sheet, 'A31:E32');
+
   // ─── SECTION 6: WEEKLY TREND (right side) ──────────────────────────
-  // Moved to col I (was H) to make room for Sparkline column in DoW Averages.
+  // Col I (was H) to make room for Sparkline column in DoW Averages.
   const trendCol = 9; // Column I
 
-  sheet.getRange(3, trendCol).setValue("WEEKLY TREND");
-  sheet.getRange(3, trendCol).setFontSize(11).setFontWeight("bold").setFontColor("#1a73e8");
-  sheet.getRange(3, trendCol, 1, 5).merge();
+  row = 4;
+  applyHeroCard_(sheet, 'I4', null, null, 'I4:N5', 'WEEKLY TREND');
+  sheet.getRange(row, trendCol, 1, 6).merge();
+  applyRowHeight_(sheet, row, 'section');
 
+  row = 5;
   const trendHeaders = ["Week Ending", "Revenue", "Tips", "Production", "Shifts"];
-  trendHeaders.forEach((h, i) => sheet.getRange(4, trendCol + i).setValue(h));
-  sheet.getRange(4, trendCol, 1, trendHeaders.length).setFontWeight("bold").setBackground("#f3f3f3");
+  trendHeaders.forEach((h, i) => sheet.getRange(row, trendCol + i).setValue(h));
+  applyTableHeader_(sheet, 'I5:N5');
 
-  sheet.getRange(5, trendCol).setFormula(
+  row = 6;
+  sheet.getRange(row, trendCol).setFormula(
     `=IFERROR(QUERY(${src}!A2:P,` +
     `"SELECT C, SUM(E), SUM(H), SUM(J), COUNT(A) ` +
     `WHERE C IS NOT NULL ` +
@@ -247,32 +288,21 @@ function buildFinancialDashboard() {
     `ORDER BY C DESC ` +
     `LABEL C 'Week Ending', SUM(E) 'Revenue', SUM(H) 'Tips', SUM(J) 'Production', COUNT(A) 'Shifts'"),"")`
   );
-
-  // Format the Week Ending column (first column of the query result) as a date
-  sheet.getRange(5, trendCol, 50, 1).setNumberFormat("dd/MM/yyyy");
+  applyTableBody_(sheet, 'I6:N56');
+  // Format the Week Ending column as a date (QUERY returns serial numbers otherwise)
+  sheet.getRange(7, trendCol, 50, 1).setNumberFormat("dd/MM/yyyy");
 
   // ─── FORMATTING ─────────────────────────────────────────────────────
-  sheet.setColumnWidth(1, 150);
-  sheet.setColumnWidth(2, 120);
-  sheet.setColumnWidth(3, 120);
-  sheet.setColumnWidth(4, 150);
-  sheet.setColumnWidth(5, 120);
-  sheet.setColumnWidth(6, 100);
-  sheet.setColumnWidth(7, 110); // Std Dev column
-  sheet.setColumnWidth(8, 140); // Sparkline column — wider for visual chart
-  for (let c = trendCol; c <= trendCol + 4; c++) {
-    sheet.setColumnWidth(c, 120);
-  }
+  // Column widths applied via applyColumnWidths_() at top of function.
 
-  // Bold labels — updated to compressed row positions
-  sheet.getRange("A4:A7").setFontWeight("bold");
-  sheet.getRange("D4:D7").setFontWeight("bold");
-  sheet.getRange("A9:A14").setFontWeight("bold");
-  sheet.getRange("A24:A25").setFontWeight("bold");
-  sheet.getRange("D24:D25").setFontWeight("bold");
+  // Bold labels in column A
+  sheet.getRange("A5:A9").setFontWeight("bold");
+  sheet.getRange("D5:D7").setFontWeight("bold");
+  sheet.getRange("A31:A32").setFontWeight("bold");
+  sheet.getRange("D31:D32").setFontWeight("bold");
 
   // Conditional formatting: negative WoW changes in red, positive in green
-  const changeRange = sheet.getRange(`D${wowStartRow}:D${wowStartRow + wowMetrics.length - 1}`);
+  const changeRange = sheet.getRange("D14:D17");
   sheet.setConditionalFormatRules([
     SpreadsheetApp.newConditionalFormatRule()
       .whenNumberLessThan(0)
@@ -286,6 +316,7 @@ function buildFinancialDashboard() {
       .build()
   ]);
 
+  // Freeze header
   sheet.setFrozenRows(2);
 
   // ─── M7: EXTENDED TRENDS ────────────────────────────────────────────
