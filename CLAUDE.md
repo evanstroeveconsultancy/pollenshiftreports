@@ -46,7 +46,7 @@
 | Claude API via UrlFetchApp | `claude-api-agent` |
 | Warehouse queries / backfill / analytics | `data-warehouse-agent` |
 | Deputy API / OAuth2 / external REST | `external-integrations-agent` |
-| Task management 8-status workflow | `task-management-agent` |
+| Task management 9-status workflow | `task-management-agent` |
 
 ### Pipeline architecture (`/saks` and `/tah`)
 
@@ -83,7 +83,7 @@ Scope → Implementation (parallel agents) → Review → Docs → Deploy. See `
 
 ### Need Shared Patterns?
 → **Read [`CLAUDE_SHARED.md`](CLAUDE_SHARED.md)**
-- Task management system (8-status workflow)
+- Task management system (9-status workflow)
 - Slack Block Kit integration
 - PDF export & email system
 - Data warehouse integration
@@ -97,7 +97,7 @@ SHIFT REPORTS 3.0 is a comprehensive hospitality automation system that manages 
 
 **Core Capabilities:**
 - 📊 **Automated Shift Reporting** - Daily financial reconciliation and operational notes
-- ✅ **Enhanced Task Management** - 8-status workflow with auto-escalation and recurring tasks
+- ✅ **Enhanced Task Management** - 9-status workflow with auto-escalation and recurring tasks
 - 📈 **Data Warehousing** - Centralized analytics database with duplicate prevention
 - 🔄 **Weekly Rollover** - Automated report cycling
 - 📧 **PDF Export** - Formatted reports via email and Slack
@@ -166,7 +166,7 @@ SHIFT REPORTS 3.0/                       # Git repo: github.com/evanstroeveconsu
 - Task management deep dive: Load [`WORKFLOW_TASK_MANAGEMENT.md`](docs/_archive/WORKFLOW_TASK_MANAGEMENT.md) only when needed
 
 ### For Both Venues:
-- Task management setup: See [`CLAUDE_SHARED.md`](CLAUDE_SHARED.md#1-enhanced-task-management-8-status-workflow)
+- Task management setup: See [`CLAUDE_SHARED.md`](CLAUDE_SHARED.md#1-enhanced-task-management-9-status-workflow)
 - Slack integration: See [`CLAUDE_SHARED.md`](CLAUDE_SHARED.md#2-slack-block-kit-integration)
 - PDF export: See [`CLAUDE_SHARED.md`](CLAUDE_SHARED.md#3-pdf-export--email-system)
 
@@ -235,6 +235,15 @@ main                          ← stable, merged code only
 
 **Last Updated:** May 21, 2026 (Unified dashboard UI redesign across both venues — Roboto type scale, botanical palette, hybrid framing)
 **Status:** Both venues fully operational and production-ready ✅
+
+**Documentation (May 22, 2026) — Sakura House Audience-Tiered Docs System:**
+- New `docs/sakura/` tree mirrors the Waratah audience-tier structure: `for-daily-users/` (1 walkthrough), `for-managers/` (5 docs + README), `for-admins/` (4 docs + README), `for-developers/` (6 docs + README), `_archive/` (9 legacy files preserved)
+- Total: 16 new audience-scoped docs + top-level README, ~4,944 lines of UK English, no em-dashes
+- All technical claims grounded in a verified code fact sheet (`docs/plans/2026-05-22-sakura-docs-FACT-SHEET.md`) produced by three forensic Explore agents reading the actual `SAKURA HOUSE/` codebase. Every Script Property key, trigger time, function name, cell reference, and menu path traces back to a `file:line` citation in that fact sheet — anti-fiction protocol designed in response to the May 17 Waratah doc pass that invented a 22-col schema
+- Discrepancies corrected during the migration: task workflow status count (Sakura is **9 statuses**, not 8 as some older docs claimed); NIGHTLY_FINANCIAL is 16 cols A-P (matches April 2 entry); AI Insights is shipped (not "soft launch"), routed via `AI_INSIGHTS_MODE` property; Send Test Report does NOT require admin password; warehouse sheet is `QUALITATIVE_LOG` not `QUALITATIVE_NOTES`; menu items `Send Overdue Summary Now` / `Create Overdue Summary Trigger` were removed April 2 and remaining doc references purged
+- `CLAUDE.md`, `CLAUDE_SAKURA.md`, `CLAUDE_SHARED.md` updated: all `8-status` references corrected to `9-status`; anchor link `#1-enhanced-task-management-9-status-workflow` updated to match new section heading in `CLAUDE_SHARED.md:373`
+- `SAKURA HOUSE/FILE EXPLAINERS/` reduced to a single `README.md` stub pointing at the new `docs/sakura/` tree (mirrors Waratah pattern). The 5 original files moved to `docs/sakura/_archive/`. The 4 legacy flat technical docs that lived directly under `docs/sakura/` (CELL_REFERENCE_MAP, DEEP_DIVE_ARCHITECTURE, INTEGRATION_FLOWS, WORKFLOW_WEEKLY) also moved to `_archive/`
+- Plan: `docs/plans/2026-05-22-sakura-docs-system-mirror.md`. Verified code fact sheet: `docs/plans/2026-05-22-sakura-docs-FACT-SHEET.md`
 
 **Deployment (May 21, 2026) — Unified Dashboard UI Redesign (Both Venues):**
 - Both venues: New `DashboardStyle{Sakura,Waratah}` files centralise design tokens (Roboto 4-size scale: 28/18/11/10/9pt; botanical palette: deep green `#2f5d3a` / terracotta `#b5533c` / sand `#d6cfa8` / muted neutrals; standardised row heights and column widths A-I) plus 7 reusable helpers (`applyHeroCard_`, `applyHairlineSection_`, `applyTableHeader_`, `applyTableBody_`, `applyDeltaCell_`, `applyColumnWidths_`, `applyRowHeight_`)

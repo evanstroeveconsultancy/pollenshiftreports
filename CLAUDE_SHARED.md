@@ -370,7 +370,7 @@ If CLEARABLE_FIELDS uses `cashDiscount` but FIELD_CONFIG uses `cdDiscount`, the 
 
 ## Shared Systems
 
-### 1. Enhanced Task Management (8-Status Workflow)
+### 1. Enhanced Task Management (9-Status Workflow)
 
 **Files:**
 - Sakura: `EnhancedTaskManagement_Sakura.gs` (1,964 lines)
@@ -392,7 +392,7 @@ NEW → TO DO → IN PROGRESS → DONE
 **Data Schema (14 columns):**
 | Column | Field | Type |
 |--------|-------|------|
-| A | Status | Dropdown (8 statuses) |
+| A | Status | Dropdown (9 statuses) |
 | B | Priority | URGENT, HIGH, MEDIUM, LOW |
 | C | Staff Allocated | Dropdown (venue-specific staff) |
 | D | Area | FOH, BOH, Bar, Kitchen, Admin, etc. |

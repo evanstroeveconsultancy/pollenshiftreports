@@ -6,6 +6,29 @@
 
 > **Note:** This is the Sakura-specific guide. For The Waratah, see `CLAUDE_WARATAH.md`. For shared architecture patterns, see `CLAUDE_SHARED.md`.
 
+## DOCUMENTATION (May 22, 2026) -- Audience-Tiered Docs System
+
+A polished audience-tiered documentation system now lives under [`docs/sakura/`](docs/sakura/) mirroring the Waratah structure:
+
+- [`docs/sakura/for-daily-users/shift-report-walkthrough.md`](docs/sakura/for-daily-users/shift-report-walkthrough.md) — floor staff and MODs filling in tonight's report
+- [`docs/sakura/for-managers/`](docs/sakura/for-managers/) — venue managers (5 docs + README): shift-reports, task-management, weekly-automation, staff-and-recipients, troubleshooting
+- [`docs/sakura/for-admins/`](docs/sakura/for-admins/) — admin operators (4 docs + README): configuration-reference, staff-and-access-management, advanced-troubleshooting, deployment-and-clasp
+- [`docs/sakura/for-developers/`](docs/sakura/for-developers/) — developers and Claude AI agents (6 docs + README): architecture, cell-reference, integration-pipeline, warehouse-schemas, rollover-and-triggers, task-management-internals
+- [`docs/sakura/_archive/`](docs/sakura/_archive/) — 9 legacy flat files (5 from FILE EXPLAINERS, 4 from old docs/sakura/) preserved for historical reference
+
+The 5 files at `SAKURA HOUSE/FILE EXPLAINERS/` were reduced to a single README stub pointing here. Total new content: ~4,944 lines, UK English, no em-dashes.
+
+**For AI sessions:** start at this file, then jump to the relevant [`docs/sakura/for-developers/`](docs/sakura/for-developers/) doc for your task. Verified code fact sheet (single source of truth for all technical claims): [`docs/plans/2026-05-22-sakura-docs-FACT-SHEET.md`](docs/plans/2026-05-22-sakura-docs-FACT-SHEET.md).
+
+**Discrepancies corrected during migration:**
+- Task workflow is **9 statuses** (NEW, TO DO, IN PROGRESS, TO DISCUSS, BLOCKED, DEFERRED, DONE, CANCELLED, RECURRING per `EnhancedTaskManagement_Sakura.gs:160-182`), not 8 as some older docs claimed
+- Send Test Report (`MenuSakura.gs:121`) does NOT require admin password (calls `exportAndEmailPDF_TestToSelf` directly, no `pw_` wrapper)
+- AI Insights is shipped, gated by `AI_INSIGHTS_MODE` Script Property (`live` or `evan_only`), not "soft launch"
+- Warehouse sheet is `QUALITATIVE_LOG` (not `QUALITATIVE_NOTES`)
+- NIGHTLY_FINANCIAL is 16 cols A-P (verified at `IntegrationHubSakura.gs:412-429`)
+
+---
+
 ## DEPLOYMENT (May 21, 2026) -- Analytics Dashboard Enhancements
 
 **ANALYTICS tab (`buildFinancialDashboard`):**
@@ -557,7 +580,7 @@ SAKURA HOUSE shift reporting and task management system built on Google Apps Scr
 
 **Core Capabilities:**
 - 📊 **Automated Shift Reporting** - Daily financial reconciliation and operational notes
-- ✅ **Enhanced Task Management** - 8-status workflow with auto-escalation and recurring tasks
+- ✅ **Enhanced Task Management** - 9-status workflow with auto-escalation and recurring tasks
 - 📈 **Data Warehousing** - Centralized analytics database with duplicate prevention
 - 🔄 **Weekly Rollover In-Place** - NEW: Automated report cycling without file duplication
 - 📧 **PDF Export** - Formatted reports via email and Slack
