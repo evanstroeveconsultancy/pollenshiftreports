@@ -822,16 +822,6 @@ function rebuildAllDashboards() {
 }
 
 
-/**
- * Helper: writes a section header row.
- */
-function _sectionHeader_(sheet, row, title) {
-  sheet.getRange(row, 1).setValue(title);
-  sheet.getRange(row, 1).setFontSize(11).setFontWeight("bold").setFontColor("#1a73e8");
-  sheet.getRange(row, 1, 1, 6).merge();
-}
-
-
 // ============================================================================
 // M7 — EXTENDED TREND WINDOWS (Sakura)
 // ============================================================================
@@ -840,13 +830,12 @@ function _sectionHeader_(sheet, row, title) {
  * Appends the "Extended Trends" section to the ANALYTICS sheet.
  * Uses AVERAGEIFS/SUMIFS formulas so the section auto-updates.
  *
- * Starts at row 25, immediately after the DoW Averages section ends at row 22
- * (rows 17-22 for Mon-Sat data), with a 2-row gap.
- *
- * Sections added:
- *   - 13-week & 26-week day-of-week average revenue table (Mon-Sat)
- *   - Day-of-week revenue heatmap (green=best, red=worst)
- *   - Year-to-Date summary (total revenue, shifts, avg per shift)
+ * Layout (after AVERAGE WEEKLY ends at row 32):
+ *   Row 34:    EXTENDED TRENDS hairline section header
+ *   Row 35:    Column headers
+ *   Rows 36-41: 6-day data (Mon-Sat)
+ *   Row 43:    YEAR TO DATE hairline section header
+ *   Rows 44-45: YTD data
  *
  * Sakura NIGHTLY_FINANCIAL columns:
  *   A=Date, B=Day, C=WeekEnding, D=MOD, E=NetRevenue, H=TotalTips
@@ -855,27 +844,28 @@ function _sectionHeader_(sheet, row, title) {
  * @param {string} src   - Source sheet name ("NIGHTLY_FINANCIAL").
  */
 function buildExtendedTrends_Sakura(sheet, src) {
-  // DoW averages end row 22; AVERAGE WEEKLY occupies rows 23-25; row 26 is a spacer.
-  let row = 27;
+  // AVERAGE WEEKLY occupies rows 30-32; row 33 is implicit gap; section starts row 34.
+  let row = 34;
 
   // ── Section header ───────────────────────────────────────────────────
-  _sectionHeader_(sheet, row, "EXTENDED TRENDS — DAY-OF-WEEK (13W / 26W)");
+  applyHairlineSection_(sheet, 'A34', 'EXTENDED TRENDS — DAY-OF-WEEK (13W / 26W)');
+  applyRowHeight_(sheet, row, 'section');
 
   // ── Column headers ───────────────────────────────────────────────────
-  row = 28;
+  row = 35;
   const etHeaders = ["Day", "13-Week Avg Rev", "26-Week Avg Rev", "13-Week Avg Tips", "26-Week Avg Tips", "Heatmap Rank"];
   etHeaders.forEach((h, i) => sheet.getRange(row, i + 1).setValue(h));
-  sheet.getRange(row, 1, 1, etHeaders.length).setFontWeight("bold").setBackground("#f3f3f3");
+  applyTableHeader_(sheet, 'A35:F35');
 
-  // ── Per-day rows ─────────────────────────────────────────────────────
+  // ── Per-day rows (Mon-Sat = 6 days) ─────────────────────────────────
   const sakuraDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const etDataStartRow = 29;
+  const etDataStartRow = 36;
 
   sakuraDays.forEach((day, i) => {
     const r = etDataStartRow + i;
     sheet.getRange(r, 1).setValue(day);
 
-    // 13-week avg revenue (91 days)
+    // 13-week avg revenue (91 days) — E=NetRevenue
     sheet.getRange(r, 2).setFormula(
       `=IFERROR(AVERAGEIFS(${src}!E:E,${src}!B:B,"${day}",${src}!A:A,">="&TODAY()-91),0)`
     ).setNumberFormat("$#,##0");
@@ -885,7 +875,7 @@ function buildExtendedTrends_Sakura(sheet, src) {
       `=IFERROR(AVERAGEIFS(${src}!E:E,${src}!B:B,"${day}",${src}!A:A,">="&TODAY()-182),0)`
     ).setNumberFormat("$#,##0");
 
-    // 13-week avg tips
+    // 13-week avg tips — H=TipsTotal
     sheet.getRange(r, 4).setFormula(
       `=IFERROR(AVERAGEIFS(${src}!H:H,${src}!B:B,"${day}",${src}!A:A,">="&TODAY()-91),0)`
     ).setNumberFormat("$#,##0");
@@ -896,15 +886,27 @@ function buildExtendedTrends_Sakura(sheet, src) {
     ).setNumberFormat("$#,##0");
 
     // Rank by 13-week avg revenue (RANK: 1=highest)
-    sheet.getRange(r, 6).setFormula(
-      `=IFERROR(RANK(B${r},B${etDataStartRow}:B${etDataStartRow + 5},0),"")`
-    );
+    sheet.getRange(r, 6).setFormula(`=IFERROR(RANK(B${r},B${etDataStartRow}:B${etDataStartRow + 5},0),"")`);
   });
 
-  // ── Day-of-week heatmap: colour the 13W avg revenue column green→red ──
-  // Colours applied at build time from server-side AVERAGEIFS evaluation.
-  // Green (#b7e1cd) = highest, Red (#c5221f) = lowest; 6 steps.
-  const heatmapColors = ["#34a853", "#81c995", "#b7e1cd", "#f6aea9", "#ea4335", "#c5221f"];
+  applyTableBody_(sheet, 'A36:F41');
+
+  // ── Day-of-week heatmap: colour B36:B41 best→worst using STYLE palette ──
+  // Sakura has 6 days (Mon-Sat) vs Waratah's 5; a 6-step palette is defined here.
+  // Rank 1 (best)  → STYLE.colour.good        (#2f5d3a)
+  // Rank 2         → '#5a8c66'                 (mid-green, between good and cardFill)
+  // Rank 3         → STYLE.colour.cardFill     (#f5f5f2)  — light neutral
+  // Rank 4         → '#c8d4c8'                 (neutral green-grey, derived from palette)
+  // Rank 5         → STYLE.colour.sand         (#d6cfa8)  — warm low
+  // Rank 6 (worst) → STYLE.colour.bad          (#b5533c)
+  const heatmapColors = [
+    STYLE.colour.good,      // rank 1 — best
+    '#5a8c66',              // rank 2
+    STYLE.colour.cardFill,  // rank 3
+    '#c8d4c8',              // rank 4
+    STYLE.colour.sand,      // rank 5
+    STYLE.colour.bad        // rank 6 — worst
+  ];
 
   try {
     const revenueVals = sheet.getRange(etDataStartRow, 2, 6, 1).getValues().map(r => r[0]);
@@ -913,22 +915,22 @@ function buildExtendedTrends_Sakura(sheet, src) {
         .map((v, i) => ({ v, i }))
         .sort((a, b) => b.v - a.v);
       sorted.forEach(({ i }, rank) => {
-        sheet.getRange(etDataStartRow + i, 2).setBackground(heatmapColors[rank] || "#ffffff");
+        sheet.getRange(etDataStartRow + i, 2).setBackground(heatmapColors[rank] || STYLE.colour.cardFill);
       });
     }
   } catch (e) {
-    // Heatmap colouring is best-effort; formulas still present
     Logger.log(`Extended Trends heatmap skipped: ${e.message}`);
   }
 
   // ── Year to Date ─────────────────────────────────────────────────────
-  row = 36;
-  _sectionHeader_(sheet, row, "YEAR TO DATE");
+  row = 43;
+  applyHairlineSection_(sheet, 'A43', 'YEAR TO DATE');
+  applyRowHeight_(sheet, row, 'section');
 
-  row = 37;
+  row = 44;
   sheet.getRange(row, 1).setValue("YTD Total Revenue");
   sheet.getRange(row, 2).setFormula(
-    `=IFERROR(SUMPRODUCT((YEAR(${src}!A2:A)=YEAR(TODAY()))*${src}!E2:E),0)`
+    `=IFERROR(SUMPRODUCT((YEAR(${src}!A2:A)=YEAR(TODAY()))*${src}!E2:E),0)` // E=NetRevenue
   ).setNumberFormat("$#,##0");
 
   sheet.getRange(row, 4).setValue("YTD Shifts");
@@ -936,18 +938,19 @@ function buildExtendedTrends_Sakura(sheet, src) {
     `=IFERROR(SUMPRODUCT((YEAR(${src}!A2:A)=YEAR(TODAY()))*(${src}!A2:A<>"")*1),0)`
   ).setNumberFormat("#,##0");
 
-  row = 38;
+  row = 45;
   sheet.getRange(row, 1).setValue("YTD Avg Revenue / Shift");
-  sheet.getRange(row, 2).setFormula(`=IFERROR(B37/E37,0)`).setNumberFormat("$#,##0");
+  sheet.getRange(row, 2).setFormula(`=IFERROR(B44/E44,0)`).setNumberFormat("$#,##0");
 
   sheet.getRange(row, 4).setValue("YTD Total Tips");
   sheet.getRange(row, 5).setFormula(
-    `=IFERROR(SUMPRODUCT((YEAR(${src}!A2:A)=YEAR(TODAY()))*${src}!H2:H),0)`
+    `=IFERROR(SUMPRODUCT((YEAR(${src}!A2:A)=YEAR(TODAY()))*${src}!H2:H),0)` // H=TipsTotal
   ).setNumberFormat("$#,##0");
 
-  // Bold labels
-  sheet.getRange("A37:A38").setFontWeight("bold");
-  sheet.getRange("D37:D38").setFontWeight("bold");
+  applyTableBody_(sheet, 'A44:E45');
+  // Sand accent on YTD label cells — reserved accent for benchmark/YTD context
+  sheet.getRange("A44:A45").setBackground(STYLE.colour.sand).setFontWeight("bold");
+  sheet.getRange("D44:D45").setFontWeight("bold");
 
   Logger.log("M7 Extended Trends section built for Sakura.");
 }
@@ -962,30 +965,34 @@ function buildExtendedTrends_Sakura(sheet, src) {
  * Adds: 4-Week Moving Average, Consistency, Top/Bottom 5 Shifts,
  *       Outliers vs DoW Baseline, Recent DoW Pattern.
  *
- * Layout (rows 40+):
- *   Row 40:    4-WEEK MOVING AVERAGE header
- *   Row 41:    Current 4W MA + Prior 4W MA + Change %
- *   Row 43:    CONSISTENCY header
- *   Row 44-45: Most Consistent / Most Volatile day
- *   Row 47:    TOP 5 SHIFTS THIS MONTH header
- *   Rows 48-53: Header + 5 SORTN rows
- *   Row 55:    BOTTOM 5 SHIFTS THIS MONTH header
- *   Rows 56-61: Header + 5 SORTN rows
- *   Row 63:    OUTLIERS THIS MONTH header
- *   Rows 64-69: Header + 5 outlier rows
- *   Row 71:    RECENT DOW PATTERN header
- *   Rows 72-78: Header + 6 day rows (build-time arrows)
+ * Layout (YTD ends at row 45):
+ *   Row 47:    4-WEEK MOVING AVERAGE header
+ *   Row 48:    Current 4W MA + Prior 4W MA + Change %
+ *   Row 50:    CONSISTENCY header
+ *   Rows 51-52: Most Consistent / Most Volatile day
+ *   Row 54:    TOP 5 SHIFTS THIS MONTH header
+ *   Rows 55-60: Header + 5 SORTN rows
+ *   Row 62:    BOTTOM 5 SHIFTS THIS MONTH header
+ *   Rows 63-68: Header + 5 SORTN rows
+ *   Row 70:    OUTLIERS THIS MONTH header
+ *   Rows 71-76: Header + 5 outlier rows
+ *   Row 78:    RECENT DOW PATTERN header
+ *   Rows 79-85: Header + 6 day rows (build-time arrows)
  *
  * Sakura NIGHTLY_FINANCIAL columns:
- *   A=Date, B=Day, C=WeekEnding, D=MOD, E=NetRevenue, H=TotalTips
+ *   A=Date, B=Day, C=WeekEnding, D=MOD, E=NetRevenue, H=TipsTotal
+ *
+ * CONSISTENCY formulas reference DoW Averages table at rows 23-28 (A23:A28,
+ * B23:B28, G23:G28) — Mon-Sat data written by buildFinancialDashboard.
+ * OUTLIERS VLOOKUP source is $A$23:$B$28 for the same reason.
  */
 function buildAnalyticsExtensions_Sakura(sheet, src) {
   // ── 4-WEEK MOVING AVERAGE ─────────────────────────────────────────────
-  let row = 40;
-  _sectionHeader_(sheet, row, "4-WEEK MOVING AVERAGE");
+  let row = 47;
+  applyHairlineSection_(sheet, 'A47', '4-WEEK MOVING AVERAGE');
+  applyRowHeight_(sheet, row, 'section');
 
-  row = 41;
-  // Current 4W MA: avg of latest 4 week-ending revenue totals
+  row = 48;
   sheet.getRange(row, 1).setValue("Current 4W MA");
   sheet.getRange(row, 2).setFormula(
     `=IFERROR(AVERAGE(ARRAYFORMULA(SUMIF(${src}!C:C,QUERY(UNIQUE(${src}!C2:C),"SELECT Col1 WHERE Col1 IS NOT NULL ORDER BY Col1 DESC LIMIT 4",0),${src}!E:E))),0)`
@@ -999,107 +1006,129 @@ function buildAnalyticsExtensions_Sakura(sheet, src) {
   sheet.getRange(row, 5).setValue("Change");
   sheet.getRange(row, 6).setFormula(`=IFERROR((B${row}-D${row})/D${row},0)`).setNumberFormat("+0.0%;[red]-0.0%");
 
-  // ── CONSISTENCY ────────────────────────────────────────────────────────
-  row = 43;
-  _sectionHeader_(sheet, row, "CONSISTENCY");
+  applyTableBody_(sheet, 'A48:F48');
 
+  // ── CONSISTENCY ────────────────────────────────────────────────────────
   // Coefficient of Variation (CV) = StdDev / Mean; lower = more consistent.
-  // DoW Avg is in B17:B22, StdDev in G17:G22.
-  // Use ARRAYFORMULA to compute CV vector, then INDEX/MATCH for label.
-  row = 44;
+  // DoW Avg in B23:B28, StdDev in G23:G28 (Phase 3 layout: Mon-Sat rows 23-28).
+  row = 50;
+  applyHairlineSection_(sheet, 'A50', 'CONSISTENCY');
+  applyRowHeight_(sheet, row, 'section');
+
+  row = 51;
   sheet.getRange(row, 1).setValue("Most Consistent Day");
   sheet.getRange(row, 2).setFormula(
-    `=IFERROR(INDEX(A17:A22,MATCH(MIN(ARRAYFORMULA(IF(B17:B22>0,G17:G22/B17:B22,9))),ARRAYFORMULA(IF(B17:B22>0,G17:G22/B17:B22,9)),0))&" (±"&TEXT(MIN(ARRAYFORMULA(IF(B17:B22>0,G17:G22/B17:B22,9))),"0%")&")","-")`
+    `=IFERROR(INDEX(A23:A28,MATCH(MIN(ARRAYFORMULA(IF(B23:B28>0,G23:G28/B23:B28,9))),ARRAYFORMULA(IF(B23:B28>0,G23:G28/B23:B28,9)),0))&" (±"&TEXT(MIN(ARRAYFORMULA(IF(B23:B28>0,G23:G28/B23:B28,9))),"0%")&")","-")`
   );
 
-  row = 45;
+  row = 52;
   sheet.getRange(row, 1).setValue("Most Volatile Day");
   sheet.getRange(row, 2).setFormula(
-    `=IFERROR(INDEX(A17:A22,MATCH(MAX(ARRAYFORMULA(IF(B17:B22>0,G17:G22/B17:B22,0))),ARRAYFORMULA(IF(B17:B22>0,G17:G22/B17:B22,0)),0))&" (±"&TEXT(MAX(ARRAYFORMULA(IF(B17:B22>0,G17:G22/B17:B22,0))),"0%")&")","-")`
+    `=IFERROR(INDEX(A23:A28,MATCH(MAX(ARRAYFORMULA(IF(B23:B28>0,G23:G28/B23:B28,0))),ARRAYFORMULA(IF(B23:B28>0,G23:G28/B23:B28,0)),0))&" (±"&TEXT(MAX(ARRAYFORMULA(IF(B23:B28>0,G23:G28/B23:B28,0))),"0%")&")","-")`
   );
+  applyTableBody_(sheet, 'A51:B52');
 
   // ── TOP 5 SHIFTS THIS MONTH ────────────────────────────────────────────
-  row = 47;
-  _sectionHeader_(sheet, row, "TOP 5 SHIFTS THIS MONTH");
+  row = 54;
+  applyHairlineSection_(sheet, 'A54', 'TOP 5 SHIFTS THIS MONTH');
+  applyRowHeight_(sheet, row, 'section');
 
-  row = 48;
+  row = 55;
   const shiftHeaders = ["Date", "Day", "MOD", "Revenue"];
   shiftHeaders.forEach((h, i) => sheet.getRange(row, i + 1).setValue(h));
-  sheet.getRange(row, 1, 1, shiftHeaders.length).setFontWeight("bold").setBackground("#f3f3f3");
+  applyTableHeader_(sheet, 'A55:D55');
 
-  row = 49;
+  row = 56;
   sheet.getRange(row, 1).setFormula(
     `=IFERROR(SORTN(FILTER({${src}!A2:A,${src}!B2:B,${src}!D2:D,${src}!E2:E},MONTH(${src}!A2:A)=MONTH(TODAY()),YEAR(${src}!A2:A)=YEAR(TODAY()),${src}!E2:E>0),5,0,4,FALSE),"No shifts logged this month")`
   );
   sheet.getRange(row, 1, 5, 1).setNumberFormat("dd/MM/yyyy");
   sheet.getRange(row, 4, 5, 1).setNumberFormat("$#,##0");
+  applyTableBody_(sheet, 'A56:D60');
+  // Rank accent: date column gets good (green) colour to flag top shifts
+  sheet.getRange('A56:A60').setFontWeight('bold').setFontColor(STYLE.colour.good);
 
   // ── BOTTOM 5 SHIFTS THIS MONTH ─────────────────────────────────────────
-  row = 55;
-  _sectionHeader_(sheet, row, "BOTTOM 5 SHIFTS THIS MONTH");
+  row = 62;
+  applyHairlineSection_(sheet, 'A62', 'BOTTOM 5 SHIFTS THIS MONTH');
+  applyRowHeight_(sheet, row, 'section');
 
-  row = 56;
+  row = 63;
   shiftHeaders.forEach((h, i) => sheet.getRange(row, i + 1).setValue(h));
-  sheet.getRange(row, 1, 1, shiftHeaders.length).setFontWeight("bold").setBackground("#f3f3f3");
+  applyTableHeader_(sheet, 'A63:D63');
 
-  row = 57;
+  row = 64;
   sheet.getRange(row, 1).setFormula(
     `=IFERROR(SORTN(FILTER({${src}!A2:A,${src}!B2:B,${src}!D2:D,${src}!E2:E},MONTH(${src}!A2:A)=MONTH(TODAY()),YEAR(${src}!A2:A)=YEAR(TODAY()),${src}!E2:E>0),5,0,4,TRUE),"No shifts logged this month")`
   );
   sheet.getRange(row, 1, 5, 1).setNumberFormat("dd/MM/yyyy");
   sheet.getRange(row, 4, 5, 1).setNumberFormat("$#,##0");
+  applyTableBody_(sheet, 'A64:D68');
+  // Rank accent: date column gets bad (terracotta) colour to flag bottom shifts
+  sheet.getRange('A64:A68').setFontWeight('bold').setFontColor(STYLE.colour.bad);
 
   // ── OUTLIERS THIS MONTH (vs DoW 13W Baseline) ──────────────────────────
-  // Lists top 5 shifts by absolute % variance from their day-of-week average.
-  // Uses A17:B22 (Day → Avg Revenue) as VLOOKUP source.
-  row = 63;
-  _sectionHeader_(sheet, row, "OUTLIERS THIS MONTH (vs DoW Baseline)");
+  // Lists top 5 shifts by absolute % variance from DoW average (A23:B28).
+  row = 70;
+  applyHairlineSection_(sheet, 'A70', 'OUTLIERS THIS MONTH (vs DoW Baseline)');
+  applyRowHeight_(sheet, row, 'section');
 
-  row = 64;
+  row = 71;
   const outlierHeaders = ["Date", "Day", "Revenue", "Variance %"];
   outlierHeaders.forEach((h, i) => sheet.getRange(row, i + 1).setValue(h));
-  sheet.getRange(row, 1, 1, outlierHeaders.length).setFontWeight("bold").setBackground("#f3f3f3");
+  applyTableHeader_(sheet, 'A71:D71');
 
-  row = 65;
-  // Variance formula: (Revenue - DoW_Avg) / DoW_Avg. Filter where |variance| > 0.2.
-  // 5th column carries |variance| for sorting; only 4 cols displayed (the 5th overflows
-  // into col E but is hidden by formatting).
-  const variance = `IFERROR((${src}!E2:E-VLOOKUP(${src}!B2:B,$A$17:$B$22,2,FALSE))/VLOOKUP(${src}!B2:B,$A$17:$B$22,2,FALSE),0)`;
+  row = 72;
+  // Variance: (Revenue - DoW_Avg) / DoW_Avg. VLOOKUP source $A$23:$B$28 = Phase 3 DoW rows.
+  // 5th column carries |variance| for sort key; hidden by white text on white background.
+  const variance = `IFERROR((${src}!E2:E-VLOOKUP(${src}!B2:B,$A$23:$B$28,2,FALSE))/VLOOKUP(${src}!B2:B,$A$23:$B$28,2,FALSE),0)`;
   sheet.getRange(row, 1).setFormula(
     `=IFERROR(SORTN(FILTER({${src}!A2:A,${src}!B2:B,${src}!E2:E,${variance},ABS(${variance})},MONTH(${src}!A2:A)=MONTH(TODAY()),YEAR(${src}!A2:A)=YEAR(TODAY()),${src}!E2:E>0,ABS(${variance})>0.2),5,0,5,FALSE),"No outliers detected this month (>20% variance)")`
   );
   sheet.getRange(row, 1, 5, 1).setNumberFormat("dd/MM/yyyy");
   sheet.getRange(row, 3, 5, 1).setNumberFormat("$#,##0");
   sheet.getRange(row, 4, 5, 1).setNumberFormat("+0.0%;[red]-0.0%");
-  // Hide the 5th column (|variance| sort key) by clearing its values' display
+  // Hide the 5th column (|variance| sort key) — white text on white background
   sheet.getRange(row, 5, 5, 1).setFontColor("#ffffff");
+  applyTableBody_(sheet, 'A72:D76');
+
+  // Force recalculation so variance values are available for delta colouring.
+  SpreadsheetApp.flush();
+
+  // Apply delta colours to Variance % column (D72:D76).
+  for (let i = 0; i < 5; i++) {
+    const r = 72 + i;
+    const v = sheet.getRange(`D${r}`).getValue();
+    applyDeltaCell_(sheet, `D${r}`, typeof v === 'number' ? v : null);
+  }
 
   // ── RECENT DOW PATTERN (build-time arrows) ─────────────────────────────
-  // For each day, show the last 4 occurrences as ↑/↓ vs DoW average.
-  row = 71;
-  _sectionHeader_(sheet, row, "RECENT DOW PATTERN (vs DoW Avg)");
+  row = 78;
+  applyHairlineSection_(sheet, 'A78', 'RECENT DOW PATTERN (vs DoW Avg)');
+  applyRowHeight_(sheet, row, 'section');
 
-  row = 72;
+  row = 79;
   const recentDowHeaders = ["Day", "Last 4 Pattern", "Above Baseline"];
   recentDowHeaders.forEach((h, i) => sheet.getRange(row, i + 1).setValue(h));
-  sheet.getRange(row, 1, 1, recentDowHeaders.length).setFontWeight("bold").setBackground("#f3f3f3");
+  applyTableHeader_(sheet, 'A79:C79');
 
-  // Read warehouse data for build-time computation
   try {
     const ss = sheet.getParent();
     const srcSheet = ss.getSheetByName(src);
     const lastRow = srcSheet.getLastRow();
     if (lastRow >= 2) {
-      const data = srcSheet.getRange(2, 1, lastRow - 1, 5).getValues(); // A=Date, B=Day, E=NetRev
+      // Read A-E: Date, Day, WeekEnding, MOD, NetRevenue
+      const data = srcSheet.getRange(2, 1, lastRow - 1, 5).getValues();
       const dowDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
       dowDays.forEach((day, idx) => {
-        const r = 73 + idx;
+        const r = 80 + idx;
         sheet.getRange(r, 1).setValue(day);
 
-        // Get all shifts for this day, sorted by date desc; take last 4
-        const dayShifts = data
-          .filter(row => row[1] === day && row[4] > 0)
+        // For Sakura, NetRevenue is in col E (index 4)
+        const dayRows = data.filter(row => row[1] === day && row[4] > 0);
+        const dayShifts = dayRows
+          .slice()
           .sort((a, b) => new Date(b[0]) - new Date(a[0]))
           .slice(0, 4);
 
@@ -1109,29 +1138,30 @@ function buildAnalyticsExtensions_Sakura(sheet, src) {
           return;
         }
 
-        const dayAvg = data
-          .filter(row => row[1] === day && row[4] > 0)
-          .reduce((sum, row) => sum + row[4], 0) / Math.max(1, data.filter(row => row[1] === day && row[4] > 0).length);
-
-        // Build arrow pattern (oldest → newest, left to right)
+        const dayAvg = dayRows.reduce((sum, row) => sum + row[4], 0) / Math.max(1, dayRows.length);
         const arrows = dayShifts.reverse().map(row => row[4] >= dayAvg ? "↑" : "↓").join("");
         const aboveCount = dayShifts.filter(row => row[4] >= dayAvg).length;
 
         sheet.getRange(r, 2).setValue(arrows);
         sheet.getRange(r, 2).setFontSize(14);
         sheet.getRange(r, 3).setValue(`${aboveCount} of ${dayShifts.length}`);
+
+        // Arrow colour: majority above avg → good, majority below → bad, split → neutral
+        const arrowDelta = aboveCount > dayShifts.length / 2 ? 1
+                         : aboveCount < dayShifts.length / 2 ? -1
+                         : 0;
+        applyDeltaCell_(sheet, `B${r}`, arrowDelta);
       });
     }
   } catch (e) {
     Logger.log(`Recent DoW pattern build skipped: ${e.message}`);
   }
+  applyTableBody_(sheet, 'A80:C85');
 
-  // Bold labels for new sections
-  sheet.getRange("A41:A41").setFontWeight("bold");
-  sheet.getRange("C41:C41").setFontWeight("bold");
-  sheet.getRange("E41:E41").setFontWeight("bold");
-  sheet.getRange("A44:A45").setFontWeight("bold");
-  sheet.getRange("A73:A78").setFontWeight("bold");
+  // Bold labels for MA and Consistency sections
+  sheet.getRange("A48:A48").setFontWeight("bold");
+  sheet.getRange("C48:C48").setFontWeight("bold");
+  sheet.getRange("E48:E48").setFontWeight("bold");
 
   Logger.log("M8 Analytics Extensions section built for Sakura.");
 }
