@@ -1417,17 +1417,17 @@ function _sendWeeklyActiveTasksSummaryCore(webhookUrl, isTest) {
   weeklyBlocks.push(bk_context([`${totalCount} active task(s) across ${staffOrder.length} staff member(s)`]));
   weeklyBlocks.push(bk_buttons([{ text: "Open Task Sheet", url: `https://docs.google.com/spreadsheets/d/${getTaskSpreadsheetId_()}` }]));
 
-  // Channel post removed — weekly summary now DM-only (Apr 2026)
-  // bk_post(webhookUrl, weeklyBlocks,
-  //   `${titlePrefix}Sakura Weekly: ${totalCount} active tasks`);
-  Logger.log(`Weekly active tasks summary — channel post skipped, sending DMs only (${isTest ? "TEST" : "LIVE"}).`);
+  // Channel post re-enabled (May 2026) — weekly summary now channel-only, DMs disabled
+  bk_post(webhookUrl, weeklyBlocks,
+    `${titlePrefix}Sakura Weekly: ${totalCount} active tasks`);
+  Logger.log(`Weekly active tasks summary posted to managers channel (${isTest ? "TEST" : "LIVE"}).`);
 
-  logAuditEntry_("WEEKLY_SUMMARY", "System", `Posted ${totalCount} active tasks to Slack (${isTest ? "TEST" : "LIVE"})`);
+  logAuditEntry_("WEEKLY_SUMMARY", "System", `Posted ${totalCount} active tasks to managers channel (${isTest ? "TEST" : "LIVE"})`);
 
-  // Send individual DMs to each staff member with their tasks
-  _sendWeeklyActiveTasksDMs_(staffMap, today, tz, isTest);
+  // Individual DMs disabled (May 2026) — channel post only. Kept as commented code for easy revert.
+  // _sendWeeklyActiveTasksDMs_(staffMap, today, tz, isTest);
 
-  // FOH leads channel post removed (Apr 2026) — weekly summary now DM-only
+  // FOH leads channel post remains disabled (was removed Apr 2026)
 }
 
 
@@ -1495,7 +1495,7 @@ function _sendWeeklyActiveTasksDMs_(staffMap, today, tz, isTest) {
  * Standalone entry point: post FOH leads summary live (called from menu).
  */
 // sendWeeklyFohLeadsSummary_Live() and _sendWeeklyFohLeadsSummary_() removed (Apr 2026)
-// FOH leads channel post discontinued — weekly tasks now sent as individual DMs only
+// FOH leads channel post discontinued (Apr 2026); weekly tasks returned to managers channel (May 2026)
 
 
 /* ==========================================================================

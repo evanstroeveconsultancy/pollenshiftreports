@@ -15,7 +15,7 @@
  *   L=Refunds, M=CDRedeem, N=TotalDiscount,
  *   O=DiscountsCompsExcCD, P=GrossTaxableSales,
  *   Q=Taxes, R=NetSalesWTips, S=CardTips, T=CashTips,
- *   U=TotalTips, V=LoggedAt, W=CashCounted, X=ExpectedCash, Y=CashVariance
+ *   U=TotalTips, V=CashCounted, W=ExpectedCash, X=CashVariance, Y=LoggedAt
  *
  * @version 3.0.0
  ****************************************************/
@@ -52,24 +52,40 @@ function buildFinancialDashboard() {
   sheet.clearFormats();
   sheet.clearConditionalFormatRules();
 
+  applyColumnWidths_(sheet);
+
   const src = config.sourceSheet;
   const tz = config.timezone;
-  const now = Utilities.formatDate(new Date(), tz, "dd/MM/yyyy HH:mm");
+  const now = Utilities.formatDate(new Date(), tz, 'd MMM yyyy h:mm a');
 
   // ─── SECTION 1: HEADER ─────────────────────────────────────────────
   let row = 1;
-  sheet.getRange(row, 1).setValue("THE WARATAH — FINANCIAL ANALYTICS");
-  sheet.getRange(row, 1).setFontSize(16).setFontWeight("bold");
-  sheet.getRange(row, 1, 1, 6).merge();
+  sheet.getRange('A1').breakApart();
+  sheet.getRange('A1')
+       .setValue('WARATAH · ANALYTICS DASHBOARD')
+       .setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.metric)
+       .setFontWeight('bold')
+       .setFontColor(STYLE.colour.ink)
+       .setHorizontalAlignment('left')
+       .setVerticalAlignment('middle');
+  sheet.getRange('I1')
+       .setValue('Last updated: ' + now)
+       .setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.label)
+       .setFontColor(STYLE.colour.inkMuted)
+       .setHorizontalAlignment('right')
+       .setVerticalAlignment('middle');
+  applyRowHeight_(sheet, 1, 'section');
 
   row = 2;
-  sheet.getRange(row, 1).setValue(`Dashboard built: ${now}  •  Data refreshes automatically`);
-  sheet.getRange(row, 1).setFontSize(9).setFontColor("#666666").setFontStyle("italic");
-  sheet.getRange(row, 1, 1, 6).merge();
+  sheet.getRange('A2:I2').breakApart().clearContent();
+  applyRowHeight_(sheet, 2, 'spacer');
 
   // ─── SECTION 2: THIS WEEK SNAPSHOT ──────────────────────────────────
   row = 4;
-  _sectionHeader_(sheet, row, "THIS WEEK");
+  applyHeroCard_(sheet, 'A4', null, null, 'A4:F9', 'THIS WEEK');
+  sheet.getRange('A4:F4').merge();
 
   row = 5;
   // Find the most recent week-ending date
@@ -115,7 +131,8 @@ function buildFinancialDashboard() {
 
   // ─── SECTION 3: WEEK-OVER-WEEK COMPARISON ──────────────────────────
   row = 11;
-  _sectionHeader_(sheet, row, "WEEK-OVER-WEEK");
+  applyHairlineSection_(sheet, 'A11', 'WEEK-OVER-WEEK');
+  applyRowHeight_(sheet, row, 'section');
 
   row = 12;
   sheet.getRange(row, 1).setValue("Previous Week Ending");
@@ -131,7 +148,7 @@ function buildFinancialDashboard() {
   sheet.getRange(row, 3).setValue("Last Week");
   sheet.getRange(row, 4).setValue("Change");
   sheet.getRange(row, 5).setValue("% Change");
-  sheet.getRange(row, 1, 1, 5).setFontWeight("bold").setBackground("#f3f3f3");
+  applyTableHeader_(sheet, 'A13:E13');
 
   const wowMetrics = [
     { label: "Revenue",     col: "F", fmt: "$#,##0" },
@@ -150,15 +167,29 @@ function buildFinancialDashboard() {
     sheet.getRange(r, 4).setFormula(`=IFERROR(B${r}-C${r},0)`).setNumberFormat(m.fmt);
     sheet.getRange(r, 5).setFormula(`=IFERROR(D${r}/C${r},0)`).setNumberFormat("+0.0%;-0.0%");
   });
+  applyTableBody_(sheet, 'A14:E19');
+
+  // Force recalculation so getValue() returns current formula results, not stale values.
+  SpreadsheetApp.flush();
+
+  // Delta colours baked in at build time. D column = change $, E column = change %.
+  // Conditional formatting on D14:D19 (from existing CF rules) handles red/green for $;
+  // we apply applyDeltaCell_ to E14:E19 (% column) which has no CF rule.
+  for (let i = 0; i < wowMetrics.length; i++) {
+    const r = 14 + i;
+    const pctVal = sheet.getRange(`E${r}`).getValue();
+    applyDeltaCell_(sheet, `E${r}`, typeof pctVal === 'number' ? pctVal : null);
+  }
 
   // ─── SECTION 4: DAY-OF-WEEK AVERAGES ───────────────────────────────
   row = 21;
-  _sectionHeader_(sheet, row, "DAY-OF-WEEK AVERAGES (ALL TIME)");
+  applyHairlineSection_(sheet, 'A21', 'DAY-OF-WEEK AVERAGES (ALL TIME)');
+  applyRowHeight_(sheet, row, 'section');
 
   row = 22;
   const dowHeaders = ["Day", "Avg Revenue", "Avg Cash Takings", "Avg Tips", "Avg Discounts", "Avg Production", "Count", "Std Dev", "13W Trend"];
   dowHeaders.forEach((h, i) => sheet.getRange(row, i + 1).setValue(h));
-  sheet.getRange(row, 1, 1, dowHeaders.length).setFontWeight("bold").setBackground("#f3f3f3");
+  applyTableHeader_(sheet, `A22:I22`);
 
   const days = ["Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
   days.forEach((day, i) => {
@@ -175,10 +206,12 @@ function buildFinancialDashboard() {
       `=IFERROR(STDEV(FILTER(${src}!F:F,${src}!B:B="${day}",${src}!F:F>0)),0)`
     ).setNumberFormat("$#,##0");
     // 13-week Sparkline (col I): trend of last 91 days for this day
+    // Colour param replaced with STYLE.colour.good — only the colour changes, not chart type/linewidth/etc.
     sheet.getRange(r, 9).setFormula(
-      `=IFERROR(SPARKLINE(FILTER(${src}!F:F,${src}!B:B="${day}",${src}!A:A>=TODAY()-91),{"charttype","line";"color","#1a73e8";"linewidth",2}),"")`
+      `=IFERROR(SPARKLINE(FILTER(${src}!F:F,${src}!B:B="${day}",${src}!A:A>=TODAY()-91),{"charttype","line";"color","` + STYLE.colour.good + `";"linewidth",2}),"")`
     );
   });
+  applyTableBody_(sheet, 'A23:I27');
 
   // MOD PERFORMANCE section removed — user deleted rows 31+ from the sheet (Feb 2026).
   // Do not add code here that writes to rows 31 or beyond on the ANALYTICS tab.
@@ -187,7 +220,8 @@ function buildFinancialDashboard() {
   // Average of per-week totals (not per-shift). Uses AVERAGE(QUERY(...GROUP BY C))
   // so each week contributes one value regardless of how many shifts it contains.
   row = 28;
-  _sectionHeader_(sheet, row, "AVERAGE WEEKLY (ALL WEEKS)");
+  applyHairlineSection_(sheet, 'A28', 'AVERAGE WEEKLY (ALL WEEKS)');
+  applyRowHeight_(sheet, row, 'section');
 
   row = 29;
   sheet.getRange(row, 1).setValue("Avg Weekly Net Revenue");
@@ -211,19 +245,21 @@ function buildFinancialDashboard() {
     `=IFERROR(AVERAGE(QUERY(${src}!A2:V,"SELECT SUM(N) WHERE C IS NOT NULL GROUP BY C LABEL SUM(N) ''")),0)`
   ).setNumberFormat("$#,##0");
 
+  applyTableBody_(sheet, 'A29:E30');
+
   // ─── SECTION 6: WEEKLY TREND ────────────────────────────────────────
   // Moved to col J (was I) to make room for Sparkline column in DoW Averages.
   const trendCol = 10; // Column J
 
   row = 4;
-  sheet.getRange(row, trendCol).setValue("WEEKLY TREND");
-  sheet.getRange(row, trendCol).setFontSize(11).setFontWeight("bold").setFontColor("#1a73e8");
+  applyHeroCard_(sheet, 'J4', null, null, 'J4:O5', 'WEEKLY TREND');
   sheet.getRange(row, trendCol, 1, 6).merge();
+  applyRowHeight_(sheet, row, 'section');
 
   row = 5;
   const trendHeaders = ["Week Ending", "Revenue", "Cash Takings", "Tips", "Discounts", "Taxes"];
   trendHeaders.forEach((h, i) => sheet.getRange(row, trendCol + i).setValue(h));
-  sheet.getRange(row, trendCol, 1, trendHeaders.length).setFontWeight("bold").setBackground("#f3f3f3");
+  applyTableHeader_(sheet, 'J5:O5');
 
   row = 6;
   sheet.getRange(row, trendCol).setFormula(
@@ -234,24 +270,12 @@ function buildFinancialDashboard() {
     `ORDER BY C DESC ` +
     `LABEL C 'Week Ending', SUM(F) 'Revenue', SUM(H) 'Cash Takings', SUM(U) 'Tips', SUM(N) 'Discounts', SUM(Q) 'Taxes'"),"")`
   );
+  applyTableBody_(sheet, 'J6:O56');
   // Format the Week Ending column as a date (QUERY returns serial numbers otherwise)
   sheet.getRange(7, trendCol, 50, 1).setNumberFormat("dd/MM/yyyy");
 
   // ─── FORMATTING ─────────────────────────────────────────────────────
-  // Column widths
-  sheet.setColumnWidth(1, 160);
-  sheet.setColumnWidth(2, 120);
-  sheet.setColumnWidth(3, 120);
-  sheet.setColumnWidth(4, 160);
-  sheet.setColumnWidth(5, 120);
-  sheet.setColumnWidth(6, 120);
-  sheet.setColumnWidth(7, 80);
-  sheet.setColumnWidth(8, 110); // Std Dev column
-  sheet.setColumnWidth(9, 140); // Sparkline column — wider for visual chart
-  // Trend columns
-  for (let c = trendCol; c <= trendCol + 5; c++) {
-    sheet.setColumnWidth(c, 120);
-  }
+  // Column widths applied via applyColumnWidths_() at top of function.
 
   // Bold labels in column A
   sheet.getRange("A5:A9").setFontWeight("bold");
@@ -316,94 +340,169 @@ function buildExecutiveDashboard() {
   sheet.clearFormats();
   sheet.clearConditionalFormatRules();
 
+  applyColumnWidths_(sheet);
+
   const src = config.sourceSheet;
-  const tz = config.timezone;
-  const now = Utilities.formatDate(new Date(), tz, "dd/MM/yyyy HH:mm");
 
   // ─── SECTION 1: HEADER ─────────────────────────────────────────────
   let row = 1;
-  sheet.getRange(row, 1).setValue("THE WARATAH — EXECUTIVE DASHBOARD");
-  sheet.getRange(row, 1).setFontSize(16).setFontWeight("bold");
-  sheet.getRange(row, 1, 1, 7).merge();
-
-  row = 2;
-  sheet.getRange(row, 1).setValue(`Dashboard built: ${now}  •  Data refreshes automatically`);
-  sheet.getRange(row, 1).setFontSize(9).setFontColor("#666666").setFontStyle("italic");
-  sheet.getRange(row, 1, 1, 7).merge();
+  // Row 1: page title + timestamp
+  sheet.getRange('A1').breakApart();
+  sheet.getRange('A1')
+       .setValue('WARATAH · EXECUTIVE DASHBOARD')
+       .setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.metric)
+       .setFontWeight('bold')
+       .setFontColor(STYLE.colour.ink)
+       .setHorizontalAlignment('left')
+       .setVerticalAlignment('middle');
+  sheet.getRange('I1')
+       .setValue('Last updated: ' + Utilities.formatDate(new Date(), 'Australia/Sydney', 'd MMM yyyy h:mm a'))
+       .setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.label)
+       .setFontColor(STYLE.colour.inkMuted)
+       .setHorizontalAlignment('right')
+       .setVerticalAlignment('middle');
+  applyRowHeight_(sheet, 1, 'section');
+  // Row 2: spacer (timestamp moved to I1)
+  sheet.getRange('A2:I2').breakApart().clearContent();
+  applyRowHeight_(sheet, 2, 'spacer');
 
   // ─── SECTION 2: CURRENT MONTH SNAPSHOT ──────────────────────────────
   row = 4;
-  _sectionHeader_(sheet, row, "CURRENT MONTH");
+  applyHeroCard_(sheet, 'A4', null, null, 'A4:E8', 'CURRENT MONTH');
+  sheet.getRange('A4:E4').merge();
+  applyRowHeight_(sheet, row, 'section');
 
   row = 5;
   sheet.getRange(row, 1).setValue("Month");
+  sheet.getRange(row, 1).setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.body)
+       .setFontColor(STYLE.colour.inkMuted)
+       .setFontWeight('normal');
   sheet.getRange(row, 2).setFormula('=TEXT(TODAY(),"MMMM YYYY")');
-  sheet.getRange(row, 2).setFontWeight("bold");
+  sheet.getRange(row, 2).setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.body)
+       .setFontColor(STYLE.colour.ink);
 
   row = 6;
   sheet.getRange(row, 1).setValue("Total Revenue");
+  sheet.getRange(row, 1).setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.body)
+       .setFontColor(STYLE.colour.inkMuted)
+       .setFontWeight('normal');
   sheet.getRange(row, 2).setFormula(
     `=IFERROR(SUMPRODUCT((MONTH(${src}!A2:A)=MONTH(TODAY()))*(YEAR(${src}!A2:A)=YEAR(TODAY()))*${src}!F2:F),0)` // F=NetRevenue
   );
-  sheet.getRange(row, 2).setNumberFormat("$#,##0");
+  sheet.getRange(row, 2).setNumberFormat("$#,##0")
+       .setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.hero)
+       .setFontWeight('bold')
+       .setFontColor(STYLE.colour.ink);
+  applyRowHeight_(sheet, row, 'hero');
 
   sheet.getRange(row, 4).setValue("Shifts");
+  sheet.getRange(row, 4).setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.body)
+       .setFontColor(STYLE.colour.inkMuted)
+       .setFontWeight('normal');
   sheet.getRange(row, 5).setFormula(
     `=IFERROR(SUMPRODUCT((MONTH(${src}!A2:A)=MONTH(TODAY()))*(YEAR(${src}!A2:A)=YEAR(TODAY()))*(${src}!A2:A<>"")*1),0)`
   );
+  sheet.getRange(row, 5).setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.metric)
+       .setFontWeight('bold')
+       .setFontColor(STYLE.colour.ink);
 
   row = 7;
   sheet.getRange(row, 1).setValue("Avg Daily Revenue");
+  sheet.getRange(row, 1).setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.body)
+       .setFontColor(STYLE.colour.inkMuted)
+       .setFontWeight('normal');
   sheet.getRange(row, 2).setFormula("=IFERROR(B6/E6,0)");
-  sheet.getRange(row, 2).setNumberFormat("$#,##0");
+  sheet.getRange(row, 2).setNumberFormat("$#,##0")
+       .setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.metric)
+       .setFontWeight('bold')
+       .setFontColor(STYLE.colour.ink);
 
   sheet.getRange(row, 4).setValue("Total Tips");
+  sheet.getRange(row, 4).setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.body)
+       .setFontColor(STYLE.colour.inkMuted)
+       .setFontWeight('normal');
   sheet.getRange(row, 5).setFormula(
     `=IFERROR(SUMPRODUCT((MONTH(${src}!A2:A)=MONTH(TODAY()))*(YEAR(${src}!A2:A)=YEAR(TODAY()))*${src}!U2:U),0)` // U=TotalTips
   );
-  sheet.getRange(row, 5).setNumberFormat("$#,##0");
+  sheet.getRange(row, 5).setNumberFormat("$#,##0")
+       .setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.metric)
+       .setFontWeight('bold')
+       .setFontColor(STYLE.colour.ink);
 
   row = 8;
   sheet.getRange(row, 1).setValue("Total Discounts");
+  sheet.getRange(row, 1).setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.body)
+       .setFontColor(STYLE.colour.inkMuted)
+       .setFontWeight('normal');
   sheet.getRange(row, 2).setFormula(
     `=IFERROR(SUMPRODUCT((MONTH(${src}!A2:A)=MONTH(TODAY()))*(YEAR(${src}!A2:A)=YEAR(TODAY()))*${src}!N2:N),0)` // N=TotalDiscount
   );
-  sheet.getRange(row, 2).setNumberFormat("$#,##0");
+  sheet.getRange(row, 2).setNumberFormat("$#,##0")
+       .setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.metric)
+       .setFontWeight('bold')
+       .setFontColor(STYLE.colour.ink);
 
   sheet.getRange(row, 4).setValue("Total Taxes");
+  sheet.getRange(row, 4).setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.body)
+       .setFontColor(STYLE.colour.inkMuted)
+       .setFontWeight('normal');
   sheet.getRange(row, 5).setFormula(
     `=IFERROR(SUMPRODUCT((MONTH(${src}!A2:A)=MONTH(TODAY()))*(YEAR(${src}!A2:A)=YEAR(TODAY()))*${src}!Q2:Q),0)` // Q=Taxes
   );
-  sheet.getRange(row, 5).setNumberFormat("$#,##0");
+  sheet.getRange(row, 5).setNumberFormat("$#,##0")
+       .setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.metric)
+       .setFontWeight('bold')
+       .setFontColor(STYLE.colour.ink);
 
   // ─── SECTION 3: MONTHLY TREND ──────────────────────────────────────
   row = 10;
-  _sectionHeader_(sheet, row, "MONTHLY TREND");
+  applyHairlineSection_(sheet, 'A10', 'MONTHLY TREND');
+  applyRowHeight_(sheet, row, 'section');
 
   row = 11;
   const monthHeaders = ["Month", "Revenue", "Tips", "Discounts", "Taxes", "Shifts"];
   monthHeaders.forEach((h, i) => sheet.getRange(row, i + 1).setValue(h));
-  sheet.getRange(row, 1, 1, monthHeaders.length).setFontWeight("bold").setBackground("#f3f3f3");
+  applyTableHeader_(sheet, 'A11:F11');
 
   row = 12;
   sheet.getRange(row, 1).setFormula(
     `=IFERROR(QUERY(${src}!A2:V,` +
-    `"SELECT YEAR(A)*100+MONTH(A), SUM(F), SUM(U), SUM(N), SUM(Q), COUNT(A) ` +
+    `"SELECT YEAR(A)*100+(MONTH(A)+1), SUM(F), SUM(U), SUM(N), SUM(Q), COUNT(A) ` +
     `WHERE A IS NOT NULL ` +
-    `GROUP BY YEAR(A)*100+MONTH(A) ` +
-    `ORDER BY YEAR(A)*100+MONTH(A) DESC ` +
-    `LABEL YEAR(A)*100+MONTH(A) 'Month', SUM(F) 'Revenue', SUM(U) 'Tips', SUM(N) 'Discounts', ` +
+    `GROUP BY YEAR(A)*100+(MONTH(A)+1) ` +
+    `ORDER BY YEAR(A)*100+(MONTH(A)+1) DESC ` +
+    `LABEL YEAR(A)*100+(MONTH(A)+1) 'Month', SUM(F) 'Revenue', SUM(U) 'Tips', SUM(N) 'Discounts', ` +
     `SUM(Q) 'Taxes', COUNT(A) 'Shifts'"),"")`
   );
+  applyTableBody_(sheet, 'A12:F24');
+  // Render the month column as YYYY/MM (QUERY returns raw integer like 202605).
+  sheet.getRange('A12:A24').setNumberFormat('0000"/"00');
 
   // ─── SECTION 4: ROLLING 4-WEEK COMPARISON ──────────────────────────
   row = 26;
-  _sectionHeader_(sheet, row, "ROLLING 4-WEEK COMPARISON");
+  applyHairlineSection_(sheet, 'A26', 'ROLLING 4-WEEK COMPARISON');
+  applyRowHeight_(sheet, row, 'section');
 
   row = 27;
   const weekCompHeaders = ["", "Week 1 (Latest)", "Week 2", "Week 3", "Week 4"];
   weekCompHeaders.forEach((h, i) => sheet.getRange(row, i + 1).setValue(h));
-  sheet.getRange(row, 1, 1, weekCompHeaders.length).setFontWeight("bold").setBackground("#f3f3f3");
+  applyTableHeader_(sheet, 'A27:E27');
 
   row = 28;
   sheet.getRange(row, 1).setValue("Week Ending");
@@ -458,16 +557,19 @@ function buildExecutiveDashboard() {
   sheet.getRange(row, 4).setFormula("=IFERROR((D29-E29)/E29,0)").setNumberFormat("+0.0%;-0.0%");
   sheet.getRange(row, 5).setValue("—");
 
+  applyTableBody_(sheet, 'A28:E34');
+
   // ─── SECTION 4b: THIS WEEK vs 13W BASELINE ─────────────────────────
   // Flags shifts performing above/below their day-of-week 13-week average.
   // Uses MAX(C:C) as "current week" and AVERAGEIFS with TODAY()-91 window.
   row = 36;
-  _sectionHeader_(sheet, row, "THIS WEEK vs 13W BASELINE");
+  applyHairlineSection_(sheet, 'A36', 'THIS WEEK vs 13W BASELINE');
+  applyRowHeight_(sheet, row, 'section');
 
   row = 37;
   const baseHeaders = ["Day", "This Week", "13W DoW Avg", "Diff $", "Diff %"];
   baseHeaders.forEach((h, i) => sheet.getRange(row, i + 1).setValue(h));
-  sheet.getRange(row, 1, 1, baseHeaders.length).setFontWeight("bold").setBackground("#f3f3f3");
+  applyTableHeader_(sheet, 'A37:E37');
 
   const baselineDays = ["Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
   baselineDays.forEach((day, i) => {
@@ -481,12 +583,26 @@ function buildExecutiveDashboard() {
     sheet.getRange(r, 3).setFormula(
       `=IFERROR(AVERAGEIFS(${src}!F:F,${src}!B:B,"${day}",${src}!A:A,">="&TODAY()-91),0)`
     ).setNumberFormat("$#,##0");
-    sheet.getRange(r, 4).setFormula(`=IFERROR(B${r}-C${r},0)`).setNumberFormat("$#,##0;[red]-$#,##0");
-    sheet.getRange(r, 5).setFormula(`=IFERROR(D${r}/C${r},0)`).setNumberFormat("+0.0%;[red]-0.0%");
+    // Delta $ and % — number formats without [red] prefix; delta colour applied below via applyDeltaCell_
+    sheet.getRange(r, 4).setFormula(`=IFERROR(B${r}-C${r},0)`).setNumberFormat("$#,##0;-$#,##0");
+    sheet.getRange(r, 5).setFormula(`=IFERROR(D${r}/C${r},0)`).setNumberFormat("+0.0%;-0.0%");
   });
+  applyTableBody_(sheet, 'A38:E42');
 
-  // Diff %/Diff $ colour-coding handled by the number format strings above
-  // (red for negative); no separate conditional formatting rule needed.
+  // Force formula recalculation before reading values for delta colouring.
+  // Without flush(), getValue() after setFormula() in the same execution can
+  // return stale (pre-formula) results, leading to incorrect neutral colour.
+  SpreadsheetApp.flush();
+
+  // Delta colours baked in at build time — reflect data at the moment of rebuild.
+  // A dashboard rebuild refreshes them. applyDeltaCell_ reads current values.
+  baselineDays.forEach((day, i) => {
+    const r = 38 + i;
+    const diffDollar = sheet.getRange(r, 4).getValue();
+    const diffPct    = sheet.getRange(r, 5).getValue();
+    applyDeltaCell_(sheet, `D${r}`, typeof diffDollar === 'number' ? diffDollar : null);
+    applyDeltaCell_(sheet, `E${r}`, typeof diffPct    === 'number' ? diffPct    : null);
+  });
 
   // ─── SECTION 5: INSIGHTS (right side) ──────────────────────────────
   // Replaces former TOP MOD block. Three sub-sections:
@@ -495,14 +611,19 @@ function buildExecutiveDashboard() {
   //   - REPORTS:    shift count this month
   const modCol = 8; // Column H — kept name for downstream code
 
-  // Section header
-  sheet.getRange(4, modCol).setValue("═══ INSIGHTS ═══");
-  sheet.getRange(4, modCol).setFontSize(11).setFontWeight("bold").setFontColor("#1a73e8");
-  sheet.getRange(4, modCol, 1, 4).merge();
+  // Section header — hairline style; then merge the row across H:K
+  applyHairlineSection_(sheet, 'H4', 'INSIGHTS');
+  sheet.getRange('H4:K4').merge();
+  applyRowHeight_(sheet, 4, 'section');
 
   // ── Trajectory subheader ────────────────────────────────────────────
   sheet.getRange(5, modCol).setValue("TRAJECTORY");
-  sheet.getRange(5, modCol).setFontSize(9).setFontStyle("italic").setFontColor("#666666");
+  sheet.getRange(5, modCol)
+       .setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.label)
+       .setFontWeight('bold')
+       .setFontStyle('normal')
+       .setFontColor(STYLE.colour.inkMuted);
   sheet.getRange(5, modCol, 1, 4).merge();
 
   // 4-Week Trend: SLOPE of last 4 weeks (B29=latest, E29=oldest of rolling 4)
@@ -525,10 +646,16 @@ function buildExecutiveDashboard() {
   sheet.getRange(8, modCol + 1).setFormula(
     `="Up "&(IF(B29>C29,1,0)+IF(C29>D29,1,0)+IF(D29>E29,1,0))&" of 3"`
   );
+  applyTableBody_(sheet, 'H6:K8');
 
   // ── Exceptions subheader ───────────────────────────────────────────
   sheet.getRange(9, modCol).setValue("EXCEPTIONS");
-  sheet.getRange(9, modCol).setFontSize(9).setFontStyle("italic").setFontColor("#666666");
+  sheet.getRange(9, modCol)
+       .setFontFamily(STYLE.font.family)
+       .setFontSize(STYLE.font.label)
+       .setFontWeight('bold')
+       .setFontStyle('normal')
+       .setFontColor(STYLE.colour.inkMuted);
   sheet.getRange(9, modCol, 1, 4).merge();
 
   // Best Shift This Month: MAXIFS + INDEX/MATCH for date
@@ -554,17 +681,18 @@ function buildExecutiveDashboard() {
   // Reports Filed: references E6 (Shifts) from CURRENT MONTH section
   sheet.getRange(12, modCol).setValue("Reports Filed");
   sheet.getRange(12, modCol + 1).setFormula(`=E6&" shifts logged"`);
+  applyTableBody_(sheet, 'H10:K12');
 
   // ─── SECTION 6: DAY-OF-WEEK REVENUE RANKING (right side) ──────────
   let dowRow = 16;
-  sheet.getRange(dowRow, modCol).setValue("REVENUE BY DAY (RANKED)");
-  sheet.getRange(dowRow, modCol).setFontSize(11).setFontWeight("bold").setFontColor("#1a73e8");
-  sheet.getRange(dowRow, modCol, 1, 5).merge();
+  applyHeroCard_(sheet, 'H16', null, null, 'H16:L22', 'REVENUE BY DAY');
+  sheet.getRange('H16:L16').merge();
+  applyRowHeight_(sheet, dowRow, 'section');
 
   dowRow = 17;
   const dowRankHeaders = ["Day", "Avg Revenue", "Total Revenue", "Shifts", "Share"];
   dowRankHeaders.forEach((h, i) => sheet.getRange(dowRow, modCol + i).setValue(h));
-  sheet.getRange(dowRow, modCol, 1, dowRankHeaders.length).setFontWeight("bold").setBackground("#f3f3f3");
+  applyTableHeader_(sheet, 'H17:L17');
 
   dowRow = 18;
   sheet.getRange(dowRow, modCol).setFormula(
@@ -575,6 +703,7 @@ function buildExecutiveDashboard() {
     `ORDER BY AVG(F) DESC ` +
     `LABEL B 'Day', AVG(F) 'Avg Revenue', SUM(F) 'Total Revenue', COUNT(A) 'Shifts'"),"")`
   );
+  applyTableBody_(sheet, 'H18:L22');
 
   // Share % column (col L, rows 19-23 = Waratah's 5 operating days).
   // J19:J23 holds Total Revenue per day from QUERY above. Bar uses REPT for visual.
@@ -585,9 +714,7 @@ function buildExecutiveDashboard() {
   }
 
   // ─── FORMATTING ─────────────────────────────────────────────────────
-  for (let c = 1; c <= 7; c++) sheet.setColumnWidth(c, c === 1 ? 160 : 130);
-  for (let c = modCol; c <= modCol + 3; c++) sheet.setColumnWidth(c, 130);
-  sheet.setColumnWidth(modCol + 4, 170); // Share column (col L) — wider for bar+%
+  // Column widths applied via applyColumnWidths_() at top of function.
 
   // Bold labels
   sheet.getRange("A5:A8").setFontWeight("bold");
@@ -620,16 +747,6 @@ function buildExecutiveDashboard() {
 }
 
 
-/**
- * Helper: writes a section header row.
- */
-function _sectionHeader_(sheet, row, title) {
-  sheet.getRange(row, 1).setValue(title);
-  sheet.getRange(row, 1).setFontSize(11).setFontWeight("bold").setFontColor("#1a73e8");
-  sheet.getRange(row, 1, 1, 6).merge();
-}
-
-
 // ============================================================================
 // M7 — EXTENDED TREND WINDOWS (Waratah)
 // ============================================================================
@@ -654,13 +771,14 @@ function buildExtendedTrends_Waratah(sheet, src) {
   let row = 32;
 
   // ── Section header ───────────────────────────────────────────────────
-  _sectionHeader_(sheet, row, "EXTENDED TRENDS — DAY-OF-WEEK (13W / 26W)");
+  applyHairlineSection_(sheet, 'A32', 'EXTENDED TRENDS — DAY-OF-WEEK (13W / 26W)');
+  applyRowHeight_(sheet, row, 'section');
 
   // ── Column headers ───────────────────────────────────────────────────
   row = 33;
   const etHeaders = ["Day", "13-Week Avg Rev", "26-Week Avg Rev", "13-Week Avg Tips", "26-Week Avg Tips", "Heatmap Rank"];
   etHeaders.forEach((h, i) => sheet.getRange(row, i + 1).setValue(h));
-  sheet.getRange(row, 1, 1, etHeaders.length).setFontWeight("bold").setBackground("#f3f3f3");
+  applyTableHeader_(sheet, 'A33:F33');
 
   // ── Per-day rows (Wed-Sun = 5 days) ─────────────────────────────────
   const waratahDays = ["Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -693,9 +811,21 @@ function buildExtendedTrends_Waratah(sheet, src) {
     sheet.getRange(r, 6).setFormula(`=IFERROR(RANK(B${r},B34:B38,0),"")`);
   });
 
-  // ── Day-of-week heatmap: colour B34:B38 green→red by 13W avg revenue ──
-  const heatmapColors = ["#34a853", "#81c995", "#b7e1cd", "#f6aea9", "#ea4335"];
-  // 5 steps for 5 Waratah days (best→worst)
+  applyTableBody_(sheet, 'A34:F38');
+
+  // ── Day-of-week heatmap: colour B34:B38 best→worst using STYLE palette ──
+  // Rank 1 (best)  → STYLE.colour.good      (#2f5d3a)
+  // Rank 2         → STYLE.colour.cardFill   (#f5f5f2)  — light neutral
+  // Rank 3 (mid)   → STYLE.colour.neutral    (#8a8a7a)  — implied mid
+  // Rank 4         → STYLE.colour.sand       (#d6cfa8)  — warm low
+  // Rank 5 (worst) → STYLE.colour.bad        (#b5533c)
+  const heatmapColors = [
+    STYLE.colour.good,        // rank 1 — best
+    STYLE.colour.cardFill,    // rank 2
+    '#c8d4c8',                // rank 3 — mid (neutral green-grey, derived from palette)
+    STYLE.colour.sand,        // rank 4
+    STYLE.colour.bad          // rank 5 — worst
+  ];
 
   try {
     const revenueVals = sheet.getRange(34, 2, 5, 1).getValues().map(r => r[0]);
@@ -704,7 +834,7 @@ function buildExtendedTrends_Waratah(sheet, src) {
         .map((v, i) => ({ v, i }))
         .sort((a, b) => b.v - a.v);
       sorted.forEach(({ i }, rank) => {
-        sheet.getRange(34 + i, 2).setBackground(heatmapColors[rank] || "#ffffff");
+        sheet.getRange(34 + i, 2).setBackground(heatmapColors[rank] || STYLE.colour.cardFill);
       });
     }
   } catch (e) {
@@ -713,7 +843,8 @@ function buildExtendedTrends_Waratah(sheet, src) {
 
   // ── Year to Date ─────────────────────────────────────────────────────
   row = 41;
-  _sectionHeader_(sheet, row, "YEAR TO DATE");
+  applyHairlineSection_(sheet, 'A41', 'YEAR TO DATE');
+  applyRowHeight_(sheet, row, 'section');
 
   row = 42;
   sheet.getRange(row, 1).setValue("YTD Total Revenue");
@@ -735,8 +866,9 @@ function buildExtendedTrends_Waratah(sheet, src) {
     `=IFERROR(SUMPRODUCT((YEAR(${src}!A2:A)=YEAR(TODAY()))*${src}!U2:U),0)` // U=TotalTips
   ).setNumberFormat("$#,##0");
 
-  // Bold labels
-  sheet.getRange("A42:A43").setFontWeight("bold");
+  applyTableBody_(sheet, 'A42:E43');
+  // Sand accent on YTD label cells — reserved accent for benchmark/YTD context
+  sheet.getRange("A42:A43").setBackground(STYLE.colour.sand).setFontWeight("bold");
   sheet.getRange("D42:D43").setFontWeight("bold");
 
   Logger.log("M7 Extended Trends section built for Waratah.");
@@ -772,7 +904,8 @@ function buildExtendedTrends_Waratah(sheet, src) {
 function buildAnalyticsExtensions_Waratah(sheet, src) {
   // ── 4-WEEK MOVING AVERAGE ─────────────────────────────────────────────
   let row = 45;
-  _sectionHeader_(sheet, row, "4-WEEK MOVING AVERAGE");
+  applyHairlineSection_(sheet, 'A45', '4-WEEK MOVING AVERAGE');
+  applyRowHeight_(sheet, row, 'section');
 
   row = 46;
   sheet.getRange(row, 1).setValue("Current 4W MA");
@@ -788,10 +921,13 @@ function buildAnalyticsExtensions_Waratah(sheet, src) {
   sheet.getRange(row, 5).setValue("Change");
   sheet.getRange(row, 6).setFormula(`=IFERROR((B${row}-D${row})/D${row},0)`).setNumberFormat("+0.0%;[red]-0.0%");
 
+  applyTableBody_(sheet, 'A46:F46');
+
   // ── CONSISTENCY ────────────────────────────────────────────────────────
   // DoW Avg in B23:B27, StdDev in H23:H27. CV = StdDev/Avg.
   row = 48;
-  _sectionHeader_(sheet, row, "CONSISTENCY");
+  applyHairlineSection_(sheet, 'A48', 'CONSISTENCY');
+  applyRowHeight_(sheet, row, 'section');
 
   row = 49;
   sheet.getRange(row, 1).setValue("Most Consistent Day");
@@ -804,15 +940,17 @@ function buildAnalyticsExtensions_Waratah(sheet, src) {
   sheet.getRange(row, 2).setFormula(
     `=IFERROR(INDEX(A23:A27,MATCH(MAX(ARRAYFORMULA(IF(B23:B27>0,H23:H27/B23:B27,0))),ARRAYFORMULA(IF(B23:B27>0,H23:H27/B23:B27,0)),0))&" (±"&TEXT(MAX(ARRAYFORMULA(IF(B23:B27>0,H23:H27/B23:B27,0))),"0%")&")","-")`
   );
+  applyTableBody_(sheet, 'A49:B50');
 
   // ── TOP 5 SHIFTS THIS MONTH ────────────────────────────────────────────
   row = 52;
-  _sectionHeader_(sheet, row, "TOP 5 SHIFTS THIS MONTH");
+  applyHairlineSection_(sheet, 'A52', 'TOP 5 SHIFTS THIS MONTH');
+  applyRowHeight_(sheet, row, 'section');
 
   row = 53;
   const shiftHeaders = ["Date", "Day", "MOD", "Revenue"];
   shiftHeaders.forEach((h, i) => sheet.getRange(row, i + 1).setValue(h));
-  sheet.getRange(row, 1, 1, shiftHeaders.length).setFontWeight("bold").setBackground("#f3f3f3");
+  applyTableHeader_(sheet, 'A53:D53');
 
   row = 54;
   sheet.getRange(row, 1).setFormula(
@@ -820,14 +958,18 @@ function buildAnalyticsExtensions_Waratah(sheet, src) {
   );
   sheet.getRange(row, 1, 5, 1).setNumberFormat("dd/MM/yyyy");
   sheet.getRange(row, 4, 5, 1).setNumberFormat("$#,##0");
+  applyTableBody_(sheet, 'A54:D58');
+  // Rank accent: first date column gets good (green) colour to flag top shifts
+  sheet.getRange('A54:A58').setFontWeight('bold').setFontColor(STYLE.colour.good);
 
   // ── BOTTOM 5 SHIFTS THIS MONTH ─────────────────────────────────────────
   row = 60;
-  _sectionHeader_(sheet, row, "BOTTOM 5 SHIFTS THIS MONTH");
+  applyHairlineSection_(sheet, 'A60', 'BOTTOM 5 SHIFTS THIS MONTH');
+  applyRowHeight_(sheet, row, 'section');
 
   row = 61;
   shiftHeaders.forEach((h, i) => sheet.getRange(row, i + 1).setValue(h));
-  sheet.getRange(row, 1, 1, shiftHeaders.length).setFontWeight("bold").setBackground("#f3f3f3");
+  applyTableHeader_(sheet, 'A61:D61');
 
   row = 62;
   sheet.getRange(row, 1).setFormula(
@@ -835,16 +977,20 @@ function buildAnalyticsExtensions_Waratah(sheet, src) {
   );
   sheet.getRange(row, 1, 5, 1).setNumberFormat("dd/MM/yyyy");
   sheet.getRange(row, 4, 5, 1).setNumberFormat("$#,##0");
+  applyTableBody_(sheet, 'A62:D66');
+  // Rank accent: first date column gets bad (terracotta) colour to flag bottom shifts
+  sheet.getRange('A62:A66').setFontWeight('bold').setFontColor(STYLE.colour.bad);
 
   // ── OUTLIERS THIS MONTH (vs DoW 13W Baseline) ──────────────────────────
   // Lists top 5 shifts by absolute % variance from DoW average (A23:B27).
   row = 68;
-  _sectionHeader_(sheet, row, "OUTLIERS THIS MONTH (vs DoW Baseline)");
+  applyHairlineSection_(sheet, 'A68', 'OUTLIERS THIS MONTH (vs DoW Baseline)');
+  applyRowHeight_(sheet, row, 'section');
 
   row = 69;
   const outlierHeaders = ["Date", "Day", "Revenue", "Variance %"];
   outlierHeaders.forEach((h, i) => sheet.getRange(row, i + 1).setValue(h));
-  sheet.getRange(row, 1, 1, outlierHeaders.length).setFontWeight("bold").setBackground("#f3f3f3");
+  applyTableHeader_(sheet, 'A69:D69');
 
   row = 70;
   const variance = `IFERROR((${src}!F2:F-VLOOKUP(${src}!B2:B,$A$23:$B$27,2,FALSE))/VLOOKUP(${src}!B2:B,$A$23:$B$27,2,FALSE),0)`;
@@ -854,17 +1000,29 @@ function buildAnalyticsExtensions_Waratah(sheet, src) {
   sheet.getRange(row, 1, 5, 1).setNumberFormat("dd/MM/yyyy");
   sheet.getRange(row, 3, 5, 1).setNumberFormat("$#,##0");
   sheet.getRange(row, 4, 5, 1).setNumberFormat("+0.0%;[red]-0.0%");
-  // Hide the 5th column (|variance| sort key)
+  // Hide the 5th column (|variance| sort key) — white text on white background
   sheet.getRange(row, 5, 5, 1).setFontColor("#ffffff");
+  applyTableBody_(sheet, 'A70:D74');
+
+  // Force recalculation so variance values are available for delta colouring.
+  SpreadsheetApp.flush();
+
+  // Apply delta colours to Variance % column (D70:D74).
+  for (let i = 0; i < 5; i++) {
+    const r = 70 + i;
+    const v = sheet.getRange(`D${r}`).getValue();
+    applyDeltaCell_(sheet, `D${r}`, typeof v === 'number' ? v : null);
+  }
 
   // ── RECENT DOW PATTERN (build-time arrows) ─────────────────────────────
   row = 76;
-  _sectionHeader_(sheet, row, "RECENT DOW PATTERN (vs DoW Avg)");
+  applyHairlineSection_(sheet, 'A76', 'RECENT DOW PATTERN (vs DoW Avg)');
+  applyRowHeight_(sheet, row, 'section');
 
   row = 77;
   const recentDowHeaders = ["Day", "Last 4 Pattern", "Above Baseline"];
   recentDowHeaders.forEach((h, i) => sheet.getRange(row, i + 1).setValue(h));
-  sheet.getRange(row, 1, 1, recentDowHeaders.length).setFontWeight("bold").setBackground("#f3f3f3");
+  applyTableHeader_(sheet, 'A77:C77');
 
   try {
     const ss = sheet.getParent();
@@ -899,18 +1057,23 @@ function buildAnalyticsExtensions_Waratah(sheet, src) {
         sheet.getRange(r, 2).setValue(arrows);
         sheet.getRange(r, 2).setFontSize(14);
         sheet.getRange(r, 3).setValue(`${aboveCount} of ${dayShifts.length}`);
+
+        // Arrow colour: majority above avg → good, majority below → bad, split → neutral
+        const arrowDelta = aboveCount > dayShifts.length / 2 ? 1
+                         : aboveCount < dayShifts.length / 2 ? -1
+                         : 0;
+        applyDeltaCell_(sheet, `B${r}`, arrowDelta);
       });
     }
   } catch (e) {
     Logger.log(`Recent DoW pattern build skipped: ${e.message}`);
   }
+  applyTableBody_(sheet, 'A78:C82');
 
-  // Bold labels for new sections
+  // Bold labels for new sections — label column
   sheet.getRange("A46:A46").setFontWeight("bold");
   sheet.getRange("C46:C46").setFontWeight("bold");
   sheet.getRange("E46:E46").setFontWeight("bold");
-  sheet.getRange("A49:A50").setFontWeight("bold");
-  sheet.getRange("A78:A82").setFontWeight("bold");
 
   Logger.log("M8 Analytics Extensions section built for Waratah.");
 }
