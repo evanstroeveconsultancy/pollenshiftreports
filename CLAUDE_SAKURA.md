@@ -1,6 +1,6 @@
 # SAKURA HOUSE - Claude Code Project Guide
 
-**Last Updated:** April 2, 2026 (Rollover notifications removed, menu simplified, NightlyBasicExportSakura deleted, WeeklyDigest enhanced, dead functions removed, schema column refs updated, helper functions centralized)
+**Last Updated:** May 21, 2026 (Unified dashboard UI redesign — Roboto type scale, botanical palette, hybrid filled-card + hairline framing; new `DashboardStyleSakura.gs` centralises design tokens and 7 helpers; both dashboards refactored to use helpers; CONSISTENCY formula references corrected for Phase 3 DoW row positions)
 **Project Type:** Google Apps Script (Hospitality Management System)
 **Venue:** Sakura House (Single-Venue Documentation)
 

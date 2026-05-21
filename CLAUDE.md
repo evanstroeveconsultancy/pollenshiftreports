@@ -233,8 +233,18 @@ main                          ← stable, merged code only
 
 ---
 
-**Last Updated:** May 21, 2026 (Task management: weekly summary restored to managers channel; analytics dashboard: extensions block, DoW metrics enhancements)
+**Last Updated:** May 21, 2026 (Unified dashboard UI redesign across both venues — Roboto type scale, botanical palette, hybrid framing)
 **Status:** Both venues fully operational and production-ready ✅
+
+**Deployment (May 21, 2026) — Unified Dashboard UI Redesign (Both Venues):**
+- Both venues: New `DashboardStyle{Sakura,Waratah}` files centralise design tokens (Roboto 4-size scale: 28/18/11/10/9pt; botanical palette: deep green `#2f5d3a` / terracotta `#b5533c` / sand `#d6cfa8` / muted neutrals; standardised row heights and column widths A-I) plus 7 reusable helpers (`applyHeroCard_`, `applyHairlineSection_`, `applyTableHeader_`, `applyTableBody_`, `applyDeltaCell_`, `applyColumnWidths_`, `applyRowHeight_`)
+- Both venues: All four dashboards refactored to use helpers — `buildExecutiveDashboard`, `buildFinancialDashboard`, `buildExtendedTrends_*`, `buildAnalyticsExtensions_*`. Hybrid framing: filled-card treatment reserved for headline sections (CURRENT MONTH, THIS WEEK, REVENUE BY DAY, WEEKLY TREND); all other sections use hairline rules above the section title. Single Roboto family throughout. Page headers refreshed to `VENUE · DASHBOARD-NAME` pattern with right-aligned timestamp.
+- Both venues: `_sectionHeader_` shared helper removed (zero callers after refactor)
+- Waratah-specific fixes shipped en route: Executive MONTHLY TREND QUERY `MONTH(A)+1` offset applied (Apr 2 Sakura fix never reached Waratah — May was rendering as April); `0000"/"00` number format added; file-header schema comment corrected from `V=LoggedAt` to `V=CashCounted, W=ExpectedCash, X=CashVariance, Y=LoggedAt`; `SpreadsheetApp.flush()` inserted before `applyDeltaCell_` formula reads (otherwise getValue() returned pre-formula stale values)
+- Sakura-specific fixes shipped en route: CONSISTENCY formula references corrected (pre-Phase-3 layout assumed DoW rows 17-22, post-Phase-3 layout puts them at 23-28; stale references would have silently queried empty cells)
+- Files changed: `THE WARATAH/SHIFT REPORT SCRIPTS/AnalyticsDashboardWaratah.js`, `SAKURA HOUSE/SHIFT REPORT SCRIPTS/AnalyticsDashboardSakura.gs`; new files: `THE WARATAH/SHIFT REPORT SCRIPTS/DashboardStyleWaratah.js`, `SAKURA HOUSE/SHIFT REPORT SCRIPTS/DashboardStyleSakura.gs` (sister files, byte-identical content except header comment)
+- Design plan: `docs/plans/2026-05-21-dashboard-ui-redesign.md`
+- Manual post-deploy required: managers rebuild dashboards via venue admin menus (Sakura: `Shift Report > Admin Tools > Integrations & Analytics > Rebuild All Dashboards (Admin)`; Waratah: `Waratah Tools > Admin Tools > Integrations & Analytics > Build Financial Dashboard` then `Build Executive Dashboard` — `rebuildAllDashboards()` wrapper not yet ported to Waratah menu, deferred to future cleanup)
 
 **Deployment (May 21, 2026) — Task Management: Weekly Summary Restored to Managers Channel:**
 - Both venues: `_sendWeeklyActiveTasksSummaryCore()` re-enabled managers channel post via `bk_post(webhookUrl, weeklyBlocks, ...)`; commented out `_sendWeeklyActiveTasksDMs_(...)` call

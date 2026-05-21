@@ -1,6 +1,6 @@
 # THE WARATAH - Quick Reference
 
-**Last Updated:** May 21, 2026 (Analytics dashboard enhancements — Average Weekly section, DoW Std Dev + Sparkline columns, Analytics Extensions block, Executive TOP MOD removal + INSIGHTS block, THIS WEEK vs 13W BASELINE)
+**Last Updated:** May 21, 2026 (Unified dashboard UI redesign — Roboto type scale, botanical palette, hybrid filled-card + hairline framing; new `DashboardStyleWaratah.js` centralises design tokens and 7 helpers; both dashboards refactored to use helpers; Executive `MONTHLY TREND` QUERY `MONTH(A)+1` fix shipped to Waratah at last)
 **Status:** 🟢 PRODUCTION READY (manual operations until triggers created)
 **Operating Days:** 5 days (Wed-Sun)
 **Fields:** 36 total (27 clearable, 9 formula-only)
